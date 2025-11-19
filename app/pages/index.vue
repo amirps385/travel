@@ -1,0 +1,346 @@
+<template>
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <!-- HERO -->
+    <header class="mb-8">
+      <div class="rounded-2xl bg-gradient-to-r from-sky-50 to-white p-6 md:p-8 shadow-lg flex flex-col md:flex-row items-start md:items-center gap-6">
+        <div class="grow">
+          <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900">Plan your custom trip</h1>
+          <p class="mt-2 text-slate-600 max-w-xl">
+            Choose activities, travel dates, travellers and budget — we’ll generate a personalized itinerary
+            including timeline, hotels and key pre-trip tasks.
+          </p>
+          <div class="mt-4 flex gap-3 items-center">
+            <span class="inline-flex items-center gap-2 bg-white/60 px-3 py-1 rounded-full text-sm font-medium text-slate-700 shadow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Trusted suggestions
+            </span>
+            <span class="inline-flex items-center gap-2 bg-white/60 px-3 py-1 rounded-full text-sm font-medium text-slate-700 shadow">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h4l3 8 4-16 3 8h4"/></svg>
+              Expert planning
+            </span>
+          </div>
+        </div>
+
+        <div class="w-full md:w-64">
+          <div class="bg-white rounded-xl p-4 shadow-inner border">
+            <div class="text-sm text-slate-500">Quick facts</div>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <div class="text-sm"><span class="font-semibold">Activities</span><div class="text-xs text-slate-500">4 picks</div></div>
+              <div class="text-sm"><span class="font-semibold">Max days</span><div class="text-xs text-slate-500">30</div></div>
+              <div class="text-sm"><span class="font-semibold">Group sizes</span><div class="text-xs text-slate-500">1–20</div></div>
+              <div class="text-sm"><span class="font-semibold">Currency</span><div class="text-xs text-slate-500">USD</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- FORM -->
+    <form @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- LEFT: Controls -->
+      <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow">
+        <!-- Activities -->
+        <section class="mb-5">
+          <label class="block text-sm font-semibold mb-3">Choose Your Activities</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <button
+              v-for="act in activities"
+              :key="act.value"
+              type="button"
+              @click="toggleActivity(act.value)"
+              :class="['flex items-center gap-3 p-3 rounded-xl border transition-shadow focus:outline-none', form.activities.includes(act.value) ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md border-transparent' : 'bg-white text-slate-700 border-slate-200 hover:shadow']"
+            >
+              <span class="text-xl">{{ act.icon }}</span>
+              <div class="text-left">
+                <div class="text-sm font-medium">{{ act.label }}</div>
+                <div class="text-xs text-slate-400">{{ act.desc }}</div>
+              </div>
+            </button>
+          </div>
+          <p v-if="errors.activities" class="mt-2 text-sm text-rose-600">{{ errors.activities }}</p>
+        </section>
+
+        <!-- Days slider (single progress control) -->
+        <section class="mb-5">
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-semibold">How many days?</label>
+
+            <!-- info/question mark -->
+            <button
+              type="button"
+              title="Use the slider to pick how many days you want the trip to be (1–30)."
+              class="text-xs text-slate-500 hover:text-slate-700"
+              aria-label="How many days info"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.227 13.659A3 3 0 1112 16a3 3 0 01-3.773-2.341M12 6v.01M21 12A9 9 0 113 12a9 9 0 0118 0z"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <input
+              type="range"
+              v-model.number="form.days"
+              min="1"
+              max="30"
+              step="1"
+              class="w-full h-2 appearance-none bg-transparent"
+            />
+            <div class="w-20 text-right font-medium text-slate-700">{{ form.days }}d</div>
+          </div>
+
+          <!-- styled track under the range to hint progress (single visual) -->
+          <div class="mt-3 h-2 bg-slate-100 rounded overflow-hidden">
+            <div
+              class="h-2 rounded transition-all"
+              :style="{ width: (form.days/30*100)+'%', background: 'linear-gradient(90deg,#06b6d4,#3b82f6)'}"
+            ></div>
+          </div>
+        </section>
+
+        <!-- Who is travelling -->
+        <section class="mb-5">
+          <label class="block text-sm font-semibold mb-3">Who is travelling?</label>
+          <div class="flex gap-3">
+            <label v-for="opt in whoOptions" :key="opt" class="inline-flex items-center gap-2 cursor-pointer">
+              <input type="radio" :value="opt" v-model="form.who" class="h-4 w-4" />
+              <span class="text-sm text-slate-700 capitalize">{{ opt }}</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Travel date & travellers -->
+        <section class="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold mb-2">Travel date</label>
+            <input type="date" v-model="form.date" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-sky-300" />
+            <p v-if="errors.date" class="mt-1 text-xs text-rose-600">{{ errors.date }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-2">Number of travellers</label>
+            <input type="number" v-model.number="form.travellers" min="1" max="20" class="w-full border rounded-lg p-3" />
+          </div>
+        </section>
+
+        <!-- Ages -->
+        <section v-if="form.travellers > 0" class="mb-5">
+          <label class="block text-sm font-semibold mb-3">Ages & genders</label>
+          <div class="space-y-3">
+            <div v-for="n in form.travellers" :key="n" class="flex items-center gap-3">
+              <div class="w-24 text-sm text-slate-600">Traveller {{ n }}</div>
+              <input type="number" v-model.number="form.ages[n-1]" min="0" max="120" class="border rounded-lg p-2 w-28" />
+              <select v-model="form.genders[n-1]" class="border rounded-lg p-2">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Budget -->
+        <section class="mb-5">
+          <label class="block text-sm font-semibold mb-2">Budget per night (USD)</label>
+          <input type="number" v-model.number="form.budget" min="0" class="w-48 border rounded-lg p-3" />
+        </section>
+
+        <!-- Contact -->
+        <section>
+          <label class="block text-sm font-semibold mb-3">Contact details</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input type="text" v-model="form.name" placeholder="Full name" class="border rounded-lg p-3" />
+            <input type="email" v-model="form.email" placeholder="Email address" class="border rounded-lg p-3" />
+            <input type="tel" v-model="form.phone" placeholder="Phone number" class="border rounded-lg p-3" />
+            <input type="text" v-model="form.originCity" placeholder="Origin city" class="border rounded-lg p-3" />
+          </div>
+          <div class="mt-2 space-y-1">
+            <p v-if="errors.name" class="text-xs text-rose-600">{{ errors.name }}</p>
+            <p v-if="errors.email" class="text-xs text-rose-600">{{ errors.email }}</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT: Summary / CTA -->
+      <aside class="bg-gradient-to-b from-white to-sky-50 rounded-2xl p-6 shadow-lg border">
+        <div class="flex flex-col gap-4">
+          <div>
+            <h3 class="text-lg font-semibold">Trip summary</h3>
+            <p class="text-sm text-slate-500 mt-1">Quick preview before generating your itinerary</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-sm text-slate-700">
+            <div class="font-medium">Activities</div>
+            <div class="text-right truncate">{{ form.activities.join(', ') || '—' }}</div>
+
+            <div class="font-medium">Days</div>
+            <div class="text-right">{{ form.days }} days</div>
+
+            <div class="font-medium">Travellers</div>
+            <div class="text-right">{{ form.travellers }}</div>
+
+            <div class="font-medium">Budget/night</div>
+            <div class="text-right">${{ form.budget || '—' }}</div>
+
+            <div class="font-medium">Travel date</div>
+            <div class="text-right">{{ formattedDate }}</div>
+          </div>
+
+          <div class="pt-3 border-t"></div>
+
+          <div class="flex gap-2">
+            <button
+              :disabled="!isValid"
+              class="flex-1 rounded-lg px-4 py-3 text-white font-semibold shadow-md transition disabled:opacity-50 inline-flex items-center justify-center gap-3"
+              :class="isValid ? 'bg-sky-600 hover:bg-sky-700' : 'bg-slate-400 cursor-not-allowed'"
+            >
+              <!-- Better paper-plane icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 19l9-7-9-7-4 7v6l4-4z" />
+              </svg>
+              Get my custom itinerary
+            </button>
+
+            <button type="button" @click="resetForm" class="rounded-lg px-3 py-3 border bg-white text-slate-700 hover:shadow">
+              Reset
+            </button>
+          </div>
+
+          <p class="text-xs text-slate-500">We never share your contact details. This is a demo — integrate a backend to save plans.</p>
+        </div>
+      </aside>
+    </form>
+  </div>
+</template>
+
+<script setup>
+import { ref, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const activities = [
+  { value: 'wild safari', label: 'Wild Safari', icon: '🦁', desc: 'Game drives & wildlife' },
+  { value: 'beach holidays', label: 'Beach Holidays', icon: '🏖️', desc: 'Relax by the sea' },
+  { value: 'kilimanjaro trek', label: 'Kilimanjaro Trek', icon: '🏔️', desc: 'High-altitude trek' },
+  { value: 'great migration', label: 'Great Migration', icon: '🦓', desc: 'Nature spectacle' }
+]
+
+const whoOptions = ['single', 'couple', 'groups']
+
+const form = ref({
+  activities: [],
+  days: 5,
+  who: 'single',
+  date: '',
+  travellers: 1,
+  ages: [30],
+  genders: ['male'],
+  budget: 150,
+  name: '',
+  email: '',
+  phone: '',
+  originCity: ''
+})
+
+const errors = ref({})
+
+watch(() => form.value.travellers, (newVal) => {
+  const v = Number(newVal) || 1
+  while (form.value.ages.length < v) form.value.ages.push(30)
+  while (form.value.ages.length > v) form.value.ages.pop()
+  while (form.value.genders.length < v) form.value.genders.push('male')
+  while (form.value.genders.length > v) form.value.genders.pop()
+})
+
+function toggleActivity(val) {
+  const idx = form.value.activities.indexOf(val)
+  if (idx === -1) form.value.activities.push(val)
+  else form.value.activities.splice(idx, 1)
+}
+
+const formattedDate = computed(() => {
+  if (!form.value.date) return '—'
+  return new Date(form.value.date).toDateString()
+})
+
+function validate() {
+  errors.value = {}
+  if (!form.value.name) errors.value.name = 'Please enter your full name.'
+  if (!form.value.email) errors.value.email = 'Please enter your email.'
+  if (!form.value.date) errors.value.date = 'Select a travel date.'
+  if (form.value.activities.length === 0) errors.value.activities = 'Choose at least one activity.'
+  return Object.keys(errors.value).length === 0
+}
+
+const isValid = computed(() => {
+  // quick validation for enabling CTA
+  return form.value.name && form.value.email && form.value.date && form.value.activities.length > 0
+})
+
+function handleSubmit() {
+  if (!validate()) return
+  const payload = JSON.parse(JSON.stringify(form.value))
+  payload.createdAt = new Date().toISOString()
+  localStorage.setItem('tripForm', JSON.stringify(payload))
+  router.push({ path: '/itinerary' })
+}
+
+function resetForm() {
+  form.value = {
+    activities: [],
+    days: 5,
+    who: 'single',
+    date: '',
+    travellers: 1,
+    ages: [30],
+    genders: ['male'],
+    budget: 150,
+    name: '',
+    email: '',
+    phone: '',
+    originCity: ''
+  }
+  errors.value = {}
+}
+</script>
+
+<style scoped>
+/* subtle focus ring fallback for non-Tailwind browsers */
+input:focus, select:focus, button:focus {
+  outline: 2px solid rgba(96,165,250,0.35);
+  outline-offset: 2px;
+}
+
+/* range input styling — keeps native control but hides default track on some browsers for cleaner look */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: white;
+  border: 3px solid rgba(59,130,246,0.9);
+  box-shadow: 0 2px 6px rgba(59,130,246,0.15);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: white;
+  border: 3px solid rgba(59,130,246,0.9);
+  box-shadow: 0 2px 6px rgba(59,130,246,0.15);
+  cursor: pointer;
+}
+/* remove default track visuals for webkit but keep the custom track below */
+input[type="range"]::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 6px;
+}
+</style>

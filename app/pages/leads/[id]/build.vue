@@ -379,7 +379,7 @@ function removeActivityFromDay(dayNumber, actId) {
   day.selectedActivities = day.selectedActivities.filter((a) => a.id !== actId)
 }
 
-// SAVE ITINERARY (demo)
+// SAVE ITINERARY (demO)
 async function saveItinerary() {
   if (!lead.value || !selectedHotel.value) {
     alert('Please select a hotel before saving.')

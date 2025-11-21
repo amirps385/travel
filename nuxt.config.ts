@@ -9,4 +9,7 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
+   runtimeConfig: {
+    mongodbUri: process.env.MONGODB_URI, // private, only on server
+  },
 })

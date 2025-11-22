@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto px-6 py-10">
     <!-- HERO -->
-    <header class="rounded-2xl bg-gradient-to-r from-sky-50 to-white p-8 shadow-lg mb-8">
+    <header class="rounded-2xl bg-linear-to-r from-sky-50 to-white p-8 shadow-lg mb-8">
       <div class="flex flex-col lg:flex-row gap-6 items-start">
         <div class="grow">
           <div class="flex items-center gap-4">

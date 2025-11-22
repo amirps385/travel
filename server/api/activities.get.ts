@@ -1,37 +1,25 @@
-import Activity from '../models/Activity'
+import { defineEventHandler } from 'h3'
 import { connectDB } from '../utils/mongoose'
+import Activity from '../models/Activity'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
   await connectDB()
 
-  const query = getQuery(event)
-  const q = (query.q as string | undefined)?.toLowerCase() || ''
+  const docs = await Activity.find().sort({ createdAt: -1 }).lean()
 
-  const filter: any = {}
-
-  if (q) {
-    filter.$or = [
-      { name: { $regex: q, $options: 'i' } },
-      { type: { $regex: q, $options: 'i' } },
-      { location: { $regex: q, $options: 'i' } },
-      { code: { $regex: q, $options: 'i' } }
-    ]
-  }
-
-  const docs = await Activity.find(filter).sort({ createdAt: -1 }).lean()
-
-  return docs.map((doc: any) => ({
-    id: doc._id.toString(),
-    name: doc.name,
-    type: doc.type,
-    timeOfDay: doc.timeOfDay,
-    costUSD: doc.costUSD ?? 0,
-    durationMinutes: doc.durationMinutes ?? 0,
-    location: doc.location,
-    priorityPercent: doc.priorityPercent ?? 50,
-    code: doc.code,
-    description: doc.description,
-    isActive: doc.isActive,
-    createdAt: doc.createdAt
+  return docs.map((a: any) => ({
+    id: a._id.toString(),
+    name: a.name,
+    type: a.type,
+    timeOfDay: a.timeOfDay,
+    costUSD: a.costUSD,
+    durationMinutes: a.durationMinutes,
+    location: a.location,
+    priorityPercent: a.priorityPercent,
+    code: a.code,
+    description: a.description,
+    isActive: a.isActive,
+    createdAt: a.createdAt,
+    updatedAt: a.updatedAt
   }))
 })

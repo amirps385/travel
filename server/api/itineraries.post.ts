@@ -1,3 +1,5 @@
+// server/api/itineraries.post.ts
+
 import { defineEventHandler, readBody, createError } from 'h3'
 import { connectDB } from '../utils/mongoose'
 import Itinerary from '../models/Itinerary'
@@ -7,40 +9,33 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody(event)
 
-  if (!body.title || !body.days || !body.travellers) {
+  if (!body.leadId || !body.title) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Missing required fields (title, days, travellers)'
+      statusMessage: 'leadId and title are required'
     })
   }
 
-  // Generate slug only if user didn’t send one
   const slug = body.slug || Math.random().toString(36).substring(2, 10)
 
   const newItinerary = await Itinerary.create({
     leadId: body.leadId,
+    title: body.title,
+    status: body.status ?? 'draft',
     guestName: body.guestName,
     guestEmail: body.guestEmail,
-    phone: body.phone,
+    travellers: body.travellers ?? null,
+    days: body.days || [],
+    selectedHotels: body.selectedHotels || [],
 
-    title: body.title,
-    status: 'pending',
+    // 🔥 THIS WAS MISSING
+    travelDate: body.travelDate ? new Date(body.travelDate) : null,
 
-    slug,
+    // optional but supported by schema
+    budgetPerPerson: body.budgetPerPerson ?? null,
 
-    startDate: body.startDate,
-    days: body.days,
-    travellers: body.travellers,
-    budgetPerPerson: body.budgetPerPerson,
-    currency: body.currency || 'USD',
-    totalCost: body.totalCost || 0,
-
-    primaryHotel: body.primaryHotel,
-    dayPlans: body.dayPlans || []
+    slug
   })
 
-  return {
-    success: true,
-    itinerary: newItinerary
-  }
+  return newItinerary
 })

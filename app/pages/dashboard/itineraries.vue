@@ -1,58 +1,39 @@
 <template>
   <div class="min-h-[calc(100vh-5rem)] bg-slate-50">
     <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8 space-y-6">
-      <!-- Header -->
+      <!-- HEADER -->
       <div
-        class="bg-white/90 backdrop-blur rounded-2xl shadow border border-slate-100 px-5 md:px-7 py-5 flex items-center justify-between gap-3"
+        class="bg-white/90 backdrop-blur rounded-2xl shadow border border-slate-100 px-5 md:px-7 py-4 flex items-center justify-between"
       >
         <div>
           <p class="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">
             Itineraries
           </p>
           <h1 class="text-xl md:text-2xl font-bold text-slate-900">
-            Saved itineraries
+            Created itineraries
           </h1>
           <p class="text-xs md:text-sm text-slate-500">
-            These itineraries were built from client leads using the itinerary builder.
+            These itineraries are created from leads and can be previewed or shared via link.
           </p>
         </div>
 
-        <div class="text-right text-xs md:text-sm text-slate-500">
-          <div class="font-semibold text-slate-800">
-            Total: {{ totalItineraries }}
-          </div>
-          <div v-if="isLoading" class="text-[11px] text-slate-400">
-            Loading…
-          </div>
+        <div class="text-xs text-slate-500 text-right">
+          <div>Total itineraries: <span class="font-semibold">{{ itineraries.length }}</span></div>
+          <div v-if="isLoading" class="text-[11px] text-slate-400">Loading…</div>
         </div>
       </div>
 
-      <!-- Error message -->
-      <div
-        v-if="loadError"
-        class="bg-white rounded-2xl border border-rose-100 text-rose-700 text-sm px-5 py-3"
-      >
-        {{ loadError }}
-      </div>
-
-      <!-- Itineraries table -->
-      <div
-        class="bg-white/90 backdrop-blur rounded-2xl shadow border border-slate-100 px-4 md:px-6 py-5"
-      >
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-sm font-semibold text-slate-900">
-            Itinerary list
-          </h2>
-          <p class="text-[11px] text-slate-400">
-            Click preview to see details. Public link will open the client-facing page.
-          </p>
-        </div>
+      <!-- LIST CARD -->
+      <div class="bg-white/90 backdrop-blur rounded-2xl shadow border border-slate-100 px-5 md:px-7 py-6">
+        <p v-if="loadError" class="mb-3 text-xs text-rose-600">
+          {{ loadError }}
+        </p>
 
         <div class="overflow-x-auto rounded-2xl border border-slate-100">
           <table class="min-w-full text-sm">
-            <thead class="bg-slate-50/80">
+            <thead class="bg-slate-50">
               <tr class="text-left text-xs uppercase tracking-wide text-slate-500 border-b">
-                <th class="py-3 px-4">Title</th>
+                <th class="py-3 px-4">Itinerary</th>
                 <th class="py-3 px-4">Guest</th>
                 <th class="py-3 px-4">Travel date</th>
                 <th class="py-3 px-4">Days</th>
@@ -175,26 +156,32 @@
         </div>
       </div>
 
-      <!-- Simple preview modal (stub, will be improved in Phase 4) -->
+      <!-- PREVIEW MODAL -->
       <transition name="fade">
         <div
-          v-if="isPreviewOpen && selectedItinerary"
+          v-if="isPreviewOpen && previewItinerary"
           class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
         >
           <div
-            class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-100 max-h-[80vh] overflow-y-auto"
+            class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto"
           >
-            <div class="flex items-center justify-between px-5 py-4 border-b bg-slate-50/70">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b bg-slate-50/70">
               <div>
                 <p class="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">
-                  Itinerary preview
+                  Itinerary Preview
                 </p>
                 <h2 class="text-lg font-semibold text-slate-900">
-                  {{ selectedItinerary.title || 'Untitled itinerary' }}
+                  {{ previewItinerary.title || 'Untitled itinerary' }}
                 </h2>
-                <p class="text-[11px] text-slate-500">
-                  Guest: {{ selectedItinerary.guestName || 'Guest' }}
-                  • {{ selectedItinerary.guestEmail || 'No email' }}
+                <p class="text-xs text-slate-500 mt-1">
+                  {{ previewItinerary.guestName || 'Guest' }} •
+                  {{ previewItinerary.travellers || 0 }} travellers •
+                  {{ previewItinerary.days?.length || 0 }} days •
+                  Travel date:
+                  <span class="font-medium">
+                    {{ formatDate(previewItinerary.travelDate) }}
+                  </span>
                 </p>
               </div>
               <button
@@ -206,76 +193,127 @@
               </button>
             </div>
 
-            <div class="px-5 py-4 space-y-4 text-sm text-slate-700">
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div>
-                  <div class="text-slate-500">Travel date</div>
-                  <div class="font-medium">
-                    {{ formatDate(selectedItinerary.travelDate) || '—' }}
-                  </div>
+            <!-- Modal body -->
+            <div class="px-6 py-5 space-y-6 text-sm text-slate-700">
+              <!-- Basic info -->
+              <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="border rounded-xl p-4 bg-slate-50/60">
+                  <h3 class="text-xs font-semibold text-slate-500 mb-2">Guest</h3>
+                  <p class="font-medium">{{ previewItinerary.guestName || 'Guest' }}</p>
+                  <p class="text-xs text-slate-500">
+                    {{ previewItinerary.guestEmail || 'No email' }}
+                  </p>
                 </div>
-                <div>
-                  <div class="text-slate-500">Days</div>
-                  <div class="font-medium">
-                    {{ selectedItinerary.days?.length || 0 }}
-                  </div>
-                </div>
-                <div>
-                  <div class="text-slate-500">Travellers</div>
-                  <div class="font-medium">
-                    {{ selectedItinerary.travellers ?? '—' }}
-                  </div>
-                </div>
-                <div>
-                  <div class="text-slate-500">Status</div>
-                  <div class="font-medium capitalize">
-                    {{ selectedItinerary.status || 'draft' }}
-                  </div>
-                </div>
-              </div>
 
-              <div>
+                <div class="border rounded-xl p-4 bg-slate-50/60">
+                  <h3 class="text-xs font-semibold text-slate-500 mb-2">Trip overview</h3>
+                  <p class="text-xs text-slate-600">
+                    Travellers:
+                    <span class="font-medium">{{ previewItinerary.travellers || 0 }}</span>
+                  </p>
+                  <p class="text-xs text-slate-600">
+                    Days:
+                    <span class="font-medium">{{ previewItinerary.days?.length || 0 }}</span>
+                  </p>
+                  <p class="text-xs text-slate-600">
+                    Status:
+                    <span class="font-medium capitalize">
+                      {{ previewItinerary.status || 'draft' }}
+                    </span>
+                  </p>
+                  <p class="text-xs text-slate-600" v-if="previewItinerary.budgetPerPerson">
+                    Budget / person:
+                    <span class="font-medium">
+                      ${{ previewItinerary.budgetPerPerson }}
+                    </span>
+                  </p>
+                </div>
+              </section>
+
+              <!-- Hotels -->
+              <section>
                 <h3 class="text-xs font-semibold text-slate-500 mb-2">
-                  Day-by-day overview (simple preview)
+                  Hotels / Lodges
                 </h3>
-                <div
-                  v-if="selectedItinerary.days && selectedItinerary.days.length"
-                  class="space-y-2 text-xs"
-                >
+
+                <div v-if="previewSelectedHotels.length" class="space-y-2">
                   <div
-                    v-for="d in selectedItinerary.days"
-                    :key="d._id || d.dayNumber"
-                    class="border rounded-lg px-3 py-2 bg-slate-50/80"
+                    v-for="h in previewSelectedHotels"
+                    :key="h.hotelId"
+                    class="border rounded-xl px-4 py-3 bg-white flex items-start justify-between gap-3"
                   >
-                    <div class="font-semibold">
-                      Day {{ d.dayNumber }} — {{ d.title || `Day ${d.dayNumber}` }}
+                    <div>
+                      <p class="text-sm font-semibold text-slate-900">
+                        {{ h.hotelName }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        {{ h.destination || 'Destination not set' }}
+                      </p>
+                      <p class="text-[11px] text-slate-400" v-if="h.range">
+                        Range: {{ h.range }}
+                      </p>
                     </div>
-                    <div
-                      v-if="d.notes"
-                      class="text-[11px] text-slate-500 mt-0.5"
-                    >
-                      {{ d.notes }}
-                    </div>
-                    <div
-                      v-if="d.activities && d.activities.length"
-                      class="text-[11px] text-slate-500 mt-1"
-                    >
-                      {{ d.activities.length }} activity(ies) selected
+                    <div class="text-right text-xs text-slate-500">
+                      <p class="font-medium">
+                        Nights: {{ h.nights || 1 }}
+                      </p>
+                      <p class="text-[11px]" v-if="h.notes">
+                        {{ h.notes }}
+                      </p>
                     </div>
                   </div>
                 </div>
-                <p
-                  v-else
-                  class="text-[11px] text-slate-400"
-                >
-                  No day-by-day data saved yet.
-                </p>
-              </div>
 
-              <p class="text-[11px] text-slate-400">
-                This is a simple preview. In the next phase we’ll build a full visual
-                itinerary preview similar to your public itinerary page.
-              </p>
+                <p v-else class="text-xs text-slate-400">
+                  No hotels selected for this itinerary.
+                </p>
+              </section>
+
+              <!-- Day-by-day -->
+              <section>
+                <h3 class="text-xs font-semibold text-slate-500 mb-2">
+                  Day-by-day plan
+                </h3>
+
+                <div v-if="previewItinerary.days?.length" class="space-y-3">
+                  <div
+                    v-for="day in previewItinerary.days"
+                    :key="day.dayNumber"
+                    class="border rounded-xl px-4 py-3 bg-slate-50/60"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <p class="text-sm font-semibold text-slate-900">
+                          Day {{ day.dayNumber }} — {{ day.title || `Day ${day.dayNumber}` }}
+                        </p>
+                        <p class="text-[11px] text-slate-500" v-if="day.notes">
+                          {{ day.notes }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Activities -->
+                    <div class="mt-2" v-if="day.activities && day.activities.length">
+                      <p class="text-[11px] font-semibold text-slate-600 mb-1">
+                        Activities
+                      </p>
+                      <div class="flex flex-wrap gap-1">
+                        <span
+                          v-for="(act, idx) in day.activities"
+                          :key="idx"
+                          class="inline-flex items-center px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[11px]"
+                        >
+                          {{ getActivityName(act.activityId) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <p v-else class="text-xs text-slate-400">
+                  No day structure defined for this itinerary.
+                </p>
+              </section>
             </div>
           </div>
         </div>
@@ -293,121 +331,146 @@ definePageMeta({
 })
 
 const itineraries = ref([])
-const isLoading = ref(true)
+const isLoading = ref(false)
 const loadError = ref('')
 
-// Preview state
+// Preview modal state
 const isPreviewOpen = ref(false)
-const selectedItinerary = ref(null)
+const previewItinerary = ref(null)
 
-const totalItineraries = computed(() => itineraries.value.length)
+// For resolving names in preview
+const allHotels = ref([])
+const allActivities = ref([])
 
-function statusPillClass (status) {
-  const s = status || 'draft'
-  if (s === 'draft') return 'bg-slate-100 text-slate-700'
-  if (s === 'pending' || s === 'sent') return 'bg-amber-50 text-amber-700'
-  if (s === 'confirmed') return 'bg-emerald-50 text-emerald-700'
-  if (s === 'cancelled') return 'bg-rose-50 text-rose-700'
-  return 'bg-slate-100 text-slate-700'
+onMounted(async () => {
+  await loadData()
+})
+
+async function loadData () {
+  isLoading.value = true
+  loadError.value = ''
+
+  try {
+    const [its, hotels, acts] = await Promise.all([
+      $fetch('/api/itineraries'),
+      $fetch('/api/hotels').catch(() => []),
+      $fetch('/api/activities').catch(() => [])
+    ])
+
+    itineraries.value = its || []
+    allHotels.value = hotels || []
+    allActivities.value = acts || []
+  } catch (err) {
+    console.error('Failed to load itineraries', err)
+    loadError.value = 'Failed to load itineraries. Please try again later.'
+  } finally {
+    isLoading.value = false
+  }
 }
 
 function formatDate (value) {
   if (!value) return '—'
   try {
-    const d = new Date(value)
-    if (Number.isNaN(d.getTime())) return '—'
-    return d.toLocaleDateString()
+    return new Date(value).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
   } catch {
     return '—'
   }
 }
 
 function formatTime (value) {
-  if (!value) return ''
+  if (!value) return '—'
   try {
-    const d = new Date(value)
-    if (Number.isNaN(d.getTime())) return ''
-    return d.toLocaleTimeString(undefined, {
+    return new Date(value).toLocaleTimeString(undefined, {
       hour: '2-digit',
       minute: '2-digit'
     })
   } catch {
-    return ''
+    return '—'
   }
 }
 
-// Load itineraries from API
-onMounted(async () => {
-  try {
-    const data = await $fetch('/api/itineraries')
-    itineraries.value = data || []
-  } catch (err) {
-    console.error('Failed to load itineraries', err)
-    loadError.value = 'Failed to load itineraries. Please check the server console for details.'
-  } finally {
-    isLoading.value = false
-  }
-})
+function statusPillClass (status) {
+  const s = status || 'draft'
+  if (s === 'sent') return 'bg-sky-50 text-sky-700'
+  if (s === 'accepted') return 'bg-emerald-50 text-emerald-700'
+  if (s === 'rejected') return 'bg-rose-50 text-rose-700'
+  return 'bg-slate-100 text-slate-700'
+}
 
-// Preview handlers
-function openPreview (it) {
-  selectedItinerary.value = it
+// --- Preview modal logic ---
+function openPreview (itinerary) {
+  previewItinerary.value = itinerary
   isPreviewOpen.value = true
 }
 
 function closePreview () {
   isPreviewOpen.value = false
-  selectedItinerary.value = null
+  previewItinerary.value = null
 }
 
-// Copy public link (uses slug)
-async function copyLink (it) {
-  if (!it.slug) {
-    alert('This itinerary has no public link yet.')
-    return
-  }
+// Helpers to resolve hotel & activity names
+function findHotelById (id) {
+  return allHotels.value.find(h => (h._id || h.id) === id)
+}
 
-  if (typeof window === 'undefined') return
+const previewSelectedHotels = computed(() => {
+  if (!previewItinerary.value) return []
 
-  const url = `${window.location.origin}/itineraries/${it.slug}`
+  const arr = previewItinerary.value.selectedHotels || []
+  return arr.map(sel => {
+    const hotel = findHotelById(sel.hotelId) || {}
+    return {
+      ...sel,
+      hotelName: hotel.name || 'Unknown hotel',
+      destination: hotel.destination || '',
+      range: hotel.range || ''
+    }
+  })
+})
+
+function getActivityName (id) {
+  if (!id) return 'Activity'
+  const act = allActivities.value.find(a => (a._id || a.id) === id)
+  return act ? act.name : 'Activity'
+}
+
+// --- Copy / open public link ---
+async function copyLink (itinerary) {
+  if (!itinerary.slug) return
 
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(url)
-      alert('Link copied to clipboard')
-    } else {
-      // Fallback
-      const textArea = document.createElement('textarea')
-      textArea.value = url
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      alert('Link copied to clipboard')
-    }
+    const origin =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : 'http://localhost:3000'
+
+    const url = `${origin}/itinerary/${itinerary.slug}`
+    await navigator.clipboard.writeText(url)
+    alert('Public itinerary link copied to clipboard.')
   } catch (err) {
     console.error('Failed to copy link', err)
-    alert('Could not copy link. Please copy it manually.')
+    alert('Failed to copy link.')
   }
 }
 
-// Open public link in new tab
-function openLink (it) {
-  if (!it.slug) {
-    alert('This itinerary has no public link yet.')
-    return
-  }
-  if (typeof window === 'undefined') return
+function openLink (itinerary) {
+  if (!itinerary.slug) return
 
-  const url = `/itineraries/${it.slug}`
-  window.open(url, '_blank')
+  const url = `/itinerary/${itinerary.slug}`
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank')
+  }
 }
 </script>
 
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 .fade-enter-from,
 .fade-leave-to {

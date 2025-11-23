@@ -426,10 +426,16 @@ async function saveItinerary () {
   if (!lead.value) return
 
   saveError.value = ''
-  successMessage.value = ''   // <--- add this ref in your script
+  successMessage.value = ''
   isSaving.value = true
 
   try {
+    // 👇 Decide which date to save
+    const travelDateToSave =
+      startDate.value
+        ? new Date(startDate.value)              // from the "Start date" input
+        : (lead.value.date ? new Date(lead.value.date) : null) // or from lead
+
     const payload = {
       leadId: lead.value._id || leadId.value,
       title: itineraryTitle.value,
@@ -454,7 +460,8 @@ async function saveItinerary () {
             }
           ]
         : [],
-      travelDate: startDate.value || lead.value.date || null,
+      // 👇 IMPORTANT: use our computed date
+      travelDate: travelDateToSave,
       budgetPerPerson: lead.value.budget || null
     }
 
@@ -463,9 +470,7 @@ async function saveItinerary () {
       body: payload
     })
 
-    // ✅ DO NOT REDIRECT
     successMessage.value = 'Itinerary saved successfully!'
-
   } catch (err) {
     console.error('Failed to save itinerary', err)
     saveError.value = 'Failed to save itinerary. Please check the server console for details.'
@@ -473,6 +478,7 @@ async function saveItinerary () {
     isSaving.value = false
   }
 }
+
 
 
 // selected hotel (single for now)

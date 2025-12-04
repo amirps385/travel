@@ -457,14 +457,15 @@ async function copyLink (itinerary) {
   }
 }
 
-function openLink (itinerary) {
+function openLink(itinerary) {
   if (!itinerary.slug) return
 
-  const url = `/itinerary/${itinerary.slug}`
+  const url = `/admin/itinerary/${itinerary.slug}`
   if (typeof window !== 'undefined') {
     window.open(url, '_blank')
   }
 }
+
 </script>
 
 <style scoped>

@@ -73,3 +73,7 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+
+---
+ADDED: visitor UI skeleton (pages/components/server API stubs). Replace stubs with real data.

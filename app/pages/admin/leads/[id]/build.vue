@@ -381,8 +381,10 @@ function toggleDay (n) {
 }
 
 function goBack () {
-  router.push('/dashboard/leads')
+  // send user back to the admin leads list
+  router.push('/admin/dashboard/leads')
 }
+
 
 // --- load data ---
 onMounted(async () => {

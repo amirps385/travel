@@ -21,7 +21,7 @@
       <div v-else class="space-y-6">
         <!-- HERO / SUMMARY HEADER -->
         <header
-          class="rounded-3xl bg-gradient-to-r from-sky-50 via-white to-emerald-50 border border-slate-100 shadow-md px-5 md:px-8 py-6 md:py-8"
+          class="rounded-3xl bg-linear-to-r from-sky-50 via-white to-emerald-50 border border-slate-100 shadow-md px-5 md:px-8 py-6 md:py-8"
         >
           <div class="flex flex-col lg:flex-row gap-6 lg:items-start">
             <!-- Left: Title + overview -->
@@ -224,7 +224,7 @@
                 Before you travel
               </h2>
               <div class="relative">
-                <div class="absolute left-[10px] top-3 bottom-3 w-px bg-slate-200"></div>
+                <div class="absolute left-2.5 top-3 bottom-3 w-px bg-slate-200"></div>
                 <ul class="space-y-5 pl-7">
                   <li
                     v-for="(item, idx) in timeline"

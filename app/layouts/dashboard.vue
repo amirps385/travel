@@ -119,38 +119,49 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
+// --- FIXED: use /admin prefix for all admin routes ---
+// Note: the admin "root" is /admin and the dashboard is at /admin/dashboard
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/dashboard/leads', label: 'Leads', icon: 'leads' },
-  { to: '/dashboard/itineraries', label: 'Itineraries', icon: 'itineraries' },
-  { to: '/dashboard/hotels', label: 'Hotels', icon: 'hotels' },
-  { to: '/dashboard/activities', label: 'Activities', icon: 'activities' },
-  { to: '/dashboard/transfers', label: 'Transfers', icon: 'transfers' },
-  { to: '/dashboard/cities', label: 'Cities', icon: 'cities' }
+  { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/admin/dashboard/leads', label: 'Leads', icon: 'leads' },
+  { to: '/admin/dashboard/itineraries', label: 'Itineraries', icon: 'itineraries' },
+  { to: '/admin/dashboard/hotels', label: 'Hotels', icon: 'hotels' },
+  { to: '/admin/dashboard/activities', label: 'Activities', icon: 'activities' },
+  { to: '/admin/dashboard/transfers', label: 'Transfers', icon: 'transfers' },
+  { to: '/admin/dashboard/cities', label: 'Cities', icon: 'cities' }
 ]
 
-const isActive = (to) =>
-  route.path === to || (to !== '/dashboard' && route.path.startsWith(to))
+// isActive: treat '/admin' as active (if you want), and match children via startsWith
+const isActive = (to) => {
+  if (!to) return false
+  // exact match
+  if (route.path === to) return true
+  // allow admin root to be considered active for dashboard
+  if (to === '/admin/dashboard' && (route.path === '/admin' || route.path === '/admin/')) return true
+  // children
+  return to !== '/admin/dashboard' && route.path.startsWith(to)
+}
 
+// header title / subtitle logic for admin routes (uses /admin prefix)
 const headerTitle = computed(() => {
-  if (route.path === '/dashboard') return 'Dashboard Overview'
-  if (route.path.startsWith('/dashboard/leads')) return 'Leads Management'
-  if (route.path.startsWith('/dashboard/itineraries')) return 'Itineraries'
-  if (route.path.startsWith('/dashboard/hotels')) return 'Hotels'
-  if (route.path.startsWith('/dashboard/activities')) return 'Activities'
-  if (route.path.startsWith('/dashboard/transfers')) return 'Transfers'
-  if (route.path.startsWith('/dashboard/cities')) return 'Cities'
+  if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Dashboard Overview'
+  if (route.path.startsWith('/admin/dashboard/leads')) return 'Leads Management'
+  if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Itineraries'
+  if (route.path.startsWith('/admin/dashboard/hotels')) return 'Hotels'
+  if (route.path.startsWith('/admin/dashboard/activities')) return 'Activities'
+  if (route.path.startsWith('/admin/dashboard/transfers')) return 'Transfers'
+  if (route.path.startsWith('/admin/dashboard/cities')) return 'Cities'
   return 'Dashboard'
 })
 
 const headerSubtitle = computed(() => {
-  if (route.path === '/dashboard') return 'Welcome to your admin dashboard'
-  if (route.path.startsWith('/dashboard/leads')) return 'Track and manage all travel enquiries.'
-  if (route.path.startsWith('/dashboard/itineraries')) return 'Review and edit created itineraries.'
-  if (route.path.startsWith('/dashboard/hotels')) return 'Configure hotel partners & pricing.'
-  if (route.path.startsWith('/dashboard/activities')) return 'Manage activities available for trips.'
-  if (route.path.startsWith('/dashboard/transfers')) return 'Set up transfers and local transport.'
-  if (route.path.startsWith('/dashboard/cities')) return 'Organise cities and regions.'
+  if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Welcome to your admin dashboard'
+  if (route.path.startsWith('/admin/dashboard/leads')) return 'Track and manage all travel enquiries.'
+  if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Review and edit created itineraries.'
+  if (route.path.startsWith('/admin/dashboard/hotels')) return 'Configure hotel partners & pricing.'
+  if (route.path.startsWith('/admin/dashboard/activities')) return 'Manage activities available for trips.'
+  if (route.path.startsWith('/admin/dashboard/transfers')) return 'Set up transfers and local transport.'
+  if (route.path.startsWith('/admin/dashboard/cities')) return 'Organise cities and regions.'
   return ''
 })
 

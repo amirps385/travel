@@ -364,7 +364,8 @@ async function saveLeadStatus() {
 function goToBuild (lead) {
   const id = lead._id || lead.id
   if (!id) return
-  router.push(`/leads/${id}/build`)
+  // push to the admin build route (make sure build.vue is at app/admin/pages/leads/[id]/build.vue)
+  router.push(`/admin/leads/${id}/build`)
 }
 
 // ---- Initial load ----

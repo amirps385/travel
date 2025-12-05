@@ -152,7 +152,7 @@
                 <div class="flex-1">
                   <div class="font-semibold text-gray-900">Call Us Now</div>
                   <div class="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
-                    +255 123 456 789
+                    +255 620 285 462
                   </div>
                   <div class="text-sm text-gray-500">Available 24/7</div>
                 </div>
@@ -164,7 +164,7 @@
               </a>
               
               <!-- WhatsApp Option -->
-              <a href="https://wa.me/255123456789" 
+              <a href="https://wa.me/255620285462" 
                  target="_blank"
                  class="flex items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group">
                 <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mr-4">

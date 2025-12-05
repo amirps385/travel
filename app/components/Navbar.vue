@@ -89,15 +89,34 @@
             </svg>
           </button>
 
-          <div class="currency" @mouseleave="showCurrency = false">
-            <button class="currency-btn" @click="showCurrency = !showCurrency" :aria-expanded="showCurrency" aria-haspopup="true" ref="currencyButton">
+          <!-- Currency Dropdown - Removed mouseleave from container -->
+          <div class="currency">
+            <button 
+              class="currency-btn" 
+              @click="toggleCurrencyMenu" 
+              :aria-expanded="showCurrency" 
+              aria-haspopup="true" 
+              ref="currencyButton"
+            >
               <span class="currency-text">{{ selectedCurrency }}</span>
-              <svg class="chev-sm" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor">
+              <svg 
+                class="chev-sm" 
+                :class="{ 'chev-sm-open': showCurrency }" 
+                viewBox="0 0 24 24" 
+                aria-hidden 
+                fill="none" 
+                stroke="currentColor"
+              >
                 <path d="M6 9l6 6 6-6" stroke-width="2" />
               </svg>
             </button>
 
-            <div v-if="showCurrency" class="currency-menu" role="menu">
+            <div 
+              v-if="showCurrency" 
+              class="currency-menu" 
+              role="menu"
+              ref="currencyMenu"
+            >
               <ul>
                 <li v-for="c in currencies" :key="c">
                   <button class="currency-item" @click="selectCurrency(c)">{{ c }}</button>
@@ -199,6 +218,10 @@ const menuOpenedByClick = ref(false)
 const isMouseOverPanel = ref(false)
 const isMouseOverTrigger = ref(false)
 
+// Refs for currency dropdown
+const currencyButton = ref(null)
+const currencyMenu = ref(null)
+
 // NAV items - Modified for better tablet display
 const navItems = [
   {
@@ -256,11 +279,40 @@ function toggleMobile(key) { mobileActive.value = mobileActive.value === key ? n
 function closeSearch(){ showSearch.value = false; searchQuery.value = '' }
 function performSearch(){ if(!searchQuery.value) return; router.push({ path: '/search', query: { q: searchQuery.value } }); showSearch.value = false }
 
-// currency
+// currency functions
+function toggleCurrencyMenu() {
+  showCurrency.value = !showCurrency.value
+}
+
 function selectCurrency(c) { 
   selectedCurrency.value = c; 
-  showCurrency.value = false; 
+  showCurrency.value = false; // Close after selection
   try { localStorage.setItem('zafs_currency', c) } catch(e){} 
+}
+
+// Function to handle clicks outside currency dropdown
+function handleClickOutside(event) {
+  // Check if click is outside currency button and menu
+  const isClickInsideCurrencyButton = currencyButton.value && currencyButton.value.contains(event.target)
+  const isClickInsideCurrencyMenu = currencyMenu.value && currencyMenu.value.contains(event.target)
+  
+  // If currency menu is open and click is outside, close it
+  if (showCurrency.value && !isClickInsideCurrencyButton && !isClickInsideCurrencyMenu) {
+    showCurrency.value = false
+  }
+  
+  // Check if click is outside mega menu triggers and panels
+  const isClickInsideTrigger = Object.values(triggerRefs.value).some(trigger => 
+    trigger && trigger.contains(event.target)
+  )
+  const isClickInsidePanel = Object.values(panelRefs.value).some(panel => 
+    panel && panel.contains(event.target)
+  )
+  
+  if (!isClickInsideTrigger && !isClickInsidePanel && openMega.value) {
+    openMega.value = null
+    menuOpenedByClick.value = false
+  }
 }
 
 // Mega menu functions
@@ -322,22 +374,6 @@ function handleMegaLinkClick() {
   menuOpenedByClick.value = false
 }
 
-// Close mega menu when clicking outside
-function handleClickOutside(event) {
-  // Check if click is outside mega menu triggers and panels
-  const isClickInsideTrigger = Object.values(triggerRefs.value).some(trigger => 
-    trigger && trigger.contains(event.target)
-  )
-  const isClickInsidePanel = Object.values(panelRefs.value).some(panel => 
-    panel && panel.contains(event.target)
-  )
-  
-  if (!isClickInsideTrigger && !isClickInsidePanel && openMega.value) {
-    openMega.value = null
-    menuOpenedByClick.value = false
-  }
-}
-
 onMounted(() => { 
   try { 
     const saved = localStorage.getItem('zafs_currency'); 
@@ -349,7 +385,7 @@ onMounted(() => {
     mobileOpen.value = false
   })
   
-  // Add click outside listener
+  // Add click outside listener for both mega menu and currency dropdown
   document.addEventListener('click', handleClickOutside)
   
   onBeforeUnmount(() => {
@@ -612,6 +648,11 @@ onBeforeUnmount(() => {
   font-size: 14px;
   min-width: 70px;
   justify-content: center;
+  transition: background .12s ease;
+}
+.currency-btn:hover,
+.currency-btn[aria-expanded="true"] {
+  background: rgba(255,255,255,0.1);
 }
 .currency-menu { 
   position:absolute; 
@@ -633,9 +674,22 @@ onBeforeUnmount(() => {
   border:none; 
   background:transparent; 
   cursor:pointer; 
+  transition: background .12s ease;
 }
 .currency-item:hover { 
   background: #f0f4f7; 
+}
+
+/* Currency chevron rotation */
+.chev-sm { 
+  width: 12px; 
+  height: 12px; 
+  color: rgba(255,255,255,0.95); 
+  transition: transform .18s ease; 
+  transform-origin: center; 
+}
+.chev-sm-open { 
+  transform: rotate(180deg); 
 }
 
 /* CTA */

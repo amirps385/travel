@@ -133,7 +133,7 @@
           </div>
 
           <!-- Circular Image (Bigger and positioned higher) -->
-          <div class="absolute z-10 border-[20px] border-white rounded-full shadow-[0px_27px_35.9px_rgba(41,137,145,0.2)] overflow-hidden"
+          <div class="absolute z-10 border-20px border-white rounded-full shadow-[0px_27px_35.9px_rgba(41,137,145,0.2)] overflow-hidden"
                :class="{
                  'xl:size-115 lg:size-100 size-80': true,
                  'lg:left-[10%] lg:top-[8%]': !isMobile,

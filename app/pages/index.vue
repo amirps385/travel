@@ -12,6 +12,7 @@
     <main class="bg-slate-50">
       <ToursPreview />
       <FeaturesSection />
+      <Offer/>
       <WhyChoose />
       <CTA />
       <SiteFooter />
@@ -27,6 +28,7 @@ import FeaturesSection from '~/components/FeaturesSection.vue'
 import WhyChoose from '~/components/WhyChoose.vue'
 import CTA from '~/components/CTA.vue'
 import SiteFooter from '~/components/SiteFooter.vue'
+import Offer from '~/components/Offer.vue'
 
 definePageMeta({
   title: 'Home — ZafsTours'

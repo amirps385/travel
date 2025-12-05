@@ -11,6 +11,7 @@
 
     <main class="bg-slate-50">
       <ToursPreview />
+      <FeaturesSection />
       <WhyChoose />
       <CTA />
       <SiteFooter />
@@ -22,6 +23,7 @@
 import Hero from '~/components/Hero.vue'
 import HeroLead from '~/components/HeroLead.vue'
 import ToursPreview from '~/components/ToursPreview.vue'
+import FeaturesSection from '~/components/FeaturesSection.vue' 
 import WhyChoose from '~/components/WhyChoose.vue'
 import CTA from '~/components/CTA.vue'
 import SiteFooter from '~/components/SiteFooter.vue'

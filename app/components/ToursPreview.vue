@@ -1,169 +1,320 @@
 <!-- components/ToursPreview.vue -->
 <template>
-  <section id="tours" class="py-20 bg-linear-to-b from-white to-gray-50">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+  <section id="tours" class="py-16 lg:py-24 bg-linear-to-b from-white to-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
       <!-- Section Header -->
-      <div class="text-center mb-16">
+      <div class="text-center mb-12 lg:mb-16">
         <!-- Badge -->
-        <div class="inline-flex items-center px-4 py-2 bg-linear-to-r from-primary-500 to-ocean-500 rounded-full text-white text-sm font-semibold mb-6 shadow-lg">
+        <div class="inline-flex items-center px-4 py-2 bg-linear-to-r from-emerald-500 to-emerald-600 rounded-full text-white text-sm font-semibold mb-6 shadow-lg">
           <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
           </svg>
           Handpicked Adventures
         </div>
         
-        <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-          <span class="text-transparent bg-clip-text bg-linear-to-r from-primary-600 to-ocean-600">
-            Featured
-          </span>
-          Tours
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          Popular Tanzania Trips
         </h2>
         
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-          Discover our most popular safari, trekking, and beach experiences. 
-          Each tour is carefully crafted for unforgettable memories.
+        <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+          Handpicked safari itineraries, Kilimanjaro routes, and Zanzibar beach escapes.
         </p>
       </div>
 
-      <!-- Tour Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <!-- Safari Tour Card -->
-        <article v-for="(tour, index) in tours" :key="tour.slug" 
-          class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 relative">
-          
-          <!-- Card Top with Image Background -->
-          <div class="relative h-64 overflow-hidden">
-            <!-- Image Background -->
-            <div class="absolute inset-0" :style="{ 
-              backgroundImage: `url(${tour.image || '/images/tour-placeholder.jpg'})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }">
-              <!-- Gradient Overlay -->
-              <div :class="getTourOverlay(index)" class="absolute inset-0"></div>
-            </div>
-            
-            <!-- Duration Badge -->
-            <div class="absolute top-4 left-4">
-              <span class="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-sm font-semibold" :class="getTourBadgeColor(index)">
-                {{ getTourDuration(index) }}
-              </span>
-            </div>
-            
-            <!-- Rating Badge -->
-            <div class="absolute bottom-4 left-4">
-              <span class="px-3 py-1 bg-black/50 backdrop-blur-sm rounded-full text-sm font-semibold text-white flex items-center">
-                <svg class="w-4 h-4 mr-1 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                </svg>
-                {{ getTourRating(index) }}
-              </span>
-            </div>
-            
-            <!-- Tour Type Icon -->
-            <div class="absolute top-4 right-4">
-              <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <svg :class="getTourIconColor(index)" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path v-if="index === 0" fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                  <path v-else-if="index === 1" fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
-                  <path v-else fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                </svg>
-              </div>
-            </div>
-            
-            <!-- Hover Overlay -->
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300"></div>
-          </div>
-          
-          <!-- Card Content -->
-          <div class="p-8">
-            <!-- Tour Title -->
-            <h3 class="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors">
-              {{ tour.title }}
+      <!-- Tanzania Safaris Group -->
+      <div class="mb-12 lg:mb-16">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-6 lg:mb-8">
+          <div>
+            <h3 class="text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
+              <svg class="w-6 h-6 mr-2 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+              </svg>
+              Tanzania Safaris
             </h3>
-            
-            <!-- Tour Description -->
-            <p class="text-gray-600 mb-6 line-clamp-2">
-              {{ tour.summary }}
-            </p>
-            
-            <!-- Tour Details -->
-            <div class="flex items-center justify-between mb-6">
-              <!-- Price -->
-              <div class="flex items-center text-gray-700">
-                <div class="w-8 h-8 rounded-lg bg-linear-to-r from-primary-50 to-primary-100 flex items-center justify-center mr-3">
-                  <svg class="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-xs text-gray-500">From</div>
-                  <div class="text-xl font-bold" :class="getTourPriceColor(index)">
-                    ${{ tour.price.toLocaleString() }}
-                  </div>
-                </div>
+            <p class="text-gray-600 mt-2">Experience Africa's most spectacular wildlife adventures</p>
+          </div>
+          <NuxtLink to="/tours/safaris" class="text-emerald-600 hover:text-emerald-800 font-medium mt-2 sm:mt-0 inline-flex items-center">
+            View all safaris
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </NuxtLink>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <article v-for="tour in safariTours" :key="tour.id" 
+            class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 overflow-hidden">
+            <!-- Image -->
+            <div class="h-48 relative overflow-hidden">
+              <div class="absolute inset-0" :style="{ 
+                backgroundImage: `url(${tour.image || '/images/tour-placeholder.jpg'})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }">
+                <!-- Gradient Overlay -->
+                <div class="absolute inset-0 bg-linear-to-t from-emerald-900/60 via-emerald-800/30 to-transparent"></div>
               </div>
               
-              <!-- Location/Destination -->
-              <div class="flex items-center text-gray-700">
-                <div class="w-8 h-8 rounded-lg bg-linear-to-r from-gray-50 to-gray-100 flex items-center justify-center mr-3">
-                  <svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-xs text-gray-500">Destination</div>
-                  <div class="font-semibold">{{ getTourDestination(index) }}</div>
-                </div>
+              <!-- Duration Badge -->
+              <div class="absolute top-4 left-4">
+                <span class="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-sm font-semibold text-emerald-700">
+                  {{ tour.duration }}
+                </span>
+              </div>
+              
+              <!-- Badge -->
+              <div class="absolute top-4 right-4">
+                <span class="px-3 py-1 bg-emerald-600/90 backdrop-blur-sm rounded-full text-sm font-semibold text-white">
+                  {{ tour.badge }}
+                </span>
               </div>
             </div>
             
-            <!-- Action Button -->
-            <NuxtLink :to="`/tours/${tour.slug}`" 
-              class="w-full py-3 bg-linear-to-r from-primary-50 to-ocean-50 text-primary-700 font-semibold rounded-xl hover:from-primary-100 hover:to-ocean-100 transition-all duration-300 group-hover:shadow-lg flex items-center justify-center">
-              View Details
-              <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-              </svg>
-            </NuxtLink>
-          </div>
-          
-          <!-- Card Corner Decoration -->
-          <div class="absolute top-0 right-0 w-16 h-16 overflow-hidden">
-            <div class="absolute -top-8 -right-8 w-16 h-16 rotate-45" :class="getTourCornerColor(index)"></div>
-          </div>
-        </article>
+            <!-- Card Content -->
+            <div class="p-6">
+              <!-- Title -->
+              <h4 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition-colors">
+                {{ tour.title }}
+              </h4>
+
+              <!-- Description -->
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                {{ tour.description }}
+              </p>
+
+              <!-- Highlights -->
+              <div class="flex flex-wrap gap-2 mb-5">
+                <span v-for="(highlight, idx) in tour.highlights" :key="idx" 
+                  class="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded">
+                  {{ highlight }}
+                </span>
+              </div>
+
+              <!-- Price and CTA -->
+              <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div>
+                  <div class="text-xs text-gray-500">Starting from</div>
+                  <div class="text-xl font-bold text-emerald-700">{{ tour.price }}</div>
+                </div>
+                <NuxtLink :to="tour.link" 
+                  class="px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors duration-200 text-sm">
+                  View Itinerary
+                </NuxtLink>
+              </div>
+            </div>
+          </article>
+        </div>
       </div>
 
-      <!-- View All Button -->
-      <div class="text-center mt-16">
-        <NuxtLink to="/tours" 
-          class="inline-flex items-center px-8 py-4 bg-linear-to-r from-primary-600 to-ocean-600 text-white font-semibold rounded-xl hover:shadow-2xl hover:shadow-primary-200 transition-all duration-300 hover:scale-105">
-          <span>Explore All Tours</span>
-          <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-          </svg>
-        </NuxtLink>
-        
-        <!-- Stats Below Button -->
-        <div class="mt-8 flex flex-wrap justify-center gap-8 text-sm text-gray-600">
-          <div class="flex items-center">
-            <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-            </svg>
-            <span>Best Price Guarantee</span>
+      <!-- Kilimanjaro Routes Group -->
+      <div class="mb-12 lg:mb-16">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-6 lg:mb-8">
+          <div>
+            <h3 class="text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
+              <svg class="w-6 h-6 mr-2 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
+              </svg>
+              Kilimanjaro Routes
+            </h3>
+            <p class="text-gray-600 mt-2">Conquer Africa's highest peak with expert guides</p>
           </div>
-          <div class="flex items-center">
-            <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+          <NuxtLink to="/tours/kilimanjaro" class="text-amber-600 hover:text-amber-800 font-medium mt-2 sm:mt-0 inline-flex items-center">
+            View all Kilimanjaro tours
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
             </svg>
-            <span>24/7 Support</span>
+          </NuxtLink>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <article v-for="tour in kilimanjaroTours" :key="tour.id" 
+            class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 overflow-hidden">
+            <!-- Image -->
+            <div class="h-48 relative overflow-hidden">
+              <div class="absolute inset-0" :style="{ 
+                backgroundImage: `url(${tour.image || '/images/tour-placeholder.jpg'})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }">
+                <!-- Gradient Overlay -->
+                <div class="absolute inset-0 bg-linear-to-t from-amber-900/60 via-amber-800/30 to-transparent"></div>
+              </div>
+              
+              <!-- Duration Badge -->
+              <div class="absolute top-4 left-4">
+                <span class="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-sm font-semibold text-amber-700">
+                  {{ tour.duration }}
+                </span>
+              </div>
+              
+              <!-- Badge -->
+              <div class="absolute top-4 right-4">
+                <span class="px-3 py-1 bg-amber-600/90 backdrop-blur-sm rounded-full text-sm font-semibold text-white">
+                  {{ tour.badge }}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Card Content -->
+            <div class="p-6">
+              <!-- Title -->
+              <h4 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-amber-600 transition-colors">
+                {{ tour.title }}
+              </h4>
+
+              <!-- Description -->
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                {{ tour.description }}
+              </p>
+
+              <!-- Highlights -->
+              <div class="flex flex-wrap gap-2 mb-5">
+                <span v-for="(highlight, idx) in tour.highlights" :key="idx" 
+                  class="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded">
+                  {{ highlight }}
+                </span>
+              </div>
+
+              <!-- Price and CTA -->
+              <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div>
+                  <div class="text-xs text-gray-500">Starting from</div>
+                  <div class="text-xl font-bold text-amber-700">{{ tour.price }}</div>
+                </div>
+                <NuxtLink :to="tour.link" 
+                  class="px-4 py-2 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition-colors duration-200 text-sm">
+                  View Route
+                </NuxtLink>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Zanzibar Holidays Group -->
+      <div class="mb-12 lg:mb-16">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-6 lg:mb-8">
+          <div>
+            <h3 class="text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
+              <svg class="w-6 h-6 mr-2 text-sky-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              Zanzibar Holidays
+            </h3>
+            <p class="text-gray-600 mt-2">Relax on pristine beaches and explore rich culture</p>
           </div>
-          <div class="flex items-center">
-            <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+          <NuxtLink to="/tours/zanzibar" class="text-sky-600 hover:text-sky-800 font-medium mt-2 sm:mt-0 inline-flex items-center">
+            View all Zanzibar trips
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </NuxtLink>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <article v-for="tour in zanzibarTours" :key="tour.id" 
+            class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 overflow-hidden">
+            <!-- Image -->
+            <div class="h-48 relative overflow-hidden">
+              <div class="absolute inset-0" :style="{ 
+                backgroundImage: `url(${tour.image || '/images/tour-placeholder.jpg'})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }">
+                <!-- Gradient Overlay -->
+                <div class="absolute inset-0 bg-linear-to-t from-sky-900/60 via-sky-800/30 to-transparent"></div>
+              </div>
+              
+              <!-- Duration Badge -->
+              <div class="absolute top-4 left-4">
+                <span class="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-sm font-semibold text-sky-700">
+                  {{ tour.duration }}
+                </span>
+              </div>
+              
+              <!-- Badge -->
+              <div class="absolute top-4 right-4">
+                <span class="px-3 py-1 bg-sky-600/90 backdrop-blur-sm rounded-full text-sm font-semibold text-white">
+                  {{ tour.badge }}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Card Content -->
+            <div class="p-6">
+              <!-- Title -->
+              <h4 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-sky-600 transition-colors">
+                {{ tour.title }}
+              </h4>
+
+              <!-- Description -->
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                {{ tour.description }}
+              </p>
+
+              <!-- Highlights -->
+              <div class="flex flex-wrap gap-2 mb-5">
+                <span v-for="(highlight, idx) in tour.highlights" :key="idx" 
+                  class="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded">
+                  {{ highlight }}
+                </span>
+              </div>
+
+              <!-- Price and CTA -->
+              <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div>
+                  <div class="text-xs text-gray-500">Starting from</div>
+                  <div class="text-xl font-bold text-sky-700">{{ tour.price }}</div>
+                </div>
+                <NuxtLink :to="tour.link" 
+                  class="px-4 py-2 bg-sky-600 text-white font-medium rounded-lg hover:bg-sky-700 transition-colors duration-200 text-sm">
+                  View Details
+                </NuxtLink>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Global CTA -->
+      <div class="text-center pt-8 border-t border-gray-200">
+        <p class="text-gray-600 mb-6">Can't find what you're looking for? We create custom itineraries</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <NuxtLink to="/tours" 
+            class="inline-flex items-center justify-center px-8 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors duration-200">
+            Explore All Tours
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+          </NuxtLink>
+          <NuxtLink to="/journey" 
+            class="inline-flex items-center justify-center px-8 py-3 bg-white text-emerald-600 font-semibold rounded-lg border-2 border-emerald-600 hover:bg-emerald-50 transition-colors duration-200">
+            Request Custom Trip
+          </NuxtLink>
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto">
+          <div class="flex flex-col items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+            <svg class="w-8 h-8 text-emerald-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
             </svg>
-            <span>Flexible Booking</span>
+            <div class="text-sm font-semibold text-gray-900">Best Price Guarantee</div>
+            <div class="text-xs text-gray-500 mt-1">No hidden fees</div>
+          </div>
+          <div class="flex flex-col items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+            <svg class="w-8 h-8 text-emerald-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+            </svg>
+            <div class="text-sm font-semibold text-gray-900">24/7 Support</div>
+            <div class="text-xs text-gray-500 mt-1">Always available</div>
+          </div>
+          <div class="flex flex-col items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+            <svg class="w-8 h-8 text-emerald-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6.625 2.655A9 9 0 0119 11a1 1 0 11-2 0 7 7 0 00-9.625-6.492 1 1 0 11-.75-1.853zM4.662 4.959A1 1 0 014.75 6.37 6.97 6.97 0 003 11a1 1 0 11-2 0 8.97 8.97 0 012.25-5.953 1 1 0 011.412-.088z" clip-rule="evenodd"/>
+            </svg>
+            <div class="text-sm font-semibold text-gray-900">Flexible Booking</div>
+            <div class="text-xs text-gray-500 mt-1">Easy changes</div>
           </div>
         </div>
       </div>
@@ -172,94 +323,119 @@
 </template>
 
 <script setup>
-const tours = [
+// Tanzania Safaris
+const safariTours = [
   { 
-    title: 'Serengeti Migration Safari', 
-    slug: 'serengeti-migration', 
-    price: 2200, 
-    summary: 'Witness the spectacular Great Migration with expert guides. Luxury accommodations in the heart of Serengeti National Park.',
+    id: 1,
+    title: 'Serengeti Great Migration', 
+    description: 'Witness the world\'s greatest wildlife spectacle in the heart of Serengeti with expert guides.',
+    duration: '7 Days',
+    badge: 'Best Seller',
+    highlights: ['Big Five', 'Luxury Lodges', 'Private Safari'],
+    price: 'From $2,300',
+    link: '/tours/serengeti-migration',
     image: '/images/tour1.png'
   },
   { 
-    title: 'Kilimanjaro Lemosho 8 Days', 
-    slug: 'lemosho-8d', 
-    price: 1900, 
-    summary: 'Summit Africa\'s highest peak via the scenic Lemosho route. Maximum acclimatization days for better success rates.',
-    image: '/images/tour2.png'
+    id: 2,
+    title: 'Tanzania Northern Circuit', 
+    description: 'Explore Serengeti, Ngorongoro Crater, and Tarangire on this classic safari adventure.',
+    duration: '8 Days',
+    badge: 'Most Popular',
+    highlights: ['Ngorongoro', 'Cultural Visit', 'Game Drives'],
+    price: 'From $2,800',
+    link: '/tours/northern-circuit',
+    image: '/images/tour1.png'
   },
   { 
-    title: 'Zanzibar Beach Paradise', 
-    slug: 'zanzibar-beach', 
-    price: 800, 
-    summary: 'Relax on pristine white sand beaches, explore Stone Town, and enjoy world-class diving and snorkeling adventures.',
-    image: '/images/tour3.png'
+    id: 3,
+    title: 'Family Safari Adventure', 
+    description: 'Tailored for families with kid-friendly activities, accommodations, and wildlife experiences.',
+    duration: '6 Days',
+    badge: 'Family Friendly',
+    highlights: ['Kid Activities', 'Swimming Pools', 'Private Guide'],
+    price: 'From $1,950',
+    link: '/tours/family-safari',
+    image: '/images/tour1.png'
   }
 ]
 
-// Helper functions for dynamic styling
-const getTourOverlay = (index) => {
-  const overlays = [
-    'bg-linear-to-t from-primary-900/70 via-primary-800/50 to-transparent', // Safari - Green
-    'bg-linear-to-t from-secondary-900/70 via-secondary-800/50 to-transparent', // Kilimanjaro - Orange
-    'bg-linear-to-t from-ocean-900/70 via-ocean-800/50 to-transparent', // Zanzibar - Blue
-  ]
-  return overlays[index] || overlays[0]
-}
+// Kilimanjaro Routes
+const kilimanjaroTours = [
+  { 
+    id: 4,
+    title: 'Lemosho Route 8 Days', 
+    description: 'The most scenic and successful route with excellent acclimatization for summit success.',
+    duration: '8 Days',
+    badge: 'Highest Success',
+    highlights: ['Scenic Route', '98% Success', 'Small Groups'],
+    price: 'From $2,100',
+    link: '/tours/lemosho-8d',
+    image: '/images/tour2.png'
+  },
+  { 
+    id: 5,
+    title: 'Machame Route 7 Days', 
+    description: 'Popular "Whiskey" route with stunning scenery and challenging climbs for adventure seekers.',
+    duration: '7 Days',
+    badge: 'Adventure',
+    highlights: ['Challenging', 'Picturesque', 'Experienced Guides'],
+    price: 'From $1,850',
+    link: '/tours/machame-7d',
+    image: '/images/tour2.png'
+  },
+  { 
+    id: 6,
+    title: 'Marangu Route 6 Days', 
+    description: 'The "Coca-Cola" route with hut accommodations, perfect for first-time high-altitude trekkers.',
+    duration: '6 Days',
+    badge: 'Beginner Friendly',
+    highlights: ['Mountain Huts', 'Gentle Slopes', 'All Inclusive'],
+    price: 'From $1,650',
+    link: '/tours/marangu-6d',
+    image: '/images/tour2.png'
+  }
+]
 
-const getTourBadgeColor = (index) => {
-  const colors = [
-    'text-primary-700', // Safari
-    'text-secondary-700', // Kilimanjaro
-    'text-ocean-700', // Zanzibar
-  ]
-  return colors[index] || colors[0]
-}
-
-const getTourDuration = (index) => {
-  const durations = ['7 Days', '8 Days', '5 Days']
-  return durations[index] || 'Custom'
-}
-
-const getTourRating = (index) => {
-  const ratings = ['4.9 (128)', '4.8 (96)', '4.9 (87)']
-  return ratings[index] || '4.8'
-}
-
-const getTourIconColor = (index) => {
-  const colors = [
-    'text-primary-300', // Safari
-    'text-secondary-300', // Kilimanjaro  
-    'text-ocean-300', // Zanzibar
-  ]
-  return colors[index] || colors[0]
-}
-
-const getTourPriceColor = (index) => {
-  const colors = [
-    'text-primary-700', // Safari
-    'text-secondary-700', // Kilimanjaro
-    'text-ocean-700', // Zanzibar
-  ]
-  return colors[index] || colors[0]
-}
-
-const getTourDestination = (index) => {
-  const destinations = ['Serengeti', 'Kilimanjaro', 'Zanzibar']
-  return destinations[index] || 'Tanzania'
-}
-
-const getTourCornerColor = (index) => {
-  const colors = [
-    'bg-primary-500', // Safari
-    'bg-secondary-500', // Kilimanjaro
-    'bg-ocean-500', // Zanzibar
-  ]
-  return colors[index] || colors[0]
-}
+// Zanzibar Holidays
+const zanzibarTours = [
+  { 
+    id: 7,
+    title: 'Zanzibar Beach Paradise', 
+    description: 'Relax on pristine white sand beaches and enjoy world-class diving in turquoise waters.',
+    duration: '5 Days',
+    badge: 'Beach Escape',
+    highlights: ['Private Beach', 'Spa', 'Dolphin Tour'],
+    price: 'From $850',
+    link: '/tours/zanzibar-beach',
+    image: '/images/tour3.png'
+  },
+  { 
+    id: 8,
+    title: 'Stone Town & Spice Tour', 
+    description: 'Explore historic Stone Town, spice plantations, and authentic Swahili culture.',
+    duration: '4 Days',
+    badge: 'Cultural',
+    highlights: ['Stone Town', 'Spice Tour', 'Local Cuisine'],
+    price: 'From $650',
+    link: '/tours/stone-town',
+    image: '/images/tour3.png'
+  },
+  { 
+    id: 9,
+    title: 'Safari & Beach Combo', 
+    description: 'Combine wildlife adventure with beach relaxation - the perfect Tanzania experience.',
+    duration: '10 Days',
+    badge: 'Combo Deal',
+    highlights: ['Safari + Beach', 'All Transfers', 'Luxury Lodges'],
+    price: 'From $3,200',
+    link: '/tours/safari-beach-combo',
+    image: '/images/tour3.png'
+  }
+]
 </script>
 
 <style scoped>
-/* Line clamp utility for text truncation */
 .line-clamp-2 {
   overflow: hidden;
   display: -webkit-box;
@@ -268,7 +444,7 @@ const getTourCornerColor = (index) => {
   line-clamp: 2;
 }
 
-/* Smooth transitions */
+/* Smooth hover transitions */
 .transition-all {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);

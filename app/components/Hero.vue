@@ -14,7 +14,8 @@
       
       <!-- Decorative elements -->
       <div class="absolute top-10 right-10 w-64 h-64 bg-amber-200 rounded-full mix-blend-multiply opacity-20 blur-3xl"></div>
-      <div class="absolute bottom-10 left-10 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply opacity-20 blur-3xl"></div>
+      <div class="absolute bottom-10 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply opacity-20 blur-3xl"></div>
+
     </div>
 
     <!-- Content container -->

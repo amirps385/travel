@@ -4,8 +4,10 @@
     <div class="absolute inset-0 bg-linear-to-br from-white via-blue-50/20 to-slate-50/30"></div>
     
     <!-- Decorative elements similar to other sections -->
-    <div class="absolute top-1/4 -right-20 w-80 h-80 bg-blue-100/10 rounded-full blur-3xl"></div>
-    <div class="absolute bottom-1/4 -left-20 w-80 h-80 bg-emerald-100/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/4 right-0 w-80 h-80 bg-blue-100/10 rounded-full blur-3xl"></div>
+
+    <div class="absolute bottom-1/4 left-0 w-80 h-80 bg-emerald-100/10 rounded-full blur-3xl"></div>
+
 
     <div class="container mx-auto px-4 md:px-6 relative z-10">
       <div class="max-w-3xl mx-auto">

@@ -1,5 +1,6 @@
 <template>
-  <section class="relative py-24 md:py-32 lg:py-40 overflow-hidden">
+  <section class="relative py-16 md:py-20 lg:py-24 overflow-hidden">
+
     <!-- Premium Background with layered effects -->
     <div class="absolute inset-0 bg-linear-to-brrom-white via-blue-50/10 to-emerald-50/10">
       <!-- Decorative orbs -->
@@ -12,7 +13,8 @@
 
     <div class="container mx-auto px-4 md:px-6 relative z-10">
       <!-- Premium Header -->
-      <div class="text-center max-w-4xl mx-auto mb-20 lg:mb-24">
+     <div class="text-center max-w-4xl mx-auto mb-12 lg:mb-16">
+
         <!-- Badge -->
         <div class="inline-flex items-center bg-linear-to-r from-primary-blue/10 to-blue-100/50 border border-primary-blue/20 rounded-full px-6 py-2 mb-8">
           <svg class="w-5 h-5 text-primary-blue mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

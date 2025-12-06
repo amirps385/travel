@@ -79,7 +79,8 @@
         <!-- Right Column - Images (Preserved Original Structure) -->
         <div class="relative h-[500px] lg:h-[600px]">
           <!-- Years of Experience Card with Plane -->
-          <div class="absolute z-30 lg:top-8 top-4 lg:right-0 -right-4 animate-flying max-md:hidden">
+          <div class="absolute z-30 lg:top-8 top-4 right-0 animate-flying max-md:hidden">
+
             <!-- Plane Image -->
             <div class="absolute lg:-left-28 -left-20 bottom-4 z-40">
               <img 
@@ -127,7 +128,8 @@
           </div>
 
           <!-- Background Landscape Image (Person on mountain) - ON TOP -->
-          <div class="absolute lg:-right-10 right-0 bottom-0 max-lg:w-[80%] lg:w-full z-20">
+          <div class="absolute right-0 bottom-0 max-lg:w-[80%] lg:w-full z-20">
+
             <img 
               v-if="imagesLoaded.background"
               src="/images/features/we-rec-pic.png" 

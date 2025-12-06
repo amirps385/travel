@@ -470,13 +470,14 @@ onBeforeUnmount(() => {
 
 <style scoped>
 /* Header container */
-.header { 
-  position: sticky; 
-  top: 0; 
-  z-index: 999; 
-  background: linear-gradient(180deg,#0f6b68 0%, #0d5c5b 100%); 
-  box-shadow: 0 6px 20px rgba(6, 23, 22, 0.12); 
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: linear-gradient(180deg,#0f6b68 0%, #0d5c5b 100%);
+  box-shadow: 0 6px 20px rgba(6, 23, 22, 0.12);
 }
+
 
 .container { 
   max-width: 1260px; 
@@ -740,7 +741,8 @@ onBeforeUnmount(() => {
   transition: opacity .14s ease, transform .14s ease; 
   z-index:1300;
   min-width:320px; 
-  max-width:1040px; 
+  max-width: min(1040px, 100vw - 20px); /* prevents overflow */
+overflow-x: hidden;
   white-space:normal; 
   word-break:break-word; 
   overflow-wrap:anywhere;

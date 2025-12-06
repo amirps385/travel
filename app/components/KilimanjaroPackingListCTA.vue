@@ -2,10 +2,11 @@
   <section class="relative py-12 md:py-16 lg:py-20">
     <div class="container mx-auto px-4">
       <!-- Main Container - Better contrast -->
-      <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 rounded-3xl shadow-2xl overflow-hidden max-w-6xl mx-auto border border-blue-800">
+      <div class="bg-linear-to-br from-slate-900 via-blue-900 to-slate-900 rounded-3xl shadow-2xl overflow-hidden max-w-6xl mx-auto border border-blue-800">
         
         <!-- Subtle alpine pattern -->
-        <div class="absolute inset-0 opacity-5">
+        <div class="absolute inset-0 opacity-5 overflow-hidden">
+
           <div class="absolute top-0 left-0 right-0 h-32">
             <!-- Mountain silhouettes -->
             <div class="absolute top-8 left-10 w-16 h-8 bg-white rounded-t-full"></div>
@@ -21,18 +22,18 @@
           <div class="lg:w-2/5 p-6 md:p-8 lg:p-10 flex items-center justify-center">
             <div class="relative w-full max-w-sm mx-auto">
               <!-- Mountain Illustration Card -->
-              <div class="relative h-64 md:h-72 lg:h-80 rounded-2xl bg-gradient-to-b from-slate-800 to-blue-900 border-2 border-blue-700/50 overflow-hidden shadow-2xl">
+              <div class="relative h-64 md:h-72 lg:h-80 rounded-2xl bg-linear-to-b from-slate-800 to-blue-900 border-2 border-blue-700/50 overflow-hidden shadow-2xl">
                 
                 <!-- Sky gradient -->
-                <div class="absolute inset-0 bg-gradient-to-b from-blue-400/10 via-blue-300/5 to-transparent"></div>
+                <div class="absolute inset-0 bg-linear-to-b from-blue-400/10 via-blue-300/5 to-transparent"></div>
                 
                 <!-- Kilimanjaro Peak -->
                 <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2">
                   <div class="relative">
                     <!-- Mountain -->
-                    <div class="w-56 h-36 bg-gradient-to-t from-slate-700 via-slate-600 to-slate-700 rounded-t-xl"></div>
+                    <div class="w-56 h-36 bg-linear-to-t from-slate-700 via-slate-600 to-slate-700 rounded-t-xl"></div>
                     <!-- Snow cap -->
-                    <div class="absolute -top-6 left-2 w-52 h-16 bg-gradient-to-b from-white to-blue-100 rounded-t-xl shadow-md"></div>
+                    <div class="absolute -top-6 left-2 w-52 h-16 bg-linear-to-b from-white to-blue-100 rounded-t-xl shadow-md"></div>
                     <!-- Summit -->
                     <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-white rounded-full shadow-lg"></div>
                   </div>
@@ -42,7 +43,7 @@
                 <div class="absolute bottom-12 left-6 right-6">
                   <div class="relative">
                     <!-- Base line -->
-                    <div class="h-1 bg-gradient-to-r from-emerald-400/50 via-emerald-400 to-emerald-400/50"></div>
+                    <div class="h-1 bg-linear-to-r from-emerald-400/50 via-emerald-400 to-emerald-400/50"></div>
                     <!-- Markers -->
                     <div class="absolute top-1/2 transform -translate-y-1/2 left-1/4 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
                     <div class="absolute top-1/2 transform -translate-y-1/2 left-1/2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
@@ -56,9 +57,9 @@
                     <!-- Trekking pole -->
                     <div class="absolute -bottom-4 -right-1 w-1 h-12 bg-slate-300 transform rotate-45"></div>
                     <!-- Body -->
-                    <div class="w-5 h-10 bg-gradient-to-b from-slate-100 to-slate-200 rounded"></div>
+                    <div class="w-5 h-10 bg-linear-to-b from-slate-100 to-slate-200 rounded"></div>
                     <!-- Backpack -->
-                    <div class="absolute -top-1 -right-2 w-8 h-5 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded"></div>
+                    <div class="absolute -top-1 -right-2 w-8 h-5 bg-linear-to-b from-emerald-500 to-emerald-600 rounded"></div>
                     <!-- Head -->
                     <div class="absolute -top-8 left-0 w-5 h-5 bg-slate-100 rounded-full border-2 border-slate-200"></div>
                   </div>
@@ -66,13 +67,13 @@
                 
                 <!-- Sun -->
                 <div class="absolute top-4 right-6">
-                  <div class="w-16 h-16 bg-gradient-to-br from-yellow-300 to-orange-300 rounded-full shadow-lg"></div>
-                  <div class="absolute inset-4 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full"></div>
+                  <div class="w-16 h-16 bg-linear-to-br from-yellow-300 to-orange-300 rounded-full shadow-lg"></div>
+                  <div class="absolute inset-4 bg-linear-to-br from-yellow-100 to-orange-100 rounded-full"></div>
                 </div>
                 
                 <!-- Badge -->
                 <div class="absolute top-6 left-6">
-                  <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg border-2 border-white/20">
+                  <div class="bg-linear-to-r from-emerald-500 to-emerald-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg border-2 border-white/20">
                     <div class="flex items-center gap-2">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
@@ -104,7 +105,7 @@
                 <a 
                   :href="pdfLink"
                   download
-                  class="group inline-flex items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold px-8 md:px-10 py-3 md:py-4 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 transition-all duration-300 text-base md:text-lg w-full sm:w-auto"
+                  class="group inline-flex items-center justify-center bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold px-8 md:px-10 py-3 md:py-4 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 transition-all duration-300 text-base md:text-lg w-full sm:w-auto"
                 >
                   <svg class="w-5 h-5 mr-2 md:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -127,7 +128,7 @@
               <!-- Key Features - Better visibility -->
               <div class="space-y-3 mb-6 lg:mb-8">
                 <div class="flex items-start">
-                  <div class="w-6 h-6 rounded-full bg-emerald-500/30 flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                  <div class="w-6 h-6 rounded-full bg-emerald-500/30 flex items-center justify-center mr-3 mt-0.5 shrink-0">
                     <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                     </svg>
@@ -136,7 +137,7 @@
                 </div>
                 
                 <div class="flex items-start">
-                  <div class="w-6 h-6 rounded-full bg-emerald-500/30 flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                  <div class="w-6 h-6 rounded-full bg-emerald-500/30 flex items-center justify-center mr-3 mt-0.5 shrink-0">
                     <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                     </svg>
@@ -145,7 +146,7 @@
                 </div>
                 
                 <div class="flex items-start">
-                  <div class="w-6 h-6 rounded-full bg-emerald-500/30 flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                  <div class="w-6 h-6 rounded-full bg-emerald-500/30 flex items-center justify-center mr-3 mt-0.5 shrink-0">
                     <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                     </svg>
@@ -166,7 +167,7 @@
         </div>
         
         <!-- Bottom accent -->
-        <div class="h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400"></div>
+        <div class="h-1.5 bg-linear-to-r from-emerald-400 via-emerald-500 to-emerald-400"></div>
       </div>
     </div>
   </section>

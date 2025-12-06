@@ -194,20 +194,60 @@ const form = ref({
 const loading = ref(false)
 
 const submitLead = async () => {
+  // Basic validation
+  if (!form.value.name || !form.value.email) {
+    alert('Please fill in required fields (Name and Email)')
+    return
+  }
+
   loading.value = true
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1500))
-  alert('Thank you! We\'ll contact you soon with your custom itinerary.')
-  loading.value = false
-  // Reset form
-  form.value = {
-    name: '',
-    email: '',
-    travelDate: '',
-    travellers: '2',
-    interests: [],
-    budget: '',
-    message: ''
+
+  try {
+    // 1. Prepare data to pass to journey.vue
+    const leadData = {
+      name: form.value.name,
+      email: form.value.email,
+      travelDate: form.value.travelDate,
+      travellers: form.value.travellers,
+      interests: form.value.interests,
+      budget: form.value.budget,
+      message: form.value.message,
+      source: 'hero_lead',
+      submittedAt: new Date().toISOString()
+    }
+
+    // 2. Save to localStorage (most reliable for cross-page data)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('heroLeadData', JSON.stringify(leadData))
+      // Add a timestamp to prevent old data from being used
+      localStorage.setItem('heroLeadTimestamp', Date.now().toString())
+      
+      // Also save to sessionStorage as backup
+      sessionStorage.setItem('heroLeadData', JSON.stringify(leadData))
+    }
+
+    // 3. Redirect to journey page with URL parameters (most reliable method)
+    const params = new URLSearchParams()
+    params.append('prefilled', 'true')
+    params.append('name', form.value.name)
+params.append('email', form.value.email)
+
+    
+    if (form.value.travelDate) params.append('travelDate', form.value.travelDate)
+    if (form.value.travellers) params.append('travellers', form.value.travellers)
+    if (form.value.budget) params.append('budget', form.value.budget)
+    if (form.value.interests.length > 0) params.append('interests', JSON.stringify(form.value.interests))
+    
+    // Wait a moment to ensure data is saved, then redirect
+    setTimeout(() => {
+      window.location.href = `/journey?${params.toString()}`
+    }, 100)
+
+  } catch (error) {
+    console.error('Error:', error)
+    alert('Something went wrong. Please try again.')
+  } finally {
+    loading.value = false
   }
 }
 </script>

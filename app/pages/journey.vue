@@ -6,7 +6,7 @@
         <div class="grow">
           <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900">Plan your custom trip</h1>
           <p class="mt-2 text-slate-600 max-w-xl">
-            Choose activities, travel dates, travellers and budget — we’ll generate a personalized itinerary
+            Choose activities, travel dates, travellers and budget — we'll generate a personalized itinerary
             including timeline, hotels and key pre-trip tasks.
           </p>
           <div class="mt-4 flex gap-3 items-center">
@@ -35,6 +35,29 @@
       </div>
     </header>
 
+    <!-- Notification when data is prefilled -->
+    <div v-if="showPrefilledNotification" class="mb-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-blue-800 font-medium">
+            Welcome! Some details have been prefilled from your previous form.
+          </span>
+        </div>
+        <p class="text-blue-700 text-sm mt-1 ml-7">
+          Please complete the remaining fields and click "Get my custom itinerary".
+        </p>
+        <button 
+          @click="showPrefilledNotification = false"
+          class="ml-7 mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+
     <!-- FORM -->
     <form @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- LEFT: Controls -->
@@ -60,11 +83,10 @@
           <p v-if="errors.activities" class="mt-2 text-sm text-rose-600">{{ errors.activities }}</p>
         </section>
 
-                <!-- Days slider -->
+        <!-- Days slider -->
         <section class="mb-5">
           <div class="flex items-center justify-between mb-2">
             <label class="block text-sm font-semibold">How many days?</label>
-
             <button
               type="button"
               title="Use the slider to pick how many days you want the trip to be (1–30)."
@@ -89,7 +111,6 @@
             <div class="w-20 text-right font-medium text-slate-700">{{ form.days }}d</div>
           </div>
         </section>
-
 
         <!-- Who is travelling -->
         <section class="mb-5">
@@ -183,15 +204,19 @@
 
           <div class="flex gap-2">
             <button
-              :disabled="!isValid"
+              type="submit"
+              :disabled="!isValid || isSubmitting"
               class="flex-1 rounded-lg px-4 py-3 text-white font-semibold shadow-md transition disabled:opacity-50 inline-flex items-center justify-center gap-3"
-              :class="isValid ? 'bg-sky-600 hover:bg-sky-700' : 'bg-slate-400 cursor-not-allowed'"
+              :class="isValid && !isSubmitting ? 'bg-sky-600 hover:bg-sky-700' : 'bg-slate-400 cursor-not-allowed'"
             >
-              <!-- Better paper-plane icon -->
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg v-if="!isSubmitting" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 19l9-7-9-7-4 7v6l4-4z" />
               </svg>
-              Get my custom itinerary
+              <svg v-else class="animate-spin h-5 w-5 -ml-1 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              </svg>
+              {{ isSubmitting ? 'Processing...' : 'Get my custom itinerary' }}
             </button>
 
             <button type="button" @click="resetForm" class="rounded-lg px-3 py-3 border bg-white text-slate-700 hover:shadow">
@@ -207,7 +232,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -216,11 +241,13 @@ const activities = [
   { value: 'wild safari', label: 'Wild Safari', icon: '🦁', desc: 'Game drives & wildlife' },
   { value: 'beach holidays', label: 'Beach Holidays', icon: '🏖️', desc: 'Relax by the sea' },
   { value: 'kilimanjaro trek', label: 'Kilimanjaro Trek', icon: '🏔️', desc: 'High-altitude trek' },
-  { value: 'great migration', label: 'Great Migration', icon: '🦓', desc: 'Nature spectacle' }
+  { value: 'great migration', label: 'Great Migration', icon: '🦓', desc: 'Nature spectacle' },
+  { value: 'cultural tour', label: 'Cultural Tour', icon: '🏛️', desc: 'Local culture & heritage' }
 ]
 
 const whoOptions = ['single', 'couple', 'groups', 'family']
 
+// Form structure
 const form = ref({
   activities: [],
   days: 5,
@@ -229,7 +256,7 @@ const form = ref({
   travellers: 1,
   ages: [30],
   genders: ['male'],
-  budget: 150,
+  budget: 1500,
   name: '',
   email: '',
   phone: '',
@@ -237,7 +264,195 @@ const form = ref({
 })
 
 const errors = ref({})
+const isSubmitting = ref(false)
+const showPrefilledNotification = ref(false)
 
+// On component mount, check for prefilled data
+onMounted(() => {
+  loadPrefilledData()
+})
+
+function loadPrefilledData() {
+  if (process.client) {
+    // Method 1: Check URL parameters first (most reliable)
+    loadFromURLParams()
+    
+    // Method 2: Check localStorage as backup
+    if (!showPrefilledNotification.value) {
+      loadFromLocalStorage()
+    }
+  }
+}
+
+function loadFromURLParams() {
+  const urlParams = new URLSearchParams(window.location.search)
+  
+  if (urlParams.has('prefilled') && urlParams.get('prefilled') === 'true') {
+    showPrefilledNotification.value = true
+    
+    // Basic contact info
+    if (urlParams.has('name')) {
+      form.value.name = decodeURIComponent(urlParams.get('name'))
+    }
+    if (urlParams.has('email')) {
+      form.value.email = decodeURIComponent(urlParams.get('email'))
+    }
+    
+    // Travel date
+    if (urlParams.has('travelDate')) {
+      form.value.date = urlParams.get('travelDate')
+    }
+    
+    // Travellers
+    if (urlParams.has('travellers')) {
+      const travellerParam = urlParams.get('travellers')
+      const travellerMap = {
+        '1': 1,
+        '2': 2,
+        '3-4': 3,
+        '5-6': 5,
+        '7+': 7,
+        'group': 10
+      }
+      
+      const travellerCount = travellerMap[travellerParam] || 2
+      form.value.travellers = travellerCount
+      
+      // Update who based on travellers
+      if (travellerCount === 1) form.value.who = 'single'
+      else if (travellerCount === 2) form.value.who = 'couple'
+      else if (travellerCount >= 10) form.value.who = 'groups'
+      else form.value.who = 'family'
+    }
+    
+    // Budget
+    if (urlParams.has('budget')) {
+      const budgetParam = urlParams.get('budget')
+      const budgetMap = {
+        '1000-2000': 1500,
+        '2000-3000': 2500,
+        '3000-5000': 4000,
+        '5000+': 6000,
+        'custom': 8000
+      }
+      form.value.budget = budgetMap[budgetParam] || 1500
+    }
+    
+    // Interests
+    if (urlParams.has('interests')) {
+      try {
+        const interests = JSON.parse(urlParams.get('interests'))
+        const interestToActivity = {
+          'safari': 'wild safari',
+          'kilimanjaro': 'kilimanjaro trek',
+          'zanzibar': 'beach holidays',
+          'cultural': 'cultural tour'
+        }
+        
+        interests.forEach(interest => {
+          const activity = interestToActivity[interest]
+          if (activity && !form.value.activities.includes(activity)) {
+            form.value.activities.push(activity)
+          }
+        })
+      } catch (e) {
+        console.error('Error parsing interests:', e)
+      }
+    }
+    
+    // Update ages and genders arrays
+    updateTravellerArrays()
+    
+    // Clear URL parameters
+    const newUrl = window.location.pathname
+    window.history.replaceState({}, document.title, newUrl)
+  }
+}
+
+function loadFromLocalStorage() {
+  // Check localStorage
+  let storedData = localStorage.getItem('heroLeadData')
+  const timestamp = localStorage.getItem('heroLeadTimestamp')
+  
+  // If no data in localStorage, check sessionStorage
+  if (!storedData) {
+    storedData = sessionStorage.getItem('heroLeadData')
+  }
+  
+  if (storedData) {
+    try {
+      const heroData = JSON.parse(storedData)
+      showPrefilledNotification.value = true
+      
+      // Apply data to form (same mapping logic as URL params)
+      if (heroData.name) form.value.name = heroData.name
+      if (heroData.email) form.value.email = heroData.email
+      if (heroData.travelDate) form.value.date = heroData.travelDate
+      
+      if (heroData.travellers) {
+        const travellerMap = {
+          '1': 1, '2': 2, '3-4': 3, '5-6': 5, '7+': 7, 'group': 10
+        }
+        const travellerCount = travellerMap[heroData.travellers] || 2
+        form.value.travellers = travellerCount
+        
+        if (travellerCount === 1) form.value.who = 'single'
+        else if (travellerCount === 2) form.value.who = 'couple'
+        else if (travellerCount >= 10) form.value.who = 'groups'
+        else form.value.who = 'family'
+      }
+      
+      if (heroData.budget) {
+        const budgetMap = {
+          '1000-2000': 1500, '2000-3000': 2500, '3000-5000': 4000,
+          '5000+': 6000, 'custom': 8000
+        }
+        form.value.budget = budgetMap[heroData.budget] || 1500
+      }
+      
+      if (heroData.interests && heroData.interests.length > 0) {
+        const interestToActivity = {
+          'safari': 'wild safari',
+          'kilimanjaro': 'kilimanjaro trek',
+          'zanzibar': 'beach holidays',
+          'cultural': 'cultural tour'
+        }
+        
+        heroData.interests.forEach(interest => {
+          const activity = interestToActivity[interest]
+          if (activity && !form.value.activities.includes(activity)) {
+            form.value.activities.push(activity)
+          }
+        })
+      }
+      
+      updateTravellerArrays()
+      
+      // Clear storage after loading
+      localStorage.removeItem('heroLeadData')
+      localStorage.removeItem('heroLeadTimestamp')
+      sessionStorage.removeItem('heroLeadData')
+      
+    } catch (error) {
+      console.error('Error loading from storage:', error)
+      // Clear corrupted data
+      localStorage.removeItem('heroLeadData')
+      localStorage.removeItem('heroLeadTimestamp')
+      sessionStorage.removeItem('heroLeadData')
+    }
+  }
+}
+
+// Helper to update traveller arrays
+function updateTravellerArrays() {
+  const count = form.value.travellers
+  while (form.value.ages.length < count) form.value.ages.push(30)
+  while (form.value.ages.length > count) form.value.ages.pop()
+  while (form.value.genders.length < count) form.value.genders.push('male')
+  while (form.value.genders.length > count) form.value.genders.pop()
+}
+
+// Watch for travellers changes
 watch(() => form.value.travellers, (newVal) => {
   const v = Number(newVal) || 1
   while (form.value.ages.length < v) form.value.ages.push(30)
@@ -254,28 +469,35 @@ function toggleActivity(val) {
 
 const formattedDate = computed(() => {
   if (!form.value.date) return '—'
-  return new Date(form.value.date).toDateString()
+  const date = new Date(form.value.date)
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'short', 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  })
 })
 
 function validate() {
   errors.value = {}
   if (!form.value.name) errors.value.name = 'Please enter your full name.'
-  if (!form.value.email) errors.value.email = 'Please enter your email.'
+  if (!form.value.email) {
+    errors.value.email = 'Please enter your email.'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
+    errors.value.email = 'Please enter a valid email address.'
+  }
   if (!form.value.date) errors.value.date = 'Select a travel date.'
   if (form.value.activities.length === 0) errors.value.activities = 'Choose at least one activity.'
   return Object.keys(errors.value).length === 0
 }
 
 const isValid = computed(() => {
-  // quick validation for enabling CTA
-  return form.value.name && form.value.email && form.value.date && form.value.activities.length > 0
+  return form.value.name && 
+         form.value.email && 
+         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email) &&
+         form.value.date && 
+         form.value.activities.length > 0
 })
-
-
-
-
-
-const isSubmitting = ref(false)
 
 async function handleSubmit() {
   if (!validate()) return
@@ -285,6 +507,13 @@ async function handleSubmit() {
   try {
     const payload = JSON.parse(JSON.stringify(form.value))
     payload.createdAt = new Date().toISOString()
+    
+    // Include source information
+    if (showPrefilledNotification.value) {
+      payload.source = 'hero_lead_continuation'
+    } else {
+      payload.source = 'journey_page'
+    }
 
     // 1) Save to MongoDB via API
     await $fetch('/api/leads', {
@@ -292,7 +521,7 @@ async function handleSubmit() {
       body: payload,
     })
 
-    // 2) Optional: keep local copy for thankyou page text
+    // 2) Keep local copy for thankyou page text
     if (process.client) {
       localStorage.setItem('tripForm', JSON.stringify(payload))
     }
@@ -307,10 +536,6 @@ async function handleSubmit() {
   }
 }
 
-
-
-
-
 function resetForm() {
   form.value = {
     activities: [],
@@ -320,13 +545,21 @@ function resetForm() {
     travellers: 1,
     ages: [30],
     genders: ['male'],
-    budget: 150,
+    budget: 1500,
     name: '',
     email: '',
     phone: '',
     originCity: ''
   }
   errors.value = {}
+  showPrefilledNotification.value = false
+  
+  // Also clear any stored data
+  if (process.client) {
+    localStorage.removeItem('heroLeadData')
+    localStorage.removeItem('heroLeadTimestamp')
+    sessionStorage.removeItem('heroLeadData')
+  }
 }
 </script>
 
@@ -337,5 +570,9 @@ input:focus, select:focus, button:focus {
   outline-offset: 2px;
 }
 
-
+/* Style for prefilled fields */
+input[data-prefilled="true"] {
+  background-color: #f0f9ff;
+  border-color: #0ea5e9;
+}
 </style>

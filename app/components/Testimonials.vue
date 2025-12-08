@@ -1,34 +1,44 @@
 <template>
-  <section class="relative py-16 md:py-20 lg:py-24 overflow-hidden">
-
-    <!-- Premium Background with layered effects -->
-    <div class="absolute inset-0 bg-linear-to-brrom-white via-blue-50/10 to-emerald-50/10">
-      <!-- Decorative orbs -->
-      <div class="absolute top-1/4 -left-32 w-96 h-96 bg-linear-to-br from-blue-100/30 to-blue-200/20 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-1/4 -right-32 w-96 h-96 bg-linear-to-br from-emerald-100/30 to-emerald-200/20 rounded-full blur-3xl"></div>
+  <section class="relative py-20 lg:py-28 overflow-hidden">
+    <!-- Safari-themed background matching your other components -->
+    <div class="absolute inset-0 bg-gray-900">
+      <!-- Safari background image -->
+      <div 
+        class="absolute inset-0 bg-cover bg-center"
+        :style="{ backgroundImage: `url('/images/background/safari5.png')` }"
+      ></div>
       
-      <!-- Subtle pattern -->
-      <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(#297BD4 1px, transparent 1px); background-size: 40px 40px;"></div>
+      <!-- Soft gradient overlay -->
+      <div class="absolute inset-0 bg-linear-to-br from-gray-900/50 via-gray-800/40 to-amber-900/30"></div>
+
+      <!-- Soft dark fade for text readability -->
+      <div class="absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-black/70 via-black/50 to-transparent"></div>
+      
+      <!-- Subtle pattern overlay -->
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(245,158,11,0.15)_0%,transparent_50%),radial-gradient(circle_at_70%_20%,rgba(16,185,129,0.1)_0%,transparent_50%)]"></div>
     </div>
 
-    <div class="container mx-auto px-4 md:px-6 relative z-10">
-      <!-- Premium Header -->
-     <div class="text-center max-w-4xl mx-auto mb-12 lg:mb-16">
+    <!-- Subtle background elements -->
+    <div class="absolute top-10 left-10 w-64 h-64 bg-amber-500/15 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-10 right-10 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl"></div>
 
-        <!-- Badge -->
-        <div class="inline-flex items-center bg-linear-to-r from-primary-blue/10 to-blue-100/50 border border-primary-blue/20 rounded-full px-6 py-2 mb-8">
-          <svg class="w-5 h-5 text-primary-blue mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
+      <!-- Premium Header with safari styling -->
+      <div class="text-center max-w-4xl mx-auto mb-16 lg:mb-20">
+        <!-- Safari-themed badge -->
+        <div class="inline-flex items-center px-5 py-2.5 bg-linear-to-r from-amber-500 to-amber-600 rounded-full text-white font-bold mb-8 shadow-lg">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
           </svg>
-          <span class="text-primary-blue font-semibold tracking-wider text-sm">5.0 STAR RATING</span>
+          5.0 STAR RATING
         </div>
         
-        <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight">
+        <h1 class="heading-safe text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
           Traveler Stories
-          <span class="block text-4xl md:text-5xl lg:text-6xl text-primary-blue mt-2">That Inspire Journeys</span>
+          <span class="block text-amber-300 text-3xl md:text-4xl mt-4">That Inspire Journeys</span>
         </h1>
         
-        <p class="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        <p class="body-safe text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
           Discover real experiences from adventurers who trusted ZafsTours for their Tanzanian adventures
         </p>
       </div>
@@ -67,28 +77,40 @@
               <div class="modern-testimonial-card group h-full flex flex-col">
                 <!-- Traveler Image & Info -->
                 <div class="relative mb-8 shrink-0">
-                  <!-- Image Container -->
+                  <!-- Image Container with safari styling -->
                   <div class="relative">
-                    <!-- Traveler Image -->
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden mx-auto mb-6 border-4 border-white shadow-2xl">
+                    <!-- Traveler Image with safari border -->
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden mx-auto mb-6 border-4 border-white shadow-2xl relative">
+                      <div class="absolute inset-0 bg-linear-to-br from-amber-500/20 to-transparent opacity-50"></div>
                       <img 
                         :src="testimonial.image" 
                         :alt="testimonial.name"
-                        class="w-full h-full object-cover"
+                        class="w-full h-full object-cover relative z-10"
                       />
+                      
+                      <!-- Corner accents -->
+                      <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-400 rounded-tl-lg"></div>
+                      <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-400 rounded-tr-lg"></div>
+                      <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-400 rounded-bl-lg"></div>
+                      <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-400 rounded-br-lg"></div>
                     </div>
                     
-                    <!-- Flag Badge -->
-                    <div class="absolute top-0 right-1/4 transform translate-x-1/2">
-                      <div class="flex items-center bg-white px-2 py-1 rounded-full shadow-lg border border-gray-100">
-                        <span class="text-base mr-1">{{ testimonial.flag }}</span>
-                        <span class="text-xs font-semibold text-gray-700">{{ testimonial.countryCode }}</span>
-                      </div>
-                    </div>
+                    <!-- Flag Badge with safari styling -->
+<div class="absolute -top-3 right-3 z-20">
+  <div
+    class="flex items-center bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-lg border border-amber-500/20 max-w-[180px]"
+  >
+    <span class="text-sm mr-1 shrink-0">{{ testimonial.flag }}</span>
+    <span class="text-[11px] font-semibold text-gray-700 whitespace-nowrap">
+      {{ testimonial.country }}
+    </span>
+  </div>
+</div>
+
                     
-                    <!-- Rating Badge -->
+                    <!-- Rating Badge with amber gradient -->
                     <div class="absolute bottom-2 left-1/4 transform -translate-x-1/2">
-                      <div class="flex items-center bg-linear-to-r from-yellow-500 to-orange-500 text-white px-2 py-1 rounded-full shadow-lg text-xs">
+                      <div class="flex items-center bg-linear-to-r from-amber-500 to-amber-600 text-white px-2 py-1 rounded-full shadow-lg text-xs border border-amber-400/30">
                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                         </svg>
@@ -99,42 +121,42 @@
                   
                   <!-- Traveler Info -->
                   <div class="text-center mt-4">
-                    <h3 class="font-bold text-gray-900 text-xl mb-1">{{ testimonial.name }}</h3>
-                    <p class="text-gray-500 text-sm">{{ testimonial.role }}</p>
+                    <h3 class="font-bold text-white text-xl mb-1">{{ testimonial.name }}</h3>
+                    <p class="text-gray-400 text-sm">{{ testimonial.role }}</p>
                   </div>
                 </div>
 
-                <!-- Trip Type Indicator -->
+                <!-- Trip Type Indicator with safari colors -->
                 <div class="flex justify-center mb-6 shrink-0">
-                  <div class="inline-flex items-center bg-linear-to-r from-primary-blue/10 to-blue-100/30 px-3 py-1.5 rounded-full">
-                    <div class="w-2 h-2 rounded-full mr-2" :class="{
-                      'bg-emerald-500': testimonial.tripType === 'Safari',
-                      'bg-blue-500': testimonial.tripType === 'Kilimanjaro',
-                      'bg-purple-500': testimonial.tripType === 'Zanzibar'
+                  <div class="inline-flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                    <div class="w-3 h-3 rounded-full mr-2 animate-pulse" :class="{
+                      'bg-amber-500': testimonial.tripType === 'Safari',
+                      'bg-emerald-500': testimonial.tripType === 'Kilimanjaro',
+                      'bg-blue-500': testimonial.tripType === 'Zanzibar'
                     }"></div>
-                    <span class="font-semibold text-primary-blue text-sm">{{ testimonial.tripType }}</span>
-                    <span class="mx-2 text-gray-300">•</span>
-                    <span class="text-gray-600 text-sm">{{ testimonial.duration }}</span>
+                    <span class="font-semibold text-white text-sm">{{ testimonial.tripType }}</span>
+                    <span class="mx-3 text-gray-400">•</span>
+                    <span class="text-gray-400 text-sm">{{ testimonial.duration }}</span>
                   </div>
                 </div>
 
-                <!-- Review Quote - FIXED QUOTE SYMBOLS -->
+                <!-- Review Quote -->
                 <div class="relative mb-6 grow min-h-[180px]">
                   <div class="relative">
-                    <!-- Small left quote symbol -->
-                    <div class="absolute -top-2 -left-1 text-primary-blue/20">
+                    <!-- Small left quote symbol with amber color -->
+                    <div class="absolute -top-2 -left-1 text-amber-400/40">
                       <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
                       </svg>
                     </div>
                     
-                    <!-- Review text with proper padding -->
-                    <p class="text-gray-600 text-base leading-relaxed pl-6 pr-6 line-clamp-5">
+                    <!-- Review text -->
+                    <p class="text-gray-300 text-base leading-relaxed pl-6 pr-6 line-clamp-5">
                       {{ testimonial.review }}
                     </p>
                     
                     <!-- Small right quote symbol -->
-                    <div class="absolute -bottom-2 -right-1 text-primary-blue/20 rotate-180">
+                    <div class="absolute -bottom-2 -right-1 text-amber-400/40 rotate-180">
                       <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
                       </svg>
@@ -143,11 +165,11 @@
                 </div>
 
                 <!-- Highlights -->
-                <div class="border-t border-gray-100 pt-5 shrink-0">
+                <div class="border-t border-white/10 pt-5 shrink-0">
                   <div class="flex flex-wrap justify-center gap-2">
                     <span v-for="highlight in testimonial.highlights" :key="highlight" 
-                          class="inline-flex items-center bg-gray-50 px-2.5 py-1 rounded-full text-xs text-gray-600">
-                      <svg class="w-2.5 h-2.5 mr-1.5 text-primary-blue" fill="currentColor" viewBox="0 0 20 20">
+                          class="inline-flex items-center bg-white/5 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs text-gray-300 border border-white/10 hover:border-amber-500/30 transition-colors">
+                      <svg class="w-2.5 h-2.5 mr-1.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                       </svg>
                       {{ highlight }}
@@ -156,14 +178,14 @@
                 </div>
 
                 <!-- Decorative Bottom Border -->
-                <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-20 h-0.5 bg-linear-to-r from-transparent via-primary-blue to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-0.5 bg-linear-to-r from-transparent via-amber-500 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
             </div>
           </SwiperSlide>
         </Swiper>
 
-        <!-- Modern Navigation -->
-        <div class="flex items-center justify-between mt-12 px-4">
+        <!-- Modern Navigation with safari styling -->
+        <div class="flex items-center justify-between mt-16 px-4">
           <!-- Custom Pagination -->
           <div class="custom-pagination flex items-center space-x-2"></div>
           
@@ -187,19 +209,49 @@
         </div>
       </div>
 
-      <!-- Trust Indicators -->
+      <!-- Trust Indicators with safari styling -->
       <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-        <div class="text-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div class="text-4xl font-bold text-primary-blue mb-2">500+</div>
-          <div class="text-gray-600">Happy Travelers</div>
+        <div class="text-center p-8 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <div class="text-4xl font-bold text-amber-300 mb-3">1,000+</div>
+          <div class="text-gray-300">Happy Travelers</div>
         </div>
-        <div class="text-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div class="text-4xl font-bold text-primary-blue mb-2">98%</div>
-          <div class="text-gray-600">Satisfaction Rate</div>
+        <div class="text-center p-8 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <div class="text-4xl font-bold text-emerald-300 mb-3">98%</div>
+          <div class="text-gray-300">Satisfaction Rate</div>
         </div>
-        <div class="text-center p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div class="text-4xl font-bold text-primary-blue mb-2">15</div>
-          <div class="text-gray-600">Years Experience</div>
+        <div class="text-center p-8 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <div class="text-4xl font-bold text-amber-300 mb-3">10+</div>
+          <div class="text-gray-300">Years Experience</div>
+        </div>
+      </div>
+
+      <!-- Call to Action -->
+      <div class="text-center mt-16 pt-12 border-t border-white/20">
+        <div class="inline-flex flex-col sm:flex-row items-center gap-8 bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-lg max-w-3xl mx-auto">
+          <div class="text-left">
+            <h4 class="text-2xl font-bold text-white mb-2">Ready to Write Your Own Story?</h4>
+            <p class="text-gray-300">Join thousands of happy travelers and start planning your Tanzanian adventure today.</p>
+          </div>
+          <div class="flex gap-4">
+            <NuxtLink 
+              to="/contact" 
+              class="group inline-flex items-center justify-center px-8 py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white font-bold rounded-xl hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            >
+              <span>Start Planning</span>
+              <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </NuxtLink>
+            <a 
+              href="https://wa.me/255620285462?text=Hi%20ZafsTours,%20I%20want%20to%20plan%20my%20Tanzania%20adventure."
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center px-8 py-3 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            >
+              <span class="mr-2">💬</span>
+              Chat on WhatsApp
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -316,9 +368,10 @@ const testimonials = [
   padding-bottom: 20px !important;
 }
 
-/* Modern Testimonial Card - Consistent height */
+/* Modern Testimonial Card - Safari themed glass morphism */
 .modern-testimonial-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
   border-radius: 1.5rem;
   padding: 2rem 1.75rem;
   height: 100%;
@@ -326,9 +379,7 @@ const testimonials = [
   display: flex;
   flex-direction: column;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 20px 60px -30px rgba(0, 0, 0, 0.1),
-              0 10px 30px -15px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
 }
@@ -341,11 +392,9 @@ const testimonials = [
   right: 0;
   height: 4px;
   background: linear-gradient(90deg, 
-    #3b82f6 0%, 
-    #60a5fa 25%, 
-    #93c5fd 50%, 
-    #60a5fa 75%, 
-    #3b82f6 100%);
+    rgba(245, 158, 11, 0) 0%, 
+    rgba(245, 158, 11, 0.6) 50%, 
+    rgba(245, 158, 11, 0) 100%);
   background-size: 200% 100%;
   animation: shimmer 3s infinite linear;
   border-radius: 1.5rem 1.5rem 0 0;
@@ -357,24 +406,25 @@ const testimonials = [
 }
 
 .modern-testimonial-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 30px 60px -30px rgba(37, 99, 235, 0.3),
-              0 15px 30px -15px rgba(0, 0, 0, 0.1);
-  border-color: rgba(96, 165, 250, 0.5);
+  transform: translateY(-8px);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-/* Modern Navigation Buttons */
+/* Modern Navigation Buttons with safari styling */
 .modern-nav-button {
   width: 3rem;
   height: 3rem;
   border-radius: 0.75rem;
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #e5e7eb;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -383,7 +433,7 @@ const testimonials = [
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.8) 0%, rgba(217, 119, 6, 0.8) 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -392,13 +442,13 @@ const testimonials = [
   position: relative;
   z-index: 10;
   transition: all 0.3s ease;
-  stroke: #4b5563;
+  stroke: rgba(255, 255, 255, 0.8);
 }
 
 .modern-nav-button:hover {
   transform: translateY(-2px);
-  border-color: #3b82f6;
-  box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.3);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 15px 30px -10px rgba(245, 158, 11, 0.3);
 }
 
 .modern-nav-button:hover::before {
@@ -413,7 +463,7 @@ const testimonials = [
 :deep(.custom-bullet) {
   width: 8px;
   height: 8px;
-  background: #cbd5e1;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 4px;
   opacity: 0.7;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -422,22 +472,18 @@ const testimonials = [
 
 :deep(.custom-bullet-active) {
   width: 28px;
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  background: linear-gradient(90deg, #f59e0b, #d97706);
   opacity: 1;
-  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3);
 }
 
 :deep(.custom-bullet:hover) {
-  background: #94a3b8;
+  background: rgba(245, 158, 11, 0.5);
 }
 
-/* Custom colors */
-.bg-primary-blue {
-  background-color: #297BD4;
-}
-
-.text-primary-blue {
-  color: #297BD4;
+/* Safari color scheme */
+.bg-linear-to-r.from-amber-500.to-amber-600 {
+  background-image: linear-gradient(to right, #f59e0b, #d97706);
 }
 
 /* Image styling */
@@ -456,6 +502,15 @@ img {
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-clamp: 5;
+}
+
+/* Text readability */
+.heading-safe {
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.body-safe {
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.75);
 }
 
 /* Responsive adjustments */
@@ -483,5 +538,11 @@ img {
 .modern-nav-button,
 :deep(.custom-bullet) {
   will-change: transform, box-shadow;
+}
+
+/* Glass effect */
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 </style>

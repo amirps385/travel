@@ -1,87 +1,93 @@
 <!-- components/FeaturesSection.vue -->
 <template>
   <section class="bg-white py-16 lg:py-24 overflow-hidden">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+    <!-- Subtle safari background elements -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-20 right-20 w-64 h-64 bg-amber-50/30 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-20 left-20 w-64 h-64 bg-emerald-50/30 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        <!-- Left Column - Text Content -->
-        <div>
+        <!-- Left Column - Text Content (with original content) -->
+        <div class="relative z-10">
           <!-- Section Badge -->
-          <div class="inline-flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold mb-6">
+          <div class="inline-flex items-center px-4 py-2 bg-linear-to-r from-amber-500 to-amber-600 text-white rounded-full text-sm font-semibold mb-6 shadow-lg">
             <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
             Custom Experiences
           </div>
 
-          <!-- Main Heading -->
+          <!-- Main Heading (original) -->
           <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
             Tailor-Made
-            <span class="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-emerald-600">Tanzania Experiences</span>
+            <span class="text-transparent bg-clip-text bg-linear-to-r from-amber-600 to-emerald-600">Tanzania Experiences</span>
           </h2>
 
-          <!-- Subheading -->
+          <!-- Subheading (original) -->
           <p class="text-lg text-gray-600 mb-8 lg:mb-10 leading-relaxed">
             We specialize in creating custom safaris, Kilimanjaro climbs, and Zanzibar holidays 
             designed around your dreams, schedule, and budget.
           </p>
 
-          <!-- Key Features -->
+          <!-- Key Features (original content with subtle safari styling) -->
           <div class="space-y-6 mb-10 lg:mb-12">
-            <div v-for="feature in features" :key="feature.id" class="flex items-start gap-4">
-              <div class="shrink-0 w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+            <div v-for="feature in features" :key="feature.id" class="flex items-start gap-4 group">
+              <div class="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-amber-50 to-amber-100 border border-amber-200 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                 </svg>
               </div>
-              <div>
+              <div class="flex-1">
                 <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ feature.title }}</h3>
                 <p class="text-gray-600">{{ feature.description }}</p>
               </div>
             </div>
           </div>
 
-          <!-- Trust Stats -->
+          <!-- Trust Stats (original) -->
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            <div class="text-center p-4 bg-gray-50 rounded-lg">
-              <div class="text-2xl lg:text-3xl font-bold text-emerald-600 mb-1">25+</div>
+            <div class="text-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div class="text-2xl lg:text-3xl font-bold text-amber-600 mb-1">25+</div>
               <div class="text-sm font-medium text-gray-700">Years Experience</div>
             </div>
-            <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <div class="text-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
               <div class="text-2xl lg:text-3xl font-bold text-emerald-600 mb-1">3.5k+</div>
               <div class="text-sm font-medium text-gray-700">Happy Customers</div>
             </div>
-            <div class="text-center p-4 bg-gray-50 rounded-lg">
-              <div class="text-2xl lg:text-3xl font-bold text-emerald-600 mb-1">24/7</div>
+            <div class="text-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div class="text-2xl lg:text-3xl font-bold text-amber-600 mb-1">24/7</div>
               <div class="text-sm font-medium text-gray-700">Guide Support</div>
             </div>
-            <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <div class="text-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
               <div class="text-2xl lg:text-3xl font-bold text-emerald-600 mb-1">100%</div>
               <div class="text-sm font-medium text-gray-700">Local Team</div>
             </div>
           </div>
 
-          <!-- CTA Button -->
+          <!-- CTA Button (original) -->
           <div class="flex flex-col sm:flex-row gap-4">
             <NuxtLink to="/journey" 
-              class="inline-flex items-center justify-center px-8 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors duration-200">
+              class="inline-flex items-center justify-center px-8 py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-lg hover:shadow-xl">
               Plan Your Adventure
               <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
               </svg>
             </NuxtLink>
             <button @click="scrollToTours" 
-              class="inline-flex items-center justify-center px-8 py-3 bg-white text-emerald-600 font-semibold rounded-lg border-2 border-emerald-600 hover:bg-emerald-50 transition-colors duration-200">
+              class="inline-flex items-center justify-center px-8 py-3 bg-white text-amber-600 font-semibold rounded-lg border-2 border-amber-600 hover:bg-amber-50 transition-colors duration-200">
               View All Tours
             </button>
           </div>
         </div>
 
-        <!-- Right Column - Images (Preserved Original Structure) -->
+        <!-- Right Column - Images (original layout with safari color touches) -->
         <div class="relative h-[500px] lg:h-[600px]">
-          <!-- Years of Experience Card with Plane -->
+          <!-- Years of Experience Card with Plane (original) -->
           <div class="absolute z-30 lg:top-8 top-4 right-0 animate-flying max-md:hidden">
 
-            <!-- Plane Image -->
+            <!-- Plane Image (original) -->
             <div class="absolute lg:-left-28 -left-20 bottom-4 z-40">
               <img 
                 v-if="imagesLoaded.plane"
@@ -98,14 +104,14 @@
               </div>
             </div>
 
-            <!-- Years of Experience Box -->
+            <!-- Years of Experience Box (original with amber color) -->
             <div class="bg-white rounded-xl py-4 lg:pl-14 pl-10 pr-6 inline-flex items-center lg:w-88 w-72 shadow-2xl z-30">
-              <h2 class="font-black lg:text-83 text-5xl leading-none text-emerald-600 mb-0 text-shadow-custom mr-7">25</h2>
+              <h2 class="font-black lg:text-83 text-5xl leading-none text-amber-600 mb-0 text-shadow-custom mr-7">25</h2>
               <span class="font-black lg:text-28 text-xl leading-tight text-emerald-700">Years of<br>Experience</span>
             </div>
           </div>
 
-          <!-- Circular Image (Bigger and positioned higher) -->
+          <!-- Circular Image (original) -->
           <div class="absolute z-10 border-8 border-white rounded-full shadow-xl overflow-hidden"
                :class="{
                  'lg:size-100 size-80': true,
@@ -122,14 +128,13 @@
               @load="imagesLoaded.circular = true"
               @error="handleImageError"
             >
-            <div v-else class="w-full h-full bg-linear-to-br from-emerald-100 to-emerald-50 flex items-center justify-center">
+            <div v-else class="w-full h-full bg-linear-to-br from-amber-100 to-emerald-50 flex items-center justify-center">
               <span class="text-gray-600">Profile Image</span>
             </div>
           </div>
 
-          <!-- Background Landscape Image (Person on mountain) - ON TOP -->
+          <!-- Background Landscape Image (original) -->
           <div class="absolute right-0 bottom-0 max-lg:w-[80%] lg:w-full z-20">
-
             <img 
               v-if="imagesLoaded.background"
               src="/images/features/we-rec-pic.png" 
@@ -140,7 +145,7 @@
               @load="imagesLoaded.background = true"
               @error="handleImageError"
             >
-            <div v-else class="w-full h-[400px] lg:h-[500px] bg-linear-to-r from-emerald-50 to-blue-50 rounded-2xl flex items-center justify-center">
+            <div v-else class="w-full h-[400px] lg:h-[500px] bg-linear-to-r from-amber-50 to-blue-50 rounded-2xl flex items-center justify-center">
               <div class="text-center">
                 <div class="w-40 h-60 bg-gray-300 rounded-lg mx-auto mb-4 relative">
                   <!-- Simple person silhouette -->
@@ -168,7 +173,7 @@ const imagesLoaded = ref({
 
 const isMobile = ref(false)
 
-// Features list
+// Features list (original)
 const features = [
   {
     id: 1,
@@ -241,12 +246,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Custom CSS for animations */
+/* Custom CSS for animations (original) */
 .text-shadow-custom {
   text-shadow: 0px 4px 0px #059669;
 }
 
-/* Flying animation for plane */
+/* Flying animation for plane (original) */
 .animate-flying {
   animation: flying 3s ease-in-out infinite;
 }
@@ -269,7 +274,7 @@ onUnmounted(() => {
   }
 }
 
-/* Sizing classes */
+/* Sizing classes (original) */
 .size-100 {
   width: 25rem;
   height: 25rem;
@@ -288,7 +293,7 @@ onUnmounted(() => {
   width: 18rem;
 }
 
-/* Text sizes */
+/* Text sizes (original) */
 .text-83 {
   font-size: 5.1875rem;
 }
@@ -297,7 +302,7 @@ onUnmounted(() => {
   font-size: 1.75rem;
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments (original) */
 @media (max-width: 768px) {
   .max-md\:hidden {
     display: none;

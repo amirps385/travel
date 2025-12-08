@@ -11,8 +11,9 @@
 
     <!-- MAIN CONTENT -->
     <main class="bg-slate-50">
-      <!-- Wrap everything in a vertical stack with controlled gaps -->
-      <div class="space-y-10 lg:space-y-14">
+  <!-- Let each component control its own spacing -->
+  <div class="flex flex-col">
+
         <!-- 1) TOP: TOURS + CORE VALUE PROPS -->
         <section aria-labelledby="section-tours">
           <!-- Handpicked tours preview -->
@@ -33,17 +34,15 @@
         </section>
 
         <!-- 4) IMMERSIVE VIDEO STORY -->
-        <section aria-labelledby="section-video">
-          <VideoSection />
-        </section>
+<section aria-labelledby="section-video">
+  <VideoSection />
+</section>
 
-        <!-- 5) PACKING LIST MAGNETS (DARK DUO BAND) -->
-        <section aria-labelledby="section-packing-lists" class="bg-slate-950/90">
-          <div class="max-w-6xl mx-auto px-4 py-12 md:py-16 lg:py-20 space-y-10">
-            <SafariPackingListCTA />
-            <KilimanjaroPackingListCTA />
-          </div>
-        </section>
+<!-- 5) PACKING LIST MAGNETS (each full-width, with its own background) -->
+<SafariPackingListCTA />
+<KilimanjaroPackingListCTA />
+
+
 
         <!-- 6) SOCIAL PROOF: TESTIMONIALS -->
         <section aria-labelledby="section-testimonials">

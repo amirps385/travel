@@ -5,7 +5,7 @@
       <!-- Safari background image -->
       <div 
         class="absolute inset-0 bg-cover bg-center"
-        :style="{ backgroundImage: `url('/images/background/safari8.png')` }"
+        :style="{ backgroundImage: `url('/images/background/mountains.png')` }"
       ></div>
       
       <!-- Soft gradient overlay -->
@@ -24,7 +24,8 @@
 
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl relative z-10">
       <!-- Main Card with safari glass morphism -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-10 lg:p-12 border border-white/20">
+      <div class="bg-black/30 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-10 lg:p-12 border border-white/20">
+
         
         <!-- Header -->
         <div class="text-center mb-10">

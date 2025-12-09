@@ -1,8 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
     <Navbar />
-
-    <main :class="pagePadding">
+    <main :class="mainClasses">
       <NuxtPage />
     </main>
   </div>
@@ -14,8 +13,23 @@ import Navbar from '~/components/Navbar.vue'
 
 const route = useRoute()
 
-// Remove spacing only on the homepage
-const pagePadding = computed(() =>
-  route.path === '/' ? '' : 'pt-20'
-)
+// Define which pages should NOT have padding
+const noPaddingPaths = [
+  '/',           // Homepage
+  '/tours',      // Tours index page
+]
+
+const mainClasses = computed(() => {
+  const path = route.path
+  
+  // Check if current path should NOT have padding
+  const shouldHaveNoPadding = noPaddingPaths.some(noPadPath => 
+    path === noPadPath || path.startsWith(noPadPath + '/')
+  )
+  
+  // For tour detail pages (like /tours/some-slug)
+  const isTourDetail = path.startsWith('/tours/') && path !== '/tours/'
+  
+  return shouldHaveNoPadding || isTourDetail ? '' : 'pt-20'
+})
 </script>

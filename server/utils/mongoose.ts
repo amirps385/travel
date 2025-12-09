@@ -1,23 +1,27 @@
+// server/utils/mongoose.ts
 import mongoose from 'mongoose'
 
-let cached: typeof mongoose | null = null
+let isConnected = false
 
 export async function connectDB() {
-  if (cached) return cached
+  if (isConnected) {
+    return mongoose
+  }
 
   const config = useRuntimeConfig()
   const uri = config.mongodbUri
-
+  
   if (!uri) {
     throw new Error('MONGODB_URI is not defined in runtimeConfig')
   }
 
-  if (mongoose.connection.readyState === 1) {
-    cached = mongoose
+  try {
+    await mongoose.connect(uri)
+    isConnected = true
+    console.log('✅ MongoDB connected')
     return mongoose
+  } catch (err: any) {
+    console.error('❌ MongoDB connection error:', err)
+    throw err
   }
-
-  await mongoose.connect(uri)
-  cached = mongoose
-  return mongoose
 }

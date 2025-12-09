@@ -1,4 +1,4 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+// nuxt.config.ts
 import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -9,7 +9,14 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
-   runtimeConfig: {
-    mongodbUri: process.env.MONGODB_URI, // private, only on server
+  nitro: {
+    esbuild: {
+      options: {
+        target: 'es2022' // Update target to support newer features
+      }
+    }
+  },
+  runtimeConfig: {
+    mongodbUri: process.env.MONGODB_URI,
   },
 })

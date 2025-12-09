@@ -11,15 +11,12 @@
 
     <!-- MAIN CONTENT -->
     <main class="bg-slate-50">
-  <!-- Let each component control its own spacing -->
-  <div class="flex flex-col">
+      <!-- Let each component control its own spacing -->
+      <div class="flex flex-col">
 
         <!-- 1) TOP: TOURS + CORE VALUE PROPS -->
         <section aria-labelledby="section-tours">
-          <!-- Handpicked tours preview -->
           <ToursPreview />
-
-          <!-- Core features / value props (icons, reasons to book) -->
           <FeaturesSection />
         </section>
 
@@ -34,37 +31,40 @@
         </section>
 
         <!-- 4) IMMERSIVE VIDEO STORY -->
-<section aria-labelledby="section-video">
-  <VideoSection />
-</section>
+        <section aria-labelledby="section-video">
+          <VideoSection />
+        </section>
 
-<!-- 5) PACKING LIST MAGNETS (each full-width, with its own background) -->
-<SafariPackingListCTA />
-<KilimanjaroPackingListCTA />
+        <!-- 5) PACKING LIST MAGNETS -->
+        <SafariPackingListCTA />
+        <KilimanjaroPackingListCTA />
 
+        <!-- 6) KILIMANJARO SUCCESS CALCULATOR -->
+        <section aria-labelledby="section-kili-calculator">
+          <KilimanjaroSuccessCalculator />
+        </section>
 
-
-        <!-- 6) SOCIAL PROOF: TESTIMONIALS -->
+        <!-- 7) SOCIAL PROOF: TESTIMONIALS -->
         <section aria-labelledby="section-testimonials">
           <Testimonials />
         </section>
 
-        <!-- 7) FREE CONSULTATION (lead magnet) -->
+        <!-- 8) FREE CONSULTATION (lead magnet) -->
         <section aria-labelledby="section-free-consultation">
           <FreeConsultationCTA />
         </section>
 
-        <!-- 8) FINAL BIG CTA (BOOK / PLAN TRIP) -->
+        <!-- 9) FINAL BIG CTA (BOOK / PLAN TRIP) -->
         <section aria-labelledby="section-cta">
           <CTA />
         </section>
 
-        <!-- 9) NEWSLETTER SIGNUP (low-friction micro-conversion) -->
+        <!-- 10) NEWSLETTER SIGNUP -->
         <section aria-labelledby="section-newsletter">
           <NewsletterSignup />
         </section>
 
-        <!-- 10) FOOTER -->
+        <!-- 11) FOOTER -->
         <footer aria-label="Site footer">
           <SiteFooter />
         </footer>
@@ -83,6 +83,7 @@ import WhyChoose from '~/components/WhyChoose.vue'
 import VideoSection from '~/components/VideoSection.vue'
 import SafariPackingListCTA from '~/components/SafariPackingListCTA.vue'
 import KilimanjaroPackingListCTA from '~/components/KilimanjaroPackingListCTA.vue'
+import KilimanjaroSuccessCalculator from '~/components/KilimanjaroSuccessCalculator.vue'
 import Testimonials from '~/components/Testimonials.vue'
 import FreeConsultationCTA from '~/components/FreeConsultationCTA.vue'
 import CTA from '~/components/CTA.vue'

@@ -124,12 +124,14 @@ const route = useRoute()
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/admin/dashboard/leads', label: 'Leads', icon: 'leads' },
+  { to: '/admin/dashboard/tours', label: 'Tours', icon: 'tours' },
   { to: '/admin/dashboard/itineraries', label: 'Itineraries', icon: 'itineraries' },
   { to: '/admin/dashboard/hotels', label: 'Hotels', icon: 'hotels' },
   { to: '/admin/dashboard/activities', label: 'Activities', icon: 'activities' },
   { to: '/admin/dashboard/transfers', label: 'Transfers', icon: 'transfers' },
   { to: '/admin/dashboard/cities', label: 'Cities', icon: 'cities' }
 ]
+
 
 // isActive: treat '/admin' as active (if you want), and match children via startsWith
 const isActive = (to) => {

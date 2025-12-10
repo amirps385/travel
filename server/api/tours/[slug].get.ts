@@ -1,7 +1,7 @@
 // server/api/tours/[slug].get.ts
 import { defineEventHandler } from 'h3'
-import { connectDB } from '../../utils/mongoose'  // Changed: TWO levels up
-import Tour from '../../models/Tour'              // Changed: TWO levels up
+import { connectDB } from '../../utils/mongoose'
+import Tour from '../../models/Tour'
 
 export default defineEventHandler(async (event) => {
   await connectDB()
@@ -16,6 +16,6 @@ export default defineEventHandler(async (event) => {
     return { success: true, data: tour }
   } catch (err: any) {
     console.error(`[GET /api/tours/${slug}] error:`, err)
-    return { success: false, message: err.message || 'Server error' }
+    return { success: false, message: err?.message || 'Server error' }
   }
 })

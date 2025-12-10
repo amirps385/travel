@@ -183,12 +183,7 @@
                   v-for="category in quickCategories"
                   :key="category.id"
                   @click="selectCategory(category.id)"
-                  :class="[
-                    'w-full text-left px-4 py-3 rounded-xl border transition-all duration-300 font-medium',
-                    activeCategory === category.id
-                      ? category.classes.active
-                      : category.classes.inactive
-                  ]"
+                  :class="[ 'w-full text-left px-4 py-3 rounded-xl border transition-all duration-300 font-medium', activeCategory === category.id ? category.classes.active : category.classes.inactive ]"
                 >
                   <div class="flex items-center justify-between">
                     <span>{{ category.name }}</span>
@@ -209,7 +204,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <p class="text-gray-700">
-                  Showing <span class="font-bold text-emerald-700">{{ displayedTours.length }}</span> 
+                  Showing <span class="font-bold text-emerald-700">{{ displayedToursNormalized.length }}</span> 
                   of <span class="font-bold text-gray-900">{{ totalTours }}</span> adventures
                 </p>
                 <p class="text-sm text-gray-500 mt-1">
@@ -222,12 +217,7 @@
                 <div class="flex items-center space-x-2">
                   <button
                     @click="gridView = false"
-                    :class="[
-                      'p-3 rounded-xl transition-all duration-300',
-                      !gridView 
-                        ? 'bg-emerald-500 text-white shadow-lg' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    ]"
+                    :class="[ 'p-3 rounded-xl transition-all duration-300', !gridView ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' ]"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -235,12 +225,7 @@
                   </button>
                   <button
                     @click="gridView = true"
-                    :class="[
-                      'p-3 rounded-xl transition-all duration-300',
-                      gridView 
-                        ? 'bg-emerald-500 text-white shadow-lg' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    ]"
+                    :class="[ 'p-3 rounded-xl transition-all duration-300', gridView ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' ]"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
@@ -321,16 +306,11 @@
           </div>
 
           <!-- Tours Grid -->
-          <div v-else-if="displayedTours?.length">
+          <div v-else-if="displayedToursNormalized?.length">
             <!-- Use the TourCard component for each tour -->
-            <div :class="[
-              'grid gap-8',
-              gridView 
-                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3' 
-                : 'grid-cols-1'
-            ]">
+            <div :class="[ 'grid gap-8', gridView ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1' ]">
               <TourCard
-                v-for="tour in displayedTours"
+                v-for="tour in displayedToursNormalized"
                 :key="tour._id"
                 :tour="tour"
                 :layout="gridView ? 'grid' : 'list'"
@@ -429,6 +409,7 @@
       </div>
     </div>
   </div>
+
 </template>
 
 <script setup>
@@ -436,6 +417,7 @@
 import TourCard from '~/components/tours/TourCard.vue'
 import TourFilters from '~/components/tours/TourFilters.vue'
 import TourCTA from '~/components/tours/TourCTA.vue'
+import { computed, ref } from 'vue'
 
 // Fetch tours data
 const { data, pending, error, refresh } = await useFetch('/api/tours', {
@@ -516,7 +498,7 @@ const filteredTours = computed(() => {
       filtered.sort((a, b) => (b.price || 0) - (a.price || 0))
       break
     case 'duration':
-      filtered.sort((a, b) => (a.duration || 0) - (b.duration || 0))
+      filtered.sort((a, b) => ( (a.duration ?? (a.nights != null ? a.nights + 1 : 0)) - (b.duration ?? (b.nights != null ? b.nights + 1 : 0)) ))
       break
     case 'rating':
       filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0))
@@ -533,6 +515,36 @@ const filteredTours = computed(() => {
 // Displayed tours (for pagination)
 const displayedTours = computed(() => {
   return filteredTours.value.slice(0, displayedCount.value)
+})
+
+// Normalize a single tour to include canonical nights/days and prefer DB fields
+function normalizeTour(t) {
+  const nightsFromDb = (t?.nights != null) ? Number(t.nights) : null
+  const daysFromDb = (t?.duration != null) ? Number(t.duration) : null
+
+  const displayNightsVal = nightsFromDb != null
+    ? nightsFromDb
+    : (daysFromDb != null ? Math.max(1, daysFromDb - 1) : 6)
+
+  const displayDaysVal = nightsFromDb != null
+    ? nightsFromDb + 1
+    : (daysFromDb != null ? daysFromDb : 7)
+
+  // return a shallow copy with normalized fields (do not mutate original)
+  return {
+    ...t,
+    _displayNights: displayNightsVal,
+    _displayDays: displayDaysVal,
+    // ensure `duration` shows days for components expecting days
+    duration: displayDaysVal,
+    // ensure `nights` exists for components expecting nights
+    nights: displayNightsVal
+  }
+}
+
+// Normalized displayed tours for passing to TourCard (so TourCard / other UI gets consistent fields)
+const displayedToursNormalized = computed(() => {
+  return displayedTours.value.map(t => normalizeTour(t))
 })
 
 // Handlers

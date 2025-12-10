@@ -91,11 +91,11 @@
     <div v-else-if="tour" class="max-w-7xl mx-auto px-4 py-8">
       <!-- Hero Section -->
       <div class="relative rounded-3xl overflow-hidden shadow-2xl mb-12">
-        <!-- Background Image -->
+        <!-- Background Image (use heroImage computed) -->
         <div 
-          v-if="tour.images?.[0]"
+          v-if="heroImage"
           class="aspect-21/9 bg-cover bg-center relative"
-          :style="{ backgroundImage: `url('${tour.images[0]}')` }"
+          :style="{ backgroundImage: `url('${heroImage}')` }"
         >
           <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/40 to-transparent"></div>
           <div class="absolute inset-0 bg-linear-to-r from-black/30 to-transparent"></div>
@@ -114,7 +114,7 @@
         <div v-else class="aspect-21/9 bg-linear-to-br from-emerald-900 via-emerald-800 to-amber-900 flex items-center justify-center">
           <div class="text-center">
             <svg class="w-32 h-32 text-amber-300/50 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
             </svg>
             <div class="text-amber-100 font-bold text-lg">Tanzania Adventure</div>
           </div>
@@ -128,7 +128,7 @@
               <svg class="w-5 h-5 mr-2 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
               </svg>
-              <span class="text-white font-bold">{{ getTourType(tour) }}</span>
+              <span class="text-white font-bold">{{ tourTypeFromDb }}</span>
             </div>
             
             <!-- Title -->
@@ -145,7 +145,7 @@
                   </svg>
                 </div>
                 <div>
-                  <div class="font-bold text-lg">{{ tour.duration || '7' }} days</div>
+                  <div class="font-bold text-lg">{{ displayDays }} days</div>
                   <div class="text-sm text-white/70">Duration</div>
                 </div>
               </div>
@@ -287,7 +287,7 @@
           </section>
 
           <!-- Gallery Section -->
-          <section v-if="tour.images?.length > 1" class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-8">
+          <section v-if="imagesList.length > 1" class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-8">
             <div class="flex items-center justify-between mb-8">
               <div class="flex items-center">
                 <div class="w-12 h-12 rounded-2xl bg-linear-to-br from-sky-500 to-sky-600 flex items-center justify-center mr-4">
@@ -314,7 +314,7 @@
             
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div 
-                v-for="(image, index) in tour.images.slice(1, 7)" 
+                v-for="(image, index) in imagesList.slice(1, 7)" 
                 :key="index"
                 class="group relative aspect-square overflow-hidden rounded-xl cursor-pointer"
                 @click="openLightbox(index + 1)"
@@ -349,35 +349,70 @@
               </div>
             </div>
             
-            <div class="space-y-6">
-              <div 
-                v-for="day in getSampleItinerary(tour)" 
-                :key="day.day"
-                class="bg-linear-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6"
-              >
-                <div class="flex items-start">
-                  <div class="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mr-4 shrink-0">
-                    <span class="text-white font-bold">Day {{ day.day }}</span>
-                  </div>
-                  <div>
-                    <h3 class="font-bold text-gray-900 text-lg mb-2">{{ day.title }}</h3>
-                    <p class="text-gray-700">{{ day.description }}</p>
-                    <div class="flex flex-wrap gap-2 mt-4">
-                      <span 
-                        v-for="activity in day.activities" 
-                        :key="activity"
-                        class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg border border-emerald-100"
-                      >
-                        <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        {{ activity }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+           <div class="space-y-6">
+  <!-- If admin provided structured itinerary, render it -->
+  <template v-if="tour.itinerary && tour.itinerary.length">
+    <div 
+      v-for="day in tour.itinerary" 
+      :key="day.day || day.title || Math.random()"
+      class="bg-linear-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6"
+    >
+      <div class="flex items-start">
+        <div class="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mr-4 shrink-0">
+          <span class="text-white font-bold">Day {{ day.day }}</span>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">{{ day.title }}</h3>
+          <p class="text-gray-700">{{ day.description }}</p>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <span 
+              v-for="activity in (day.activities || [])" 
+              :key="activity"
+              class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg border border-emerald-100"
+            >
+              <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              {{ activity }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Fallback to sample itinerary when DB missing -->
+  <template v-else>
+    <div 
+      v-for="day in getSampleItinerary(tour)" 
+      :key="day.day"
+      class="bg-linear-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6"
+    >
+      <div class="flex items-start">
+        <div class="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mr-4 shrink-0">
+          <span class="text-white font-bold">Day {{ day.day }}</span>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 text-lg mb-2">{{ day.title }}</h3>
+          <p class="text-gray-700">{{ day.description }}</p>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <span 
+              v-for="activity in day.activities" 
+              :key="activity"
+              class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg border border-emerald-100"
+            >
+              <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              {{ activity }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
           </section>
         </div>
 
@@ -451,38 +486,41 @@
               </div>
             </div>
 
-            <!-- Quick Facts -->
-            <div class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
-              <h4 class="font-bold text-gray-900 mb-6 text-lg">Quick Facts</h4>
-              <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600">Tour Type</span>
-                  <span class="font-bold text-emerald-700">{{ getTourType(tour) }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600">Duration</span>
-                  <span class="font-bold text-gray-900">{{ tour.duration || '7' }} days</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600">Difficulty</span>
-                  <span class="font-bold" :class="getDifficultyColor(tour)">
-                    {{ getDifficulty(tour) }}
-                  </span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600">Group Size</span>
-                  <span class="font-bold text-gray-900">2-12 people</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600">Best Season</span>
-                  <span class="font-bold text-gray-900">{{ getSeason(tour) }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-gray-600">Age Range</span>
-                  <span class="font-bold text-gray-900">{{ getAgeRange(tour) }}</span>
-                </div>
-              </div>
-            </div>
+           <!-- Quick Facts -->
+<div class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
+  <h4 class="font-bold text-gray-900 mb-6 text-lg">Quick Facts</h4>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <span class="text-gray-600">Tour Type</span>
+      <span class="font-bold text-emerald-700">{{ tour.type || getTourType(tour) }}</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-600">Duration</span>
+      <span class="font-bold text-gray-900">{{ displayDays }} days</span>
+    </div>
+    <div class="flex items-center justify-between" v-if="displayNights != null">
+      <span class="text-gray-600">Nights</span>
+      <span class="font-bold text-gray-900">{{ displayNights }} nights</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-600">Difficulty</span>
+      <span class="font-bold" :class="getDifficultyColor(tour)">{{ tour.difficulty || getDifficulty(tour) }}</span>
+    </div>
+    <div class="flex items-center justify-between" v-if="tour.groupSize">
+      <span class="text-gray-600">Group Size</span>
+      <span class="font-bold text-gray-900">{{ tour.groupSize.min ?? '—' }} - {{ tour.groupSize.max ?? '—' }} people</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-600">Best Season</span>
+      <span class="font-bold text-gray-900">{{ tour.bestTime || getSeason(tour) }}</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="text-gray-600">Age Range</span>
+      <span class="font-bold text-gray-900">{{ tour.ageRange || getAgeRange(tour) }}</span>
+    </div>
+  </div>
+</div>
+
 
             <!-- Included -->
             <div class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
@@ -567,7 +605,6 @@
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <!-- Related tours would be rendered here -->
-          <!-- You can use TourCard component if you adapt it -->
           <div 
             v-for="relatedTour in relatedTours" 
             :key="relatedTour._id"
@@ -576,7 +613,7 @@
             <!-- Image -->
             <div class="aspect-video overflow-hidden">
               <img
-                :src="relatedTour.images?.[0] || '/images/placeholder.jpg'"
+                :src="relatedTour.featuredImage || relatedTour.images?.[0] || '/images/placeholder.jpg'"
                 :alt="relatedTour.title"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -617,72 +654,153 @@
 
     <!-- Premium Lightbox -->
     <div
-      v-if="lightboxOpen && tour?.images"
+      v-if="lightboxOpen && imagesList.length"
       class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
       @click="closeLightbox"
+      role="dialog"
+      aria-modal="true"
     >
-      <!-- Close Button -->
+      <!-- Close Button (top-right, outside image) -->
       <button
-        @click="closeLightbox"
-        class="absolute top-6 right-6 text-white hover:text-amber-300 transition-colors z-10"
+        @click.stop="closeLightbox"
+        class="absolute top-6 right-6 text-white hover:text-amber-300 transition-colors z-60"
+        aria-label="Close gallery"
       >
         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
-      
+
       <!-- Previous Button -->
       <button
         v-if="lightboxIndex > 0"
         @click.stop="prevImage"
-        class="absolute left-6 top-1/2 transform -translate-y-1/2 text-white hover:text-amber-300 transition-colors z-10"
+        class="absolute left-6 top-1/2 transform -translate-y-1/2 text-white hover:text-amber-300 transition-colors z-60"
+        aria-label="Previous image"
       >
         <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
       </button>
-      
+
       <!-- Next Button -->
       <button
-        v-if="lightboxIndex < tour.images.length - 1"
+        v-if="lightboxIndex < imagesList.length - 1"
         @click.stop="nextImage"
-        class="absolute right-6 top-1/2 transform -translate-y-1/2 text-white hover:text-amber-300 transition-colors z-10"
+        class="absolute right-6 top-1/2 transform -translate-y-1/2 text-white hover:text-amber-300 transition-colors z-60"
+        aria-label="Next image"
       >
         <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>
       </button>
-      
+
       <!-- Image Counter -->
-      <div class="absolute top-6 left-6 text-white font-medium z-10">
-        {{ lightboxIndex + 1 }} / {{ tour.images.length }}
+      <div class="absolute top-6 left-6 text-white font-medium z-60">
+        {{ lightboxIndex + 1 }} / {{ imagesList.length }}
       </div>
-      
+
       <!-- Image Container -->
-      <div class="relative max-w-6xl w-full max-h-[85vh]" @click.stop>
+      <div
+        class="relative w-full max-w-4xl mx-auto px-4 max-h-[80vh] flex items-center justify-center z-50"
+        @click.stop
+      >
+        <!-- Inner Close button (over the image, useful on mobile & big images) -->
+        <button
+          @click="closeLightbox"
+          class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 p-2 rounded-full z-50 text-white"
+          aria-label="Close image"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+
         <img
-          :src="tour.images[lightboxIndex]"
+          :src="imagesList[lightboxIndex]"
           :alt="`${tour.title} - Image ${lightboxIndex + 1}`"
-          class="w-full h-full object-contain rounded-lg"
+          class="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
+          draggable="false"
         />
+
+        <!-- Hint: click outside or press ESC to close -->
+        <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/80 text-sm z-40">
+          Tap outside image or press <span class="font-medium">Esc</span> to close
+        </div>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup>
-// Import components
+/* eslint-disable vue/require-explicit-emits */
+import { ref, computed, onMounted } from 'vue'
 import TourCTA from '~/components/tours/TourCTA.vue'
 
 const route = useRoute()
 const slug = route.params.slug
 
-// Fetch tour data
+// Fetch tour data (safe access to data.value to avoid TS errors)
 const { data, pending, error, refresh } = await useFetch(`/api/tours/${slug}`, {
   method: 'get'
 })
 
-const tour = computed(() => data.value?.data || null)
+// Safely compute tour (avoid TS complaining about conditional response shape)
+const tour = computed(() => {
+  if (!data.value) return null
+  const dv = data.value
+  if (dv && 'data' in dv) return dv.data
+  return null
+})
+
+// imagesList: ensure featuredImage is used first (and avoid duplicates)
+const imagesList = computed(() => {
+  const t = tour.value
+  if (!t) return []
+  const gallery = Array.isArray(t.images) ? [...t.images] : []
+  if (t.featuredImage) {
+    const idx = gallery.findIndex((i) => i === t.featuredImage)
+    if (idx > -1) {
+      gallery.splice(idx, 1)
+    }
+    return [t.featuredImage, ...gallery]
+  }
+  return gallery
+})
+
+// heroImage: first item from imagesList or null
+const heroImage = computed(() => imagesList.value.length ? imagesList.value[0] : (tour.value?.images?.[0] || null))
+
+// --- New: normalized nights/days + tour type computed ---
+const dbNights = computed(() => {
+  const t = tour.value
+  if (!t) return null
+  return (t.nights != null) ? Number(t.nights) : null
+})
+
+const dbDurationDays = computed(() => {
+  const t = tour.value
+  if (!t) return null
+  return (t.duration != null) ? Number(t.duration) : null
+})
+
+const displayNights = computed(() => {
+  if (dbNights.value != null) return dbNights.value
+  if (dbDurationDays.value != null) return Math.max(1, dbDurationDays.value - 1)
+  return 6 // fallback nights if neither present
+})
+
+const displayDays = computed(() => {
+  if (dbNights.value != null) return dbNights.value + 1
+  if (dbDurationDays.value != null) return dbDurationDays.value
+  return 7 // fallback days
+})
+
+const tourTypeFromDb = computed(() => {
+  return tour.value?.type || getTourType(tour.value)
+})
+// --- end normalization ---
 
 // Lightbox state
 const lightboxOpen = ref(false)
@@ -700,7 +818,7 @@ const closeLightbox = () => {
 }
 
 const nextImage = () => {
-  if (tour.value?.images && lightboxIndex.value < tour.value.images.length - 1) {
+  if (imagesList.value && lightboxIndex.value < imagesList.value.length - 1) {
     lightboxIndex.value++
   }
 }
@@ -714,14 +832,12 @@ const prevImage = () => {
 // Scroll to booking section
 const scrollToBooking = () => {
   const bookingCard = document.querySelector('.sticky.top-6')
-  if (bookingCard) {
-    bookingCard.scrollIntoView({ behavior: 'smooth' })
-  }
+  if (bookingCard) bookingCard.scrollIntoView({ behavior: 'smooth' })
 }
 
-// Helper functions
-const getTourType = (tour) => {
-  const title = tour.title?.toLowerCase() || ''
+// Helper functions (unchanged logic)
+const getTourType = (tourObj) => {
+  const title = tourObj?.title?.toLowerCase() || ''
   if (title.includes('safari') || title.includes('serengeti') || title.includes('ngorongoro')) {
     return 'Wildlife Safari'
   } else if (title.includes('kilimanjaro') || title.includes('kili') || title.includes('mountain')) {
@@ -734,8 +850,8 @@ const getTourType = (tour) => {
   return 'Adventure Tour'
 }
 
-const getDifficulty = (tour) => {
-  const title = tour.title?.toLowerCase() || ''
+const getDifficulty = (tourObj) => {
+  const title = tourObj?.title?.toLowerCase() || ''
   if (title.includes('kilimanjaro') || title.includes('summit') || title.includes('climb')) {
     return 'Challenging'
   } else if (title.includes('safari') || title.includes('trek') || title.includes('walk')) {
@@ -746,8 +862,8 @@ const getDifficulty = (tour) => {
   return 'Moderate'
 }
 
-const getDifficultyColor = (tour) => {
-  const difficulty = getDifficulty(tour)
+const getDifficultyColor = (tourObj) => {
+  const difficulty = getDifficulty(tourObj)
   switch (difficulty) {
     case 'Easy': return 'text-emerald-600'
     case 'Moderate': return 'text-amber-600'
@@ -756,16 +872,29 @@ const getDifficultyColor = (tour) => {
   }
 }
 
-const getKeyLocations = (tour) => {
-  const title = tour.title?.toLowerCase() || ''
+const getKeyLocations = (tourObj) => {
+  // Prefer explicit DB keyLocations array if present
+  if (tourObj?.keyLocations && Array.isArray(tourObj.keyLocations) && tourObj.keyLocations.length) {
+    return tourObj.keyLocations.join(', ')
+  }
+
+  // fallback logic based on title (keeps previous heuristics)
+  const title = tourObj?.title?.toLowerCase() || ''
   if (title.includes('serengeti')) return 'Serengeti, Ngorongoro, Tarangire'
   if (title.includes('kilimanjaro')) return 'Kilimanjaro National Park'
   if (title.includes('zanzibar')) return 'Stone Town, Nungwi, Paje'
   return 'Multiple locations across Tanzania'
 }
 
-const getBestTime = (tour) => {
-  const type = getTourType(tour)
+
+const getBestTime = (tourObj) => {
+  // Use DB value if admin saved it
+  if (tourObj?.bestTime && String(tourObj.bestTime).trim()) {
+    return String(tourObj.bestTime)
+  }
+
+  // fallback to heuristic
+  const type = getTourType(tourObj)
   switch (type) {
     case 'Wildlife Safari': return 'June to October (Dry Season)'
     case 'Kilimanjaro Climb': return 'January-March, June-October'
@@ -774,12 +903,11 @@ const getBestTime = (tour) => {
   }
 }
 
-const getSeason = (tour) => {
-  return getBestTime(tour).split('(')[0].trim()
-}
 
-const getAgeRange = (tour) => {
-  const difficulty = getDifficulty(tour)
+const getSeason = (tourObj) => getBestTime(tourObj).split('(')[0].trim()
+
+const getAgeRange = (tourObj) => {
+  const difficulty = getDifficulty(tourObj)
   switch (difficulty) {
     case 'Challenging': return '18-65 years'
     case 'Moderate': return '12-70 years'
@@ -788,10 +916,11 @@ const getAgeRange = (tour) => {
   }
 }
 
-const getSampleItinerary = (tour) => {
-  const duration = tour.duration || 7
-  const type = getTourType(tour)
-  
+// --- Updated: compute number of days for itinerary from nights OR duration ---
+const getSampleItinerary = (tourObj) => {
+  // compute number of days for itinerary: if nights present -> nights + 1, else duration (days)
+  const duration = (tourObj?.nights != null) ? (tourObj.nights + 1) : (tourObj?.duration ?? 7)
+  const type = getTourType(tourObj)
   const itineraries = {
     'Wildlife Safari': [
       { day: 1, title: 'Arrival in Arusha', description: 'Arrive at Kilimanjaro International Airport, transfer to your lodge, and briefing with your safari guide.', activities: ['Airport Pickup', 'Orientation', 'Lodge Check-in'] },
@@ -812,7 +941,7 @@ const getSampleItinerary = (tour) => {
       { day: 7, title: 'Descent & Celebration', description: 'Descend to the gate, receive certificates, and celebrate your achievement.', activities: ['Certificate Ceremony', 'Celebration', 'Departure'] }
     ]
   }
-  
+
   return itineraries[type]?.slice(0, duration) || Array.from({ length: duration }, (_, i) => ({
     day: i + 1,
     title: `Day ${i + 1}: Adventure Continues`,
@@ -820,8 +949,9 @@ const getSampleItinerary = (tour) => {
     activities: ['Guided Tour', 'Local Experience', 'Adventure']
   }))
 }
+// --- end itinerary ---
 
-// Mock related tours
+// Mock related tours (kept as-is)
 const relatedTours = ref([
   {
     _id: '1',
@@ -855,7 +985,7 @@ const relatedTours = ref([
 // Keyboard navigation for lightbox
 onMounted(() => {
   const handleKeyDown = (event) => {
-    if (!lightboxOpen.value || !tour.value?.images) return
+    if (!lightboxOpen.value || !imagesList.value.length) return
 
     if (event.key === 'Escape') {
       closeLightbox()
@@ -872,19 +1002,22 @@ onMounted(() => {
   return () => document.removeEventListener('keydown', handleKeyDown)
 })
 
-// SEO
-useHead({
-  title: tour.value ? `${tour.value.title} - Premium Tanzania Tour | ZafsTours` : 'Tour Details - ZafsTours Tanzania',
-  meta: [
-    {
-      name: 'description',
-      content: tour.value?.overview || 'Premium Tanzania tour package with ZafsTours. Experience the best of wildlife safaris, Kilimanjaro climbs, and cultural experiences.'
-    },
-    {
-      property: 'og:image',
-      content: tour.value?.images?.[0] || '/images/social-default.jpg'
-    }
-  ]
+// SEO (use heroImage for og:image if available)
+useHead(() => {
+  const og = imagesList.value.length ? imagesList.value[0] : '/images/social-default.jpg'
+  return {
+    title: tour.value ? `${tour.value.title} - Premium Tanzania Tour | ZafsTours` : 'Tour Details - ZafsTours Tanzania',
+    meta: [
+      {
+        name: 'description',
+        content: tour.value?.overview || 'Premium Tanzania tour package with ZafsTours. Experience the best of wildlife safaris, Kilimanjaro climbs, and cultural experiences.'
+      },
+      {
+        property: 'og:image',
+        content: og
+      }
+    ]
+  }
 })
 
 definePageMeta({

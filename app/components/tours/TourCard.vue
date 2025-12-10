@@ -5,9 +5,9 @@
       <NuxtLink :to="`/tours/${tour.slug}`" class="block h-full">
         <!-- Background Image -->
         <div 
-          v-if="tour.images?.[0]" 
+          v-if="mainImage" 
           class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-          :style="{ backgroundImage: `url(${tour.images[0]})` }"
+          :style="{ backgroundImage: `url('${mainImage}')` }"
         >
           <!-- Gradient Overlay -->
           <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/40 to-transparent"></div>
@@ -19,7 +19,7 @@
           </div>
         </div>
         
-        <!-- Fallback -->
+        <!-- Fallback (if no image) -->
         <div v-else class="absolute inset-0 bg-linear-to-br from-emerald-900/90 to-amber-900/80 flex items-center justify-center">
           <div class="text-center">
             <svg class="w-16 h-16 text-amber-300 mx-auto mb-3" fill="currentColor" viewBox="0 0 20 20">
@@ -31,7 +31,7 @@
 
         <!-- Duration Badge -->
         <div class="absolute top-4 left-4">
-          <span class="px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm font-bold text-emerald-800 border border-emerald-200 shadow-sm">
+          <span class="px-4 py-2 bg- white/90 backdrop-blur-sm rounded-full text-sm font-bold text-emerald-800 border border-emerald-200 shadow-sm">
             <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
             {{ tour.duration || '7' }} days
           </span>
@@ -130,11 +130,22 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   tour: {
     type: Object,
     required: true
   }
+})
+
+// compute main image preference: featuredImage -> first gallery image -> placeholder
+const mainImage = computed(() => {
+  const t = props.tour || {}
+  if (t.featuredImage) return t.featuredImage
+  if (Array.isArray(t.images) && t.images.length) return t.images[0]
+  // placeholder (local or external) — change path if you have a different placeholder
+  return '/images/placeholder.jpg'
 })
 
 const getTourType = (tour) => {

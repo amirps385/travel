@@ -2,6 +2,7 @@
 import { defineEventHandler } from 'h3'
 import { connectDB } from '../../utils/mongoose'
 import Tour from '../../models/Tour'
+import Activity from '../../models/Activity' // <- pull names from activities collection when available
 
 function normalizeStringArrayField(field: any): string[] {
   if (!field && field !== 0) return []
@@ -14,9 +15,21 @@ function normalizeStringArrayField(field: any): string[] {
   return [String(field).trim()].filter(Boolean)
 }
 
+function addIfString(set: Set<string>, value: any) {
+  if (!value && value !== 0) return
+  if (typeof value === 'string') {
+    const v = value.trim()
+    if (v) set.add(v)
+  } else {
+    // coerce other primitives
+    set.add(String(value).trim())
+  }
+}
+
 export default defineEventHandler(async () => {
   await connectDB()
   try {
+    // get all tours (existing behavior)
     const tours = await Tour.find({}).lean().exec() as any[]
 
     const highlightsSet = new Set<string>()
@@ -49,6 +62,35 @@ export default defineEventHandler(async () => {
         if (low.includes('kilimanjaro') || low.includes('kili')) keyLocationsSet.add('Kilimanjaro')
         if (low.includes('zanzibar')) keyLocationsSet.add('Zanzibar')
       }
+    }
+
+    // --- NEW: also fetch standalone activities collection and add their names ---
+    try {
+      const activityDocs = await Activity.find({}).lean().exec()
+      if (Array.isArray(activityDocs)) {
+        for (const a of activityDocs) {
+          // try common fields that might contain the activity name:
+          if (a.name && typeof a.name === 'string') {
+            activitiesSet.add(a.name.trim())
+          } else if (a.title && typeof a.title === 'string') {
+            activitiesSet.add(a.title.trim())
+          } else if (a.activity && typeof a.activity === 'string') {
+            activitiesSet.add(a.activity.trim())
+          } else if (a.activityName && typeof a.activityName === 'string') {
+            activitiesSet.add(a.activityName.trim())
+          } else if (a._id && !a.name) {
+            // fallback: if activity doc is just a string or has code, include that
+            addIfString(activitiesSet, a._id)
+          }
+          // If activity documents include array fields (tags), add them too:
+          if (Array.isArray(a.tags)) {
+            a.tags.forEach((t: any) => { if (typeof t === 'string' && t.trim()) activitiesSet.add(t.trim()) })
+          }
+        }
+      }
+    } catch (actErr) {
+      // Non-fatal: log but continue using tour-based suggestions
+      console.warn('[GET /api/tours/suggestions] failed to load activities collection:', actErr)
     }
 
     const suggestions = {

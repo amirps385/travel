@@ -11,7 +11,7 @@ export interface ITour extends Document {
   price?: number
   nights?: number
   duration?: number
-  highlights: string[]
+  highlights: Array<{ title: string; description?: string }>
   activities: string[]
   keyLocations: string[]
   featuredImage?: string
@@ -40,6 +40,11 @@ const ItineraryDaySchema = new mongoose.Schema({
   activities: { type: [String], default: [] }
 }, { _id: false })
 
+const HighlightSchema = new mongoose.Schema({
+  title: { type: String, required: true, trim: true },
+  description: { type: String, default: '' }
+}, { _id: false })
+
 const TourSchema = new mongoose.Schema<ITour>({
   title: { type: String, required: true, trim: true },
   slug: { type: String, required: true, unique: true, trim: true, lowercase: true },
@@ -51,8 +56,10 @@ const TourSchema = new mongoose.Schema<ITour>({
   nights: { type: Number, default: null },
   duration: { type: Number, default: null },
 
+  // highlights now as objects with title + description
+  highlights: { type: [HighlightSchema], default: [] },
+
   // simple arrays
-  highlights: { type: [String], default: [] },
   activities: { type: [String], default: [] },
   keyLocations: { type: [String], default: [] },
 
@@ -82,7 +89,6 @@ const TourSchema = new mongoose.Schema<ITour>({
   // keep strict = true (default) so only defined fields persist
 })
 
-// NOTE: do NOT re-declare index if `unique: true` is set on slug above.
-
+// Reuse compiled model if exists
 const Tour: Model<ITour> = mongoose.models.Tour || mongoose.model<ITour>('Tour', TourSchema)
 export default Tour

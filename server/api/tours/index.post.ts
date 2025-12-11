@@ -10,6 +10,26 @@ function toStringArray(input: any): string[] {
   return [String(input).trim()].filter(Boolean)
 }
 
+function normalizeHighlights(input: any): Array<{ title: string; description?: string }> {
+  if (!input) return []
+  // if array of objects, ensure structure
+  if (Array.isArray(input)) {
+    return input.map((h: any) => {
+      if (h && typeof h === 'object') {
+        return { title: String(h.title ?? h.text ?? h.name ?? '').trim(), description: String(h.description ?? '').trim() }
+      }
+      // if primitive string -> save as title with empty description
+      return { title: String(h).trim(), description: '' }
+    }).filter(h => h.title)
+  }
+  // if single string of comma-separated titles
+  if (typeof input === 'string') {
+    return input.split(',').map(s => ({ title: s.trim(), description: '' })).filter(h => h.title)
+  }
+  // fallback
+  return []
+}
+
 export default defineEventHandler(async (event) => {
   await connectDB()
   try {
@@ -28,7 +48,7 @@ export default defineEventHandler(async (event) => {
       price: typeof body.price === 'number' ? body.price : Number(body.price ?? 0),
       nights: body.nights != null ? Number(body.nights) : (body.duration != null ? Math.max(0, Number(body.duration) - 1) : null),
       duration: body.duration != null ? Number(body.duration) : (body.nights != null ? Number(body.nights) + 1 : null),
-      highlights: toStringArray(body.highlights),
+      highlights: normalizeHighlights(body.highlights),
       featuredImage: body.featuredImage ?? '',
       images: Array.isArray(body.images) ? body.images.map((i: any) => String(i)) : (body.images ? toStringArray(body.images) : []),
       isActive: body.isActive === undefined ? true : !!body.isActive,
@@ -49,7 +69,7 @@ export default defineEventHandler(async (event) => {
       itinerary: Array.isArray(body.itinerary) ? body.itinerary.map((d: any) => ({
         title: d.title ?? '',
         description: d.description ?? '',
-        activities: toStringArray(d.activities)
+        activities: Array.isArray(d.activities) ? d.activities.map((a: any) => String(a)) : (d.activities ? String(d.activities).split(',').map((s:string)=>s.trim()).filter(Boolean) : [])
       })) : []
     }
 

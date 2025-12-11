@@ -81,7 +81,7 @@
             <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
             </svg>
-            {{ highlight }}
+            {{ parseHighlight(highlight) }}
           </span>
         </div>
       </div>
@@ -158,6 +158,58 @@ const getTourType = (tour) => {
     return 'Zanzibar'
   }
   return 'Adventure'
+}
+
+/**
+ * parseHighlight(value)
+ * returns a clean title string for display.
+ * Handles:
+ * - object { title, description }
+ * - JSON string '{"title":"...","description":"..."}'
+ * - primitive string "mount climbing"
+ * - string containing "|||" delimiter or trailing pipes
+ */
+function parseHighlight(h) {
+  if (h === null || h === undefined) return ''
+  // object case
+  if (typeof h === 'object') {
+    const title = (h.title ?? h.name ?? h.text ?? '').toString().trim()
+    if (title) return title
+    // if no obvious title, try description or first primitive child
+    const desc = (h.description ?? h.desc ?? h.body ?? '').toString().trim()
+    if (desc) return desc
+    try {
+      return JSON.stringify(h).replace(/^\{|\}$/g, '').slice(0, 80)
+    } catch (e) {
+      return String(h)
+    }
+  }
+  // string case
+  if (typeof h === 'string') {
+    const s = h.trim()
+    if (!s) return ''
+    // try JSON parse
+    if ((s.startsWith('{') && s.endsWith('}')) || (s.startsWith('[') && s.endsWith(']'))) {
+      try {
+        const parsed = JSON.parse(s)
+        // if parsed is object, recurse
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parseHighlight(parsed)
+        }
+      } catch (e) {
+        // not JSON, continue
+      }
+    }
+    // handle delimiter "|||": treat left part as title
+    if (s.includes('|||')) {
+      const [left] = s.split('|||')
+      return String(left || '').trim()
+    }
+    // remove accidental trailing pipes or braces
+    return s.replace(/\|+$/g, '').replace(/^{+|}+$/g, '').trim()
+  }
+  // other primitive
+  return String(h)
 }
 </script>
 

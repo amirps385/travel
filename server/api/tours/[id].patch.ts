@@ -11,6 +11,22 @@ function toStringArray(input: any): string[] {
   return [String(input).trim()].filter(Boolean)
 }
 
+function normalizeHighlights(input: any): Array<{ title: string; description?: string }> {
+  if (!input) return []
+  if (Array.isArray(input)) {
+    return input.map((h: any) => {
+      if (h && typeof h === 'object') {
+        return { title: String(h.title ?? h.text ?? h.name ?? '').trim(), description: String(h.description ?? '').trim() }
+      }
+      return { title: String(h).trim(), description: '' }
+    }).filter(h => h.title)
+  }
+  if (typeof input === 'string') {
+    return input.split(',').map(s => ({ title: s.trim(), description: '' })).filter(h => h.title)
+  }
+  return []
+}
+
 export default defineEventHandler(async (event) => {
   await connectDB()
   const params = (event as any)?.context?.params || {}
@@ -50,17 +66,20 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // arrays: highlights, activities, keyLocations
-    if (body.highlights !== undefined) update.highlights = toStringArray(body.highlights)
+    // arrays: activities, keyLocations
     if (body.activities !== undefined) update.activities = toStringArray(body.activities)
     if (body.keyLocations !== undefined) update.keyLocations = toStringArray(body.keyLocations)
+
+    // highlights (now objects or strings)
+    if (body.highlights !== undefined) {
+      update.highlights = normalizeHighlights(body.highlights)
+    }
 
     // groupSize
     if (body.groupSize !== undefined) {
       if (typeof body.groupSize === 'object') {
         update.groupSize = { min: Number(body.groupSize.min ?? 0), max: Number(body.groupSize.max ?? 0) }
       } else {
-        // accept two separate fields or "min-max" string
         const min = body.groupMin ?? (body.groupSize?.min)
         const max = body.groupMax ?? (body.groupSize?.max)
         if (min !== undefined || max !== undefined) {
@@ -86,7 +105,7 @@ export default defineEventHandler(async (event) => {
         update.itinerary = body.itinerary.map((d: any) => ({
           title: d.title ?? '',
           description: d.description ?? '',
-          activities: toStringArray(d.activities)
+          activities: Array.isArray(d.activities) ? d.activities.map((a:any)=>String(a)) : (d.activities ? String(d.activities).split(',').map((s:string)=>s.trim()).filter(Boolean) : [])
         }))
       } else {
         // ignore invalid shape

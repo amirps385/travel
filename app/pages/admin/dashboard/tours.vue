@@ -54,8 +54,17 @@
                 </td>
                 <td class="px-4 py-3 text-right">
                   <div class="inline-flex items-center gap-2">
-                    <button class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100" @click="openEditModal(tour)">✎</button>
-                    <button class="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-rose-600" @click="deleteTour(tour._id)">🗑</button>
+                    <button
+                      type="button"
+                      class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100"
+                      @click.stop="openEditModal(tour)"
+                      aria-label="Edit tour"
+                    >✎</button>
+                    <button
+                      type="button"
+                      class="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-rose-600"
+                      @click="deleteTour(tour._id)"
+                    >🗑</button>
                   </div>
                 </td>
               </tr>
@@ -77,7 +86,7 @@
                 <h2 class="text-base md:text-lg font-semibold text-slate-900">{{ isEditing ? 'Edit Tour' : 'Add New Tour' }}</h2>
                 <p class="text-xs text-slate-500">Create or update safari package details.</p>
               </div>
-              <button class="p-2 rounded-lg hover:bg-slate-100" @click="closeModal">✕</button>
+              <button type="button" class="p-2 rounded-lg hover:bg-slate-100" @click="closeModal">✕</button>
             </div>
 
             <div class="px-6 py-5 space-y-4 text-xs md:text-sm">
@@ -117,7 +126,7 @@
                 <div class="flex gap-2 flex-wrap">
                   <div v-for="(img, idx) in form.images" :key="idx" class="relative w-24 h-16 rounded overflow-hidden border">
                     <img :src="img" class="w-full h-full object-cover" />
-                    <button @click="removeGalleryImage(idx)" class="absolute top-1 right-1 bg-white/80 rounded px-1 text-xs">✕</button>
+                    <button @click="removeGalleryImage(idx)" type="button" class="absolute top-1 right-1 bg-white/80 rounded px-1 text-xs">✕</button>
                   </div>
                 </div>
               </div>
@@ -211,7 +220,7 @@
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Key Locations</label>
                 <div class="flex gap-2 flex-wrap mb-2">
                   <span v-for="(loc, i) in form.keyLocations" :key="loc + i" class="inline-flex items-center bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border">
-                    {{ loc }} <button @click="removeKeyLocation(i)" class="ml-2 text-emerald-700">✕</button>
+                    {{ loc }} <button @click="removeKeyLocation(i)" type="button" class="ml-2 text-emerald-700">✕</button>
                   </span>
                 </div>
                 <input
@@ -223,37 +232,56 @@
                   placeholder="Type location and press Enter (suggestions will appear)"
                 />
                 <div v-if="locationSuggestionsFiltered.length" class="mt-2 grid grid-cols-3 gap-2">
-                  <button v-for="s in locationSuggestionsFiltered" :key="s" @click="addKeyLocationFromSuggestion(s)" class="text-xs py-1 px-2 border rounded text-slate-700 bg-white hover:bg-emerald-50">{{ s }}</button>
+                  <button v-for="s in locationSuggestionsFiltered" :key="s" @click="addKeyLocationFromSuggestion(s)" type="button" class="text-xs py-1 px-2 border rounded text-slate-700 bg-white hover:bg-emerald-50">{{ s }}</button>
                 </div>
               </div>
 
-              <!-- Highlights tags -->
+              <!-- Highlights (single area: title + description per highlight) -->
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Highlights</label>
-                <div class="flex gap-2 flex-wrap mb-2">
-                  <span v-for="(h, i) in form.highlights" :key="h + i" class="inline-flex items-center bg-amber-50 text-amber-700 px-3 py-1 rounded-full border">
-                    {{ h }} <button @click="removeHighlight(i)" class="ml-2 text-amber-700">✕</button>
-                  </span>
-                </div>
-                <input
-                  v-model="highlightInput"
-                  @keydown.enter.prevent="addHighlight"
-                  @input="filterHighlightSuggestions"
-                  type="text"
-                  class="w-full border rounded-lg px-3 py-2"
-                  placeholder="Type highlight and press Enter"
-                />
-                <div v-if="highlightSuggestionsFiltered.length" class="mt-2 grid grid-cols-4 gap-2">
-                  <button v-for="s in highlightSuggestionsFiltered" :key="s" @click="addHighlightFromSuggestion(s)" class="text-xs py-1 px-2 border rounded text-slate-700 bg-white hover:bg-amber-50">{{ s }}</button>
+                <label class="block text-xs font-semibold text-slate-600 mb-2">Highlights</label>
+
+                <div class="space-y-3">
+                  <div v-for="(h, i) in form.highlights" :key="i" class="p-3 rounded-lg border bg-amber-50 border-amber-100">
+                    <div class="flex justify-between items-start gap-2">
+                      <div class="w-full">
+                        <div class="flex gap-2">
+                          <input v-model="h.title"
+                                 @input="filterHighlightSuggestions(i)"
+                                 placeholder="Highlight title (required)"
+                                 class="w-full border rounded px-3 py-2 text-sm" />
+                          <button type="button" @click="removeHighlight(i)" class="text-amber-700 px-2 py-1 rounded hover:bg-amber-100">✕</button>
+                        </div>
+                        <textarea v-model="h.description" rows="2" placeholder="Short description (optional)" class="w-full border rounded px-3 py-2 mt-2 text-sm"></textarea>
+                      </div>
+                    </div>
+
+                    <!-- suggestions for the title -->
+                    <div v-if="highlightSuggestionsFilteredByIndex[i] && highlightSuggestionsFilteredByIndex[i].length" class="mt-2 grid grid-cols-3 gap-2">
+                      <button
+                        v-for="s in highlightSuggestionsFilteredByIndex[i]"
+                        :key="s"
+                        type="button"
+                        class="text-xs py-1 px-2 border rounded bg-white hover:bg-amber-50 text-amber-700"
+                        @click="useHighlightSuggestion(i, s)"
+                      >{{ s }}</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="flex gap-2">
+                      <!-- Removed quick text input as requested; only Add button -->
+                      <button type="button" @click="addEmptyHighlight" class="px-4 py-2 bg-amber-500 text-white rounded-lg">Add Highlight</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Activities tags -->
+              <!-- Activities tags (global suggestions) -->
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">Activities</label>
                 <div class="flex gap-2 flex-wrap mb-2">
                   <span v-for="(a, i) in form.activities" :key="a + i" class="inline-flex items-center bg-sky-50 text-sky-700 px-3 py-1 rounded-full border">
-                    {{ a }} <button @click="removeActivity(i)" class="ml-2 text-sky-700">✕</button>
+                    {{ a }} <button @click="removeActivity(i)" type="button" class="ml-2 text-sky-700">✕</button>
                   </span>
                 </div>
                 <input
@@ -265,7 +293,7 @@
                   placeholder="Type activity and press Enter"
                 />
                 <div v-if="activitySuggestionsFiltered.length" class="mt-2 grid grid-cols-4 gap-2">
-                  <button v-for="s in activitySuggestionsFiltered" :key="s" @click="addActivityFromSuggestion(s)" class="text-xs py-1 px-2 border rounded text-slate-700 bg-white hover:bg-sky-50">{{ s }}</button>
+                  <button v-for="s in activitySuggestionsFiltered" :key="s" @click="addActivityFromSuggestion(s)" type="button" class="text-xs py-1 px-2 border rounded text-slate-700 bg-white hover:bg-sky-50">{{ s }}</button>
                 </div>
               </div>
 
@@ -277,25 +305,30 @@
                     <div class="flex justify-between items-center mb-2">
                       <div class="text-sm font-semibold">Day {{ idx + 1 }}</div>
                       <div class="flex gap-2">
-                        <button @click="removeItineraryDay(idx)" class="text-xs px-2 py-1 border rounded">Remove</button>
+                        <button type="button" @click="removeItineraryDay(idx)" class="text-xs px-2 py-1 border rounded">Remove</button>
                       </div>
                     </div>
                     <input v-model="day.title" placeholder="Title (e.g. Arrival in Arusha)" class="w-full border rounded px-2 py-1 mb-2" />
                     <textarea v-model="day.description" rows="2" class="w-full border rounded px-2 py-1" placeholder="Description"></textarea>
                     <div class="mt-2 text-xs text-slate-500">Activities for this day (add one-by-one)</div>
                     <div class="flex gap-2 mt-2">
-                      <input v-model="day.activitiesInput" @keydown.enter.prevent="pushDayActivities(idx)" placeholder="Type activity then press Enter" class="w-full border rounded px-2 py-1" />
-                      <button @click="pushDayActivities(idx)" class="px-3 py-1 border rounded bg-emerald-50">Add</button>
+                      <input v-model="day.activitiesInput" @keydown.enter.prevent="pushDayActivities(idx)" @input="filterItineraryActivitySuggestions(idx)" placeholder="Type activity then press Enter" class="w-full border rounded px-2 py-1" />
+                      <button type="button" @click="pushDayActivities(idx)" class="px-3 py-1 border rounded bg-emerald-50">Add</button>
                     </div>
+
+                    <div v-if="itineraryActivitySuggestions[idx] && itineraryActivitySuggestions[idx].length" class="mt-2 flex gap-2 flex-wrap">
+                      <button v-for="s in itineraryActivitySuggestions[idx]" :key="s" type="button" class="px-2 py-1 bg-white border rounded text-xs hover:bg-emerald-50" @click="useItineraryActivitySuggestion(idx, s)">{{ s }}</button>
+                    </div>
+
                     <div class="flex gap-2 mt-2 flex-wrap">
                       <span v-for="(act, aidx) in day.activities" :key="act + aidx" class="px-2 py-0.5 bg-emerald-50 rounded text-emerald-700 text-xs inline-flex items-center">
-                        {{ act }} <button @click="removeDayActivity(idx, aidx)" class="ml-1 text-emerald-700">✕</button>
+                        {{ act }} <button @click="removeDayActivity(idx, aidx)" type="button" class="ml-1 text-emerald-700">✕</button>
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <button @click="addItineraryDay" class="px-4 py-2 border rounded bg-white hover:bg-emerald-50 text-sm">+ Add day</button>
+                    <button @click="addItineraryDay" type="button" class="px-4 py-2 border rounded bg-white hover:bg-emerald-50 text-sm">+ Add day</button>
                   </div>
                 </div>
               </div>
@@ -309,8 +342,8 @@
             </div>
 
             <div class="px-6 py-4 border-t flex items-center justify-end gap-2">
-              <button class="rounded-lg px-4 py-2 border bg-white hover:bg-slate-100" @click="closeModal">Cancel</button>
-              <button class="rounded-lg px-4 py-2 text-white bg-emerald-700" :disabled="saving || isUploading" @click="saveTour">
+              <button type="button" class="rounded-lg px-4 py-2 border bg-white hover:bg-slate-100" @click="closeModal">Cancel</button>
+              <button type="button" class="rounded-lg px-4 py-2 text-white bg-emerald-700" :disabled="saving || isUploading" @click="saveTour">
                 {{ saving ? 'Saving…' : isEditing ? 'Save changes' : 'Create Tour' }}
               </button>
             </div>
@@ -322,10 +355,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 
 definePageMeta({ layout: 'dashboard', title: 'Dashboard - Tours' })
-
 
 /* ---------- state ---------- */
 const tours = ref([])
@@ -389,7 +421,11 @@ const suggestions = ref({
 // filtered suggestion lists for UI
 const locationSuggestionsFiltered = ref([])
 const highlightSuggestionsFiltered = ref([])
+const highlightSuggestionsFilteredByIndex = reactive({}) // keyed by highlight index
 const activitySuggestionsFiltered = ref([])
+
+// itinerary per-day suggestions
+const itineraryActivitySuggestions = reactive({}) // keyed by day idx
 
 /* ---------- helpers & lifecycle ---------- */
 
@@ -402,7 +438,7 @@ function resetForm() {
     price: 0,
     nights: 1,
     duration: 2,
-    highlights: [],
+    highlights: [{ title: '', description: '' }],
     activities: [],
     keyLocations: [],
     featuredImage: '',
@@ -424,6 +460,9 @@ function resetForm() {
   activityInput.value = ''
   customAgeRange.value = ''
   error.value = ''
+  // reset suggestion trackers
+  Object.keys(highlightSuggestionsFilteredByIndex).forEach(k => delete highlightSuggestionsFilteredByIndex[k])
+  Object.keys(itineraryActivitySuggestions).forEach(k => delete itineraryActivitySuggestions[k])
 }
 
 function openCreateModal() {
@@ -432,39 +471,99 @@ function openCreateModal() {
   showModal.value = true
 }
 
-function openEditModal(t) {
-  // deep clone to avoid mutating live array
-  form.value = JSON.parse(JSON.stringify(t || {}))
+async function openEditModal(t) {
+  try {
+    let tourObj = null
 
-  // normalize arrays & itinerary structure
-  form.value.highlights = form.value.highlights || []
-  form.value.activities = form.value.activities || []
-  form.value.keyLocations = form.value.keyLocations || []
-  form.value.itinerary = (form.value.itinerary || []).map(d => ({ ...(d || {}), activities: d?.activities || [], activitiesInput: '' }))
+    if (!t) {
+      console.warn('openEditModal called without tour param')
+      return
+    }
 
-  // parse bestTime into two selects if possible
-  if (form.value.bestTime && typeof form.value.bestTime === 'string' && form.value.bestTime.includes('-')) {
-    const parts = form.value.bestTime.split('-').map(s => s.trim())
-    bestTimeFrom.value = parts[0] || ''
-    bestTimeTo.value = parts[1] || ''
-  } else {
-    bestTimeFrom.value = (form.value.bestTime && typeof form.value.bestTime === 'string' && months.includes(form.value.bestTime)) ? form.value.bestTime : ''
-    bestTimeTo.value = ''
+    if (typeof t === 'string') {
+      // try local
+      tourObj = tours.value.find(x => x._id === t || x.slug === t) || null
+      if (!tourObj) {
+        try {
+          const res = await $fetch(`/api/tours/${t}`).catch(() => null)
+          tourObj = (res && (res.data ?? res)) || null
+        } catch (e) {
+          console.warn('failed to fetch tour by slug/id', e)
+        }
+      }
+    } else if (typeof t === 'object') {
+      tourObj = t
+    }
+
+    if (!tourObj) {
+      alert('Unable to find the tour to edit.')
+      return
+    }
+
+    // deep clone to avoid mutating array
+    form.value = JSON.parse(JSON.stringify(tourObj || {}))
+
+    // normalize arrays & itinerary structure
+    form.value.highlights = form.value.highlights || []
+    form.value.activities = form.value.activities || []
+    form.value.keyLocations = form.value.keyLocations || []
+    form.value.itinerary = (form.value.itinerary || []).map(d => ({ ...(d || {}), activities: d?.activities || [], activitiesInput: '' }))
+
+    // normalize highlights to objects {title, description}
+    form.value.highlights = (form.value.highlights || []).map(h => {
+      if (!h) return { title: '', description: '' }
+      if (typeof h === 'string') {
+        const str = h.trim()
+        if (str.startsWith('{') && str.endsWith('}')) {
+          try {
+            const parsed = JSON.parse(str)
+            return {
+              title: String(parsed.title ?? parsed.text ?? parsed.name ?? '').trim(),
+              description: String(parsed.description ?? parsed.desc ?? parsed.body ?? '').trim()
+            }
+          } catch (e) { /* ignore */ }
+        }
+        return { title: str, description: '' }
+      }
+      return {
+        title: String(h.title ?? h.text ?? h.name ?? '').trim(),
+        description: String(h.description ?? h.desc ?? h.body ?? '').trim()
+      }
+    }).filter(h => h.title || h.description)
+
+    if (!form.value.highlights.length) form.value.highlights = [{ title: '', description: '' }]
+
+    // pre-populate suggestion filters for existing highlights
+    form.value.highlights.forEach((_, idx) => {
+      highlightSuggestionsFilteredByIndex[idx] = []
+    })
+
+    // parse bestTime into two selects if possible
+    if (form.value.bestTime && typeof form.value.bestTime === 'string' && form.value.bestTime.includes('-')) {
+      const parts = form.value.bestTime.split('-').map(s => s.trim())
+      bestTimeFrom.value = parts[0] || ''
+      bestTimeTo.value = parts[1] || ''
+    } else {
+      bestTimeFrom.value = (form.value.bestTime && typeof form.value.bestTime === 'string' && months.includes(form.value.bestTime)) ? form.value.bestTime : ''
+      bestTimeTo.value = ''
+    }
+
+    groupMin.value = form.value.groupSize?.min ?? 2
+    groupMax.value = form.value.groupSize?.max ?? 12
+
+    if (!ageRangeOptions.includes(form.value.ageRange) && form.value.ageRange) {
+      customAgeRange.value = form.value.ageRange
+      form.value.ageRange = 'custom'
+    } else {
+      customAgeRange.value = ''
+    }
+
+    isEditing.value = true
+    showModal.value = true
+  } catch (err) {
+    console.error('openEditModal error:', err)
+    alert('Failed to open edit modal — see console for details.')
   }
-
-  groupMin.value = form.value.groupSize?.min ?? 2
-  groupMax.value = form.value.groupSize?.max ?? 12
-
-  // if ageRange matches one of options keep it, otherwise allow custom
-  if (!ageRangeOptions.includes(form.value.ageRange) && form.value.ageRange) {
-    customAgeRange.value = form.value.ageRange
-    form.value.ageRange = 'custom'
-  } else {
-    customAgeRange.value = ''
-  }
-
-  isEditing.value = true
-  showModal.value = true
 }
 
 function closeModal() {
@@ -480,7 +579,6 @@ async function loadTours() {
     if (Array.isArray(res)) tours.value = res
     else if (res && 'data' in res && Array.isArray(res.data)) tours.value = res.data
     else {
-      // try to extract array
       const arr = Object.values(res).find(v => Array.isArray(v))
       tours.value = arr || []
       console.warn('GET /api/tours returned unexpected shape, extracted array if any', res)
@@ -496,7 +594,6 @@ async function loadSuggestions() {
     const res = await $fetch('/api/tours/suggestions').catch(e => { console.warn('suggestions fetch failed', e); return null })
     const payload = res?.data ?? res
     if (!payload) return
-    // prefer arrays if present otherwise ignore
     suggestions.value.highlights = Array.isArray(payload.highlights) ? payload.highlights : (payload.highlights ? [payload.highlights].flat() : [])
     suggestions.value.activities = Array.isArray(payload.activities) ? payload.activities : (payload.activities ? [payload.activities].flat() : [])
     suggestions.value.keyLocations = Array.isArray(payload.keyLocations) ? payload.keyLocations : (payload.keyLocations ? [payload.keyLocations].flat() : [])
@@ -545,7 +642,7 @@ async function onGalleryImagesSelected(e) {
 function removeGalleryImage(i) { form.value.images.splice(i,1) }
 function clearGallery() { form.value.images = [] }
 
-/* ---------- tags: keyLocations, highlights, activities ---------- */
+/* ---------- tags & highlights ---------- */
 
 // Key Locations
 function addKeyLocation() {
@@ -562,22 +659,35 @@ function filterLocationSuggestions() {
   locationSuggestionsFiltered.value = q ? (suggestions.value.keyLocations || []).filter(s => s.toLowerCase().includes(q)).slice(0,12) : []
 }
 
-// Highlights
-function addHighlight() {
-  const v = (highlightInput.value || '').trim()
-  if (!v) return
-  if (!form.value.highlights.includes(v)) form.value.highlights.push(v)
-  highlightInput.value = ''
-  highlightSuggestionsFiltered.value = []
+// Highlights: single area (title + description per highlight)
+function addEmptyHighlight() {
+  form.value.highlights.push({ title: '', description: '' })
 }
-function addHighlightFromSuggestion(s) { if (!form.value.highlights.includes(s)) form.value.highlights.push(s) }
-function removeHighlight(i) { form.value.highlights.splice(i,1) }
-function filterHighlightSuggestions() {
-  const q = (highlightInput.value || '').toLowerCase()
-  highlightSuggestionsFiltered.value = q ? (suggestions.value.highlights || []).filter(s => s.toLowerCase().includes(q)).slice(0,12) : []
+function addHighlightFromSuggestion(s) {
+  if (!s) return
+  form.value.highlights.push({ title: s, description: '' })
+}
+function removeHighlight(i) {
+  form.value.highlights.splice(i,1)
+  delete highlightSuggestionsFilteredByIndex[i]
+}
+function filterHighlightSuggestions(index = null) {
+  const q = index === null ? (highlightInput.value || '').toLowerCase() : ((form.value.highlights[index]?.title || '').toLowerCase())
+  const matched = q ? (suggestions.value.highlights || []).filter(s => s.toLowerCase().includes(q)).slice(0,12) : []
+  if (index === null) {
+    highlightSuggestionsFiltered.value = matched
+  } else {
+    highlightSuggestionsFilteredByIndex[index] = matched
+  }
+}
+function useHighlightSuggestion(index, value) {
+  if (index == null) return
+  if (!form.value.highlights[index]) return
+  form.value.highlights[index].title = value
+  highlightSuggestionsFilteredByIndex[index] = []
 }
 
-// Activities
+/* ---------- Activities (global) ---------- */
 function addActivity() {
   const v = (activityInput.value || '').trim()
   if (!v) return
@@ -592,26 +702,62 @@ function filterActivitySuggestions() {
   activitySuggestionsFiltered.value = q ? (suggestions.value.activities || []).filter(s => s.toLowerCase().includes(q)).slice(0,12) : []
 }
 
-/* ---------- itinerary helpers ---------- */
+/* ---------- itinerary helpers (with per-day suggestions) ---------- */
 function addItineraryDay() {
   form.value.itinerary.push({ title: `Day ${form.value.itinerary.length + 1}`, description: '', activities: [], activitiesInput: '' })
 }
-function removeItineraryDay(i) { form.value.itinerary.splice(i,1) }
+function removeItineraryDay(i) { 
+  form.value.itinerary.splice(i,1)
+  delete itineraryActivitySuggestions[i]
+}
 function pushDayActivities(dayIdx) {
   const day = form.value.itinerary[dayIdx]
   if (!day) return
   const v = (day.activitiesInput || '').trim()
   if (!v) return
-  // allow comma separated or single entry
   const parts = v.split(',').map(s => s.trim()).filter(Boolean)
   day.activities = Array.from(new Set([...(day.activities || []), ...parts]))
   day.activitiesInput = ''
+  itineraryActivitySuggestions[dayIdx] = []
 }
 function removeDayActivity(dayIdx, actIdx) {
   form.value.itinerary[dayIdx].activities.splice(actIdx, 1)
 }
+function filterItineraryActivitySuggestions(dayIdx) {
+  const q = (form.value.itinerary[dayIdx]?.activitiesInput || '').toLowerCase()
+  itineraryActivitySuggestions[dayIdx] = q ? (suggestions.value.activities || []).filter(s => s.toLowerCase().includes(q)).slice(0,10) : []
+}
+function useItineraryActivitySuggestion(dayIdx, value) {
+  if (!form.value.itinerary[dayIdx]) return
+  if (!form.value.itinerary[dayIdx].activities) form.value.itinerary[dayIdx].activities = []
+  if (!form.value.itinerary[dayIdx].activities.includes(value)) form.value.itinerary[dayIdx].activities.push(value)
+  form.value.itinerary[dayIdx].activitiesInput = ''
+  itineraryActivitySuggestions[dayIdx] = []
+}
 
 /* ---------- save / delete ---------- */
+
+function toStringArray(input) {
+  if (!input && input !== 0) return []
+  if (Array.isArray(input)) return input.map(i => String(i).trim()).filter(Boolean)
+  if (typeof input === 'string') return input.split(',').map(s => s.trim()).filter(Boolean)
+  return [String(input).trim()].filter(Boolean)
+}
+
+function normalizeHighlightsForSave(input) {
+  if (!input) return []
+  if (Array.isArray(input)) {
+    return input.map((h) => {
+      if (!h) return null
+      if (typeof h === 'string') return { title: String(h).trim(), description: '' }
+      return { title: String(h.title ?? h.text ?? h.name ?? '').trim(), description: String(h.description ?? '').trim() }
+    }).filter(Boolean).filter(h => h.title)
+  }
+  if (typeof input === 'string') {
+    return input.split(',').map(s => ({ title: s.trim(), description: '' })).filter(h => h.title)
+  }
+  return []
+}
 
 async function saveTour() {
   error.value = ''
@@ -648,18 +794,21 @@ async function saveTour() {
   form.value.activities = Array.isArray(form.value.activities) ? form.value.activities : (form.value.activities ? String(form.value.activities).split(',').map(s=>s.trim()).filter(Boolean) : [])
   form.value.keyLocations = Array.isArray(form.value.keyLocations) ? form.value.keyLocations : (form.value.keyLocations ? String(form.value.keyLocations).split(',').map(s=>s.trim()).filter(Boolean) : [])
 
+  // normalize highlights to array of objects before sending (server expects {title, description})
+  const payload = JSON.parse(JSON.stringify(form.value))
+  payload.highlights = normalizeHighlightsForSave(payload.highlights)
+
   try {
-    if (isEditing.value && form.value._id) {
-      const res = await $fetch(`/api/tours/${form.value._id}`, { method: 'PATCH', body: form.value })
+    if (isEditing.value && payload._id) {
+      const res = await $fetch(`/api/tours/${payload._id}`, { method: 'PATCH', body: payload })
       const updated = res?.data ?? res
       const i = tours.value.findIndex(t => t._id === updated._id)
       if (i !== -1) tours.value[i] = updated
       else {
-        // if not found, reload list
         await loadTours()
       }
     } else {
-      const res = await $fetch('/api/tours', { method: 'POST', body: form.value })
+      const res = await $fetch('/api/tours', { method: 'POST', body: payload })
       const created = res?.data ?? res
       if (created) tours.value.unshift(created)
     }
@@ -696,4 +845,12 @@ onMounted(async () => {
 .fade-leave-active { transition: all 0.15s ease; }
 .fade-enter-from,
 .fade-leave-to { opacity: 0; transform: translateY(-4px); }
+
+/* make highlights visually yellow/amber like UI */
+.bg-amber-50 { background: linear-gradient(180deg, #fffbeb, #fff7ed); }
+.border-amber-100 { border-color: #ffe6b8; }
+
+/* small niceties */
+input[type="file"] { font-size: 0.85rem; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

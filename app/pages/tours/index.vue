@@ -76,7 +76,12 @@
 
           <div :class="['lg:block', showMobileFilters ? 'block' : 'hidden']">
             <!-- pass typeOptions so TourFilters can use full type labels -->
-            <TourFilters @filter="handleFilter" :type-options="typeOptions" />
+            <TourFilters
+  @filter="handleFilter"
+  :type-options="typeOptions"
+  :result-count="filteredTours.length"
+/>
+
             <div class="mt-8 bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
               <h4 class="font-bold text-gray-900 mb-4">Quick Categories</h4>
               <div class="space-y-2">
@@ -193,17 +198,105 @@ const activeFilters = ref({})
 const toursPerPage = ref(9)
 const displayedCount = ref(9)
 
-/* ---------- quick categories ---------- */
-const quickCategories = [
-  { id: 'all', name: 'All Tours', count: 48, classes: { active: 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-500', inactive: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100' } },
-  { id: 'safari', name: 'Wildlife Safaris', count: 24, classes: { active: 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-500', inactive: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' } },
-  { id: 'kilimanjaro', name: 'Kilimanjaro Climbs', count: 12, classes: { active: 'bg-gradient-to-r from-slate-600 to-slate-800 text-white border-slate-600', inactive: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100' } },
-  { id: 'zanzibar', name: 'Zanzibar Beaches', count: 8, classes: { active: 'bg-gradient-to-r from-sky-500 to-blue-600 text-white border-sky-500', inactive: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100' } },
-  { id: 'family', name: 'Family Adventures', count: 6, classes: { active: 'bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500', inactive: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' } },
+/* ---------- helper to normalize text for matching (declare FIRST) ---------- */
+const norm = (s) => (s || '').toString().toLowerCase().trim()
+
+/* ---------- small slugify used for category ids (declare FIRST) ---------- */
+const slugify = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+
+/* ---------- type options to pass to TourFilters (declare BEFORE quickCategories) ---------- */
+const typeOptions = [
+  'Wildlife Safari',
+  'Kilimanjaro Climb',
+  'Zanzibar Beach',
+  'Cultural Experience',
+  'Birdwatching',
+  'Day Trip',
+  'Private Tour',
+  'Group Departure',
+  'Adventure Tour'
 ]
 
-/* ---------- type options to pass to TourFilters ---------- */
-const typeOptions = ['Wildlife Safari','Kilimanjaro Climb','Zanzibar Beach','Cultural Experience','Birdwatching','Day Trip','Private Tour','Group Departure','Adventure Tour']
+/* ---------- dynamic quick categories (computed) ---------- */
+
+const categoryClassDefault = {
+  active: 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-500',
+  inactive: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+}
+
+const categoryClassOverrides = {
+  [slugify('Kilimanjaro Climb')]: {
+    active: 'bg-gradient-to-r from-slate-600 to-slate-800 text-white border-slate-600',
+    inactive: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+  },
+  [slugify('Zanzibar Beach')]: {
+    active: 'bg-linear-to-r from-sky-500 to-blue-600 text-white border-sky-500',
+    inactive: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100'
+  },
+  [slugify('Cultural Experience')]: {
+    active: 'bg-linear-to-r from-amber-500 to-amber-600 text-white border-amber-500',
+    inactive: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+  },
+  [slugify('Adventure Tour')]: {
+    active: 'bg-linear-to-r from-pink-500 to-rose-600 text-white border-pink-500',
+    inactive: 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100'
+  }
+}
+
+function countForCategoryId(idRaw) {
+  const id = (idRaw || 'all').toString().trim()
+
+  if (id === 'all') return tours.value.length
+
+  const matchedType = typeOptions.find(tp =>
+    slugify(tp) === id || norm(tp) === id
+  )
+
+  if (matchedType) {
+    const mf = norm(matchedType)
+    return tours.value.filter(t => {
+      const tType = Array.isArray(t.type) ? t.type.map(norm).join(' ') : norm(t.type)
+      return (
+        tType === mf ||
+        tType.includes(mf) ||
+        norm(t.title).includes(mf) ||
+        norm(t.overview).includes(mf)
+      )
+    }).length
+  }
+
+  return tours.value.filter(t =>
+    norm(t.title).includes(id) ||
+    norm(t.overview).includes(id) ||
+    (Array.isArray(t.type) ? t.type.map(norm).join(' ') : norm(t.type)).includes(id)
+  ).length
+}
+
+const quickCategories = computed(() => {
+  const out = [{
+    id: 'all',
+    name: 'All Tours',
+    count: countForCategoryId('all'),
+    classes: categoryClassDefault
+  }]
+
+  // add categories from typeOptions
+  for (const name of typeOptions) {
+    const id = slugify(name)
+    out.push({
+      id,
+      name,
+      count: countForCategoryId(id),
+      classes: categoryClassOverrides[id] || categoryClassDefault
+    })
+  }
+
+  return out
+})
 
 /* ---------- derived data ---------- */
 const tours = computed(() => {
@@ -211,16 +304,6 @@ const tours = computed(() => {
   return Array.isArray(data.value) ? data.value : (data.value.data || [])
 })
 const totalTours = computed(() => tours.value.length)
-
-/* ---------- helper to normalize text for matching ---------- */
-const norm = (s) => (s || '').toString().toLowerCase().trim()
-
-const slugify = (s) =>
-  String(s || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-
 
 /* ---------- filtering & sorting ---------- */
 const filteredTours = computed(() => {
@@ -242,109 +325,104 @@ const filteredTours = computed(() => {
   }
 
   // CATEGORY / TOUR TYPE MATCHING (supports slug + readable text)
-if (cat && cat !== 'all') {
-  // Check for full readable match OR slug match
-  const matchedType = typeOptions.find(tp =>
-    norm(tp) === cat || slugify(tp) === cat
-  )
+  if (cat && cat !== 'all') {
+    // Check for full readable match OR slug match
+    const matchedType = typeOptions.find(tp =>
+      norm(tp) === cat || slugify(tp) === cat
+    )
 
-  if (matchedType) {
-    const mf = norm(matchedType)
+    if (matchedType) {
+      const mf = norm(matchedType)
 
-    list = list.filter(t => {
-      const tType = Array.isArray(t.type)
-        ? t.type.map(norm).join(' ')
-        : norm(t.type)
+      list = list.filter(t => {
+        const tType = Array.isArray(t.type)
+          ? t.type.map(norm).join(' ')
+          : norm(t.type)
 
-      return (
-        tType === mf ||
-        tType.includes(mf) ||
-        norm(t.title).includes(mf) ||
-        norm(t.overview).includes(mf)
-      )
-    })
-  } else {
-    // fallback for short custom categories (existing logic)
-    if (cat === 'safari') {
-      list = list.filter(t =>
-        norm(t.title).includes('safari') ||
-        norm(t.overview).includes('safari') ||
-        norm(t.type).includes('safari') ||
-        norm(t.title).includes('serengeti') ||
-        norm(t.title).includes('ngorongoro')
-      )
-    } else if (cat.includes('kili')) {
-      list = list.filter(t =>
-        norm(t.title).includes('kilimanjaro') ||
-        norm(t.overview).includes('kilimanjaro') ||
-        norm(t.type).includes('kilimanjaro')
-      )
-    } else if (cat === 'zanzibar') {
-      list = list.filter(t =>
-        norm(t.title).includes('zanzibar') ||
-        norm(t.overview).includes('zanzibar') ||
-        norm(t.type).includes('zanzibar')
-      )
+        return (
+          tType === mf ||
+          tType.includes(mf) ||
+          norm(t.title).includes(mf) ||
+          norm(t.overview).includes(mf)
+        )
+      })
     } else {
-      list = list.filter(t =>
-        norm(t.title).includes(cat) ||
-        norm(t.overview).includes(cat) ||
-        norm(t.type).includes(cat)
-      )
+      // fallback for short custom categories
+      if (cat === 'safari') {
+        list = list.filter(t =>
+          norm(t.title).includes('safari') ||
+          norm(t.overview).includes('safari') ||
+          norm(t.type).includes('safari') ||
+          norm(t.title).includes('serengeti') ||
+          norm(t.title).includes('ngorongoro')
+        )
+      } else if (cat.includes('kili')) {
+        list = list.filter(t =>
+          norm(t.title).includes('kilimanjaro') ||
+          norm(t.overview).includes('kilimanjaro') ||
+          norm(t.type).includes('kilimanjaro')
+        )
+      } else if (cat === 'zanzibar') {
+        list = list.filter(t =>
+          norm(t.title).includes('zanzibar') ||
+          norm(t.overview).includes('zanzibar') ||
+          norm(t.type).includes('zanzibar')
+        )
+      } else {
+        list = list.filter(t =>
+          norm(t.title).includes(cat) ||
+          norm(t.overview).includes(cat) ||
+          norm(t.type).includes(cat)
+        )
+      }
     }
   }
-}
-
 
   // -------- Duration filter (exact days match) --------
-if (f.duration !== '' && f.duration !== null && f.duration !== undefined) {
-  const dur = Number(f.duration)
+  if (f.duration !== '' && f.duration !== null && f.duration !== undefined) {
+    const dur = Number(f.duration)
 
-  // apply only if valid number
-  if (Number.isFinite(dur) && dur > 0) {
+    // apply only if valid number
+    if (Number.isFinite(dur) && dur > 0) {
+      list = list.filter(t => {
+        const days =
+          t.duration != null
+            ? Number(t.duration)
+            : t.nights != null
+              ? Number(t.nights) + 1
+              : null
+
+        if (!Number.isFinite(days)) return false
+        return days === dur
+      })
+    }
+  }
+
+  // -------- Price range (robust) --------
+  const MAX_PRICE_DEFAULT = 10000
+
+  const rawMin = f.minPrice
+  const rawMax = f.maxPrice
+
+  // Convert safely — treat empty string / null / undefined as not-set
+  const minNum = (rawMin === '' || rawMin === null || rawMin === undefined) ? NaN : Number(rawMin)
+  const maxNum = (rawMax === '' || rawMax === null || rawMax === undefined) ? NaN : Number(rawMax)
+
+  const minSet = Number.isFinite(minNum) // true if user set a number (including 0)
+  const maxSet = Number.isFinite(maxNum)
+
+  // If neither set, skip price filtering
+  if (minSet || maxSet) {
+    const minP = minSet ? minNum : 0
+    const maxP = maxSet ? maxNum : MAX_PRICE_DEFAULT
+
     list = list.filter(t => {
-      const days =
-        t.duration != null
-          ? Number(t.duration)
-          : t.nights != null
-            ? Number(t.nights) + 1
-            : null
-
-      if (!Number.isFinite(days)) return false
-      return days === dur
+      const p = Number(t.price ?? 0)
+      // ignore tours with non-finite price values
+      if (!Number.isFinite(p)) return false
+      return p >= minP && p <= maxP
     })
   }
-}
-
-  // -------- Price range (robust)
-// Only apply price filtering when user actually set a meaningful min or max.
-// The TourFilters slider allows up to 5000, so use 5000 as the default sentinel.
-const MAX_PRICE_DEFAULT = 10000
-
-
-const rawMin = f.minPrice
-const rawMax = f.maxPrice
-
-// Convert safely — treat empty string / null / undefined as not-set
-const minNum = (rawMin === '' || rawMin === null || rawMin === undefined) ? NaN : Number(rawMin)
-const maxNum = (rawMax === '' || rawMax === null || rawMax === undefined) ? NaN : Number(rawMax)
-
-const minSet = Number.isFinite(minNum) // true if user set a number (including 0)
-const maxSet = Number.isFinite(maxNum)
-
-// If neither set, skip price filtering
-if (minSet || maxSet) {
-  const minP = minSet ? minNum : 0
-  const maxP = maxSet ? maxNum : MAX_PRICE_DEFAULT
-
-  list = list.filter(t => {
-    const p = Number(t.price ?? 0)
-    // ignore tours with non-finite price values
-    if (!Number.isFinite(p)) return false
-    return p >= minP && p <= maxP
-  })
-}
-
 
   // sorting
   switch (sortBy.value) {
@@ -393,6 +471,7 @@ function getTourType(t) {
   return 'Adventure'
 }
 </script>
+
 
 <style scoped>
 /* small styles kept from your original file */

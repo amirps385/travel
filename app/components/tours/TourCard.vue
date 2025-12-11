@@ -31,9 +31,9 @@
 
         <!-- Duration Badge -->
         <div class="absolute top-4 left-4">
-          <span class="px-4 py-2 bg- white/90 backdrop-blur-sm rounded-full text-sm font-bold text-emerald-800 border border-emerald-200 shadow-sm">
+          <span class="px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm font-bold text-emerald-800 border border-emerald-200 shadow-sm">
             <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
-            {{ tour.duration || '7' }} days
+            {{ displayDuration }} days
           </span>
         </div>
 
@@ -91,7 +91,7 @@
         <div>
           <div class="text-xs text-gray-500 font-medium">STARTING FROM</div>
           <div class="text-2xl font-bold text-emerald-700">
-            ${{ tour.price?.toLocaleString() || '1,200' }}
+            ${{ formattedPrice }}
           </div>
           <div class="text-xs text-gray-500 mt-1">per person</div>
         </div>
@@ -139,43 +139,126 @@ const props = defineProps({
   }
 })
 
-// compute main image preference: featuredImage -> first gallery image -> placeholder
+/* -------------------------
+   IMAGE / DURATION / PRICE
+   ------------------------- */
 const mainImage = computed(() => {
   const t = props.tour || {}
   if (t.featuredImage) return t.featuredImage
   if (Array.isArray(t.images) && t.images.length) return t.images[0]
-  // placeholder (local or external) — change path if you have a different placeholder
   return '/images/placeholder.jpg'
 })
 
-const getTourType = (tour) => {
-  const title = tour.title?.toLowerCase() || ''
-  if (title.includes('safari') || title.includes('serengeti') || title.includes('ngorongoro')) {
-    return 'Safari'
-  } else if (title.includes('kilimanjaro') || title.includes('kili') || title.includes('mountain')) {
-    return 'Kilimanjaro'
-  } else if (title.includes('zanzibar') || title.includes('beach')) {
-    return 'Zanzibar'
+const displayDuration = computed(() => {
+  const t = props.tour || {}
+  // prefer explicit duration (days). If only nights exist, show nights+1.
+  const dur = (t.duration != null) ? Number(t.duration) : (t.nights != null ? Number(t.nights) + 1 : null)
+  return Number.isFinite(dur) ? dur : 7
+})
+
+const formattedPrice = computed(() => {
+  const p = Number(props.tour?.price ?? 0)
+  if (!Number.isFinite(p) || p === 0) return '1,200'
+  return p.toLocaleString()
+})
+
+/* -------------------------
+   TOUR TYPE DETERMINATION
+   ------------------------- */
+/*
+Strategy:
+1. Prefer tour.type (string/array) or tour.category or tour.tags if present.
+2. Normalize strings and check against known type labels or keywords.
+3. Fall back to searching title/overview for keywords.
+*/
+const KNOWN_TYPES = [
+  { id: 'wildlife-safari', label: 'Safari', keywords: ['safari','wildlife','serengeti','ngorongoro'] },
+  { id: 'kilimanjaro-climb', label: 'Kilimanjaro', keywords: ['kilimanjaro','kili','mountain'] },
+  { id: 'zanzibar-beach', label: 'Zanzibar', keywords: ['zanzibar','beach','zanzibar beach'] },
+  { id: 'cultural-experience', label: 'Cultural', keywords: ['cultural','culture','community'] },
+  { id: 'birdwatching', label: 'Birdwatching', keywords: ['bird','birdwatch','birdwatching'] },
+  { id: 'day-trip', label: 'Day Trip', keywords: ['day trip','day-trip','daytrip'] },
+  { id: 'private-tour', label: 'Private Tour', keywords: ['private','private tour'] },
+  { id: 'group-departure', label: 'Group Departure', keywords: ['group','group departure','departure'] },
+  { id: 'adventure-tour', label: 'Adventure', keywords: ['adventure','trek','hike','climb'] }
+]
+
+function normalize(s) {
+  return (s || '').toString().toLowerCase().trim()
+}
+
+function toKeywordsArray(value) {
+  if (!value && value !== 0) return []
+  // array: map->string
+  if (Array.isArray(value)) return value.map(v => normalize(v)).filter(Boolean)
+  // object: collect likely string props
+  if (typeof value === 'object') {
+    const arr = []
+    for (const k of ['type','category','name','title']) {
+      if (value[k]) arr.push(normalize(value[k]))
+    }
+    return arr.filter(Boolean)
   }
+  // string: split by common separators
+  return normalize(String(value)).split(/[,|;/]+/).map(s => s.trim()).filter(Boolean)
+}
+
+/* main detection function */
+function detectFromArray(arr) {
+  const joined = arr.join(' ')
+  for (const type of KNOWN_TYPES) {
+    for (const kw of type.keywords) {
+      if (joined.includes(kw)) return type.label
+    }
+  }
+  return null
+}
+
+function getTourType(tour) {
+  if (!tour) return 'Adventure'
+  // 1) tour.type (array or string)
+  const typeCandidates = toKeywordsArray(tour.type)
+  if (typeCandidates.length) {
+    const d = detectFromArray(typeCandidates)
+    if (d) return d
+    // fallback: exact match to known labels
+    const joined = typeCandidates.join(' ')
+    for (const kt of KNOWN_TYPES) {
+      if (joined.includes(kt.label.toLowerCase())) return kt.label
+      if (joined.includes(kt.id)) return kt.label
+    }
+  }
+
+  // 2) tour.category or tour.tags
+  const categoryCandidates = toKeywordsArray(tour.category).concat(toKeywordsArray(tour.tags))
+  if (categoryCandidates.length) {
+    const d = detectFromArray(categoryCandidates)
+    if (d) return d
+  }
+
+  // 3) title / overview fallback
+  const textCandidates = [
+    normalize(tour.title),
+    normalize(tour.overview),
+    normalize(tour.summary),
+    normalize(tour.description)
+  ].filter(Boolean)
+  const d = detectFromArray(textCandidates)
+  if (d) return d
+
+  // 4) last fallback: if price/duration suggests day trips vs long adventures (optional)
+  // keep simple: default to Adventure
   return 'Adventure'
 }
 
-/**
- * parseHighlight(value)
- * returns a clean title string for display.
- * Handles:
- * - object { title, description }
- * - JSON string '{"title":"...","description":"..."}'
- * - primitive string "mount climbing"
- * - string containing "|||" delimiter or trailing pipes
- */
+/* -------------------------
+   Highlight parsing
+   ------------------------- */
 function parseHighlight(h) {
   if (h === null || h === undefined) return ''
-  // object case
   if (typeof h === 'object') {
     const title = (h.title ?? h.name ?? h.text ?? '').toString().trim()
     if (title) return title
-    // if no obvious title, try description or first primitive child
     const desc = (h.description ?? h.desc ?? h.body ?? '').toString().trim()
     if (desc) return desc
     try {
@@ -184,31 +267,23 @@ function parseHighlight(h) {
       return String(h)
     }
   }
-  // string case
   if (typeof h === 'string') {
     const s = h.trim()
     if (!s) return ''
-    // try JSON parse
     if ((s.startsWith('{') && s.endsWith('}')) || (s.startsWith('[') && s.endsWith(']'))) {
       try {
         const parsed = JSON.parse(s)
-        // if parsed is object, recurse
         if (typeof parsed === 'object' && parsed !== null) {
           return parseHighlight(parsed)
         }
-      } catch (e) {
-        // not JSON, continue
-      }
+      } catch (e) { /* not JSON */ }
     }
-    // handle delimiter "|||": treat left part as title
     if (s.includes('|||')) {
       const [left] = s.split('|||')
       return String(left || '').trim()
     }
-    // remove accidental trailing pipes or braces
     return s.replace(/\|+$/g, '').replace(/^{+|}+$/g, '').trim()
   }
-  // other primitive
   return String(h)
 }
 </script>

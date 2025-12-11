@@ -6,7 +6,7 @@
       <div class="flex items-center mb-6">
         <div class="w-8 h-8 rounded-full bg-linear-to-r from-amber-500 to-amber-600 flex items-center justify-center mr-3">
           <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 008 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
           </svg>
         </div>
         <h3 class="text-lg font-bold text-gray-900">Filter Tours</h3>
@@ -28,6 +28,7 @@
             type="text"
             placeholder="Find your adventure..."
             class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white/50 backdrop-blur-sm transition-all duration-300"
+            @input="onSearchInput"
           />
           <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
             <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -47,10 +48,9 @@
             @click="selectCategory(category.id)"
             :class="[
               'py-3 px-4 rounded-xl border transition-all duration-300 font-medium text-sm',
-              filters.category === category.id
-                ? categoryClasses[category.id].active
-                : categoryClasses[category.id].inactive
+              activeCategory === category.id ? getCategoryClass(category.id).active : getCategoryClass(category.id).inactive
             ]"
+            type="button"
           >
             {{ category.name }}
           </button>
@@ -65,12 +65,13 @@
         </label>
         <div class="space-y-4">
           <input
-            v-model="filters.duration"
+            v-model.number="filters.duration"
             type="range"
             min="1"
             max="21"
             step="1"
             class="w-full h-2 bg-linear-to-r from-emerald-100 to-amber-100 rounded-full appearance-none cursor-pointer"
+            @change="applyFilters"
           />
           <div class="flex justify-between text-xs text-gray-500">
             <span>1 day</span>
@@ -89,18 +90,20 @@
         </label>
         <div class="space-y-6">
           <input
-            v-model="filters.minPrice"
+            v-model.number="filters.minPrice"
             type="range"
             :min="0"
-            :max="filters.maxPrice"
+            :max="filters.maxPrice || 5000"
             class="w-full h-1.5 bg-linear-to-r from-emerald-200 to-amber-200 rounded-full appearance-none cursor-pointer"
+            @change="applyFilters"
           />
           <input
-            v-model="filters.maxPrice"
+            v-model.number="filters.maxPrice"
             type="range"
-            :min="filters.minPrice"
-            :max="5000"
+            :min="filters.minPrice || 0"
+            :max="10000"
             class="w-full h-1.5 bg-linear-to-r from-amber-200 to-emerald-200 rounded-full appearance-none cursor-pointer"
+            @change="applyFilters"
           />
         </div>
       </div>
@@ -148,69 +151,115 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { reactive, computed, ref } from 'vue'
 
 const emit = defineEmits(['filter'])
 
-// Filter options with safari-themed categories
-const categories = [
-  { id: 'all', name: 'All Tours' },
-  { id: 'safari', name: 'Wildlife Safari' },
-  { id: 'kilimanjaro', name: 'Kilimanjaro' },
-  { id: 'zanzibar', name: 'Zanzibar' },
-  { id: 'cultural', name: 'Cultural' },
-  { id: 'family', name: 'Family' }
+/* ---------- Options ---------- */
+const typeOptions = [
+  'Wildlife Safari',
+  'Kilimanjaro Climb',
+  'Zanzibar Beach',
+  'Cultural Experience',
+  'Birdwatching',
+  'Day Trip',
+  'Private Tour',
+  'Group Departure',
+  'Adventure Tour'
 ]
 
-// Color classes for each category
+const slugify = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+
+const categories = [
+  { id: 'all', name: 'All Tours' },
+  ...typeOptions.map(name => ({ id: slugify(name), name }))
+]
+
+const defaultClasses = {
+  active: 'bg-linear-to-r from-emerald-500 to-emerald-600 text-white border-emerald-500',
+  inactive: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+}
+
 const categoryClasses = {
-  all: {
-    active: 'bg-linear-to-r from-gray-800 to-gray-900 text-white border-gray-800',
-    inactive: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-  },
-  safari: {
-    active: 'bg-linear-to-r from-emerald-500 to-emerald-600 text-white border-emerald-500',
-    inactive: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-  },
-  kilimanjaro: {
+  all: defaultClasses,
+  [slugify('Kilimanjaro Climb')]: {
     active: 'bg-linear-to-r from-slate-600 to-slate-800 text-white border-slate-600',
     inactive: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
   },
-  zanzibar: {
+  [slugify('Zanzibar Beach')]: {
     active: 'bg-linear-to-r from-sky-500 to-blue-600 text-white border-sky-500',
     inactive: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100'
   },
-  cultural: {
+  [slugify('Wildlife Safari')]: {
+    active: defaultClasses.active,
+    inactive: defaultClasses.inactive
+  },
+  [slugify('Cultural Experience')]: {
     active: 'bg-linear-to-r from-amber-500 to-amber-600 text-white border-amber-500',
     inactive: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
   },
-  family: {
+  [slugify('Adventure Tour')]: {
     active: 'bg-linear-to-r from-pink-500 to-rose-600 text-white border-pink-500',
     inactive: 'bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100'
   }
 }
 
-// Filters state
+/* ---------- State ---------- */
 const filters = reactive({
   search: '',
   category: 'all',
   duration: '',
   minPrice: 0,
-  maxPrice: 3000
+  maxPrice: 10000 // updated
 })
 
-const resultCount = computed(() => {
-  // This would come from API
-  return 12
-})
 
-const selectCategory = (categoryId) => {
-  filters.category = categoryId
-  applyFilters()
+const activeCategory = ref('all')
+
+const resultCount = computed(() => 12) // placeholder, parent will compute actual
+
+function getCategoryClass(id) {
+  return categoryClasses[id] || defaultClasses
 }
 
+/* ---------- Debounce helper (tiny, no deps) ---------- */
+function debounce(fn, wait = 250) {
+  let t = null
+  return (...args) => {
+    if (t) clearTimeout(t)
+    t = setTimeout(() => {
+      fn.apply(null, args)
+      t = null
+    }, wait)
+  }
+}
+
+/* ---------- Actions ---------- */
 const applyFilters = () => {
-  emit('filter', { ...filters })
+  const payload = {
+    ...filters,
+    duration: filters.duration ? Number(filters.duration) : '',
+    minPrice: filters.minPrice ? Number(filters.minPrice) : 0,
+    maxPrice: filters.maxPrice ? Number(filters.maxPrice) : 3000
+  }
+  emit('filter', payload)
+}
+
+const debouncedApply = debounce(applyFilters, 300)
+
+const onSearchInput = () => {
+  // update activeCategory if search cleared? keep as-is.
+  debouncedApply()
+}
+
+const selectCategory = (categoryId) => {
+  activeCategory.value = categoryId
+  filters.category = categoryId
+  applyFilters()
 }
 
 const resetFilters = () => {
@@ -219,6 +268,7 @@ const resetFilters = () => {
   filters.duration = ''
   filters.minPrice = 0
   filters.maxPrice = 3000
+  activeCategory.value = 'all'
   emit('filter', { ...filters })
 }
 </script>

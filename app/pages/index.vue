@@ -63,11 +63,6 @@
         <section aria-labelledby="section-newsletter">
           <NewsletterSignup />
         </section>
-
-        <!-- 11) FOOTER -->
-        <footer aria-label="Site footer">
-          <SiteFooter />
-        </footer>
       </div>
     </main>
   </div>

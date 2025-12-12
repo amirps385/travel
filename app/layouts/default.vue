@@ -4,12 +4,15 @@
     <main :class="mainClasses">
       <NuxtPage />
     </main>
+     <!-- GLOBAL FOOTER -->
+    <SiteFooter />
   </div>
 </template>
 
 <script setup>
 import { useRoute } from 'vue-router'
 import Navbar from '~/components/Navbar.vue'
+import SiteFooter from '~/components/SiteFooter.vue'
 
 const route = useRoute()
 

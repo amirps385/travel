@@ -235,8 +235,9 @@ const navItems = [
         { label: 'Tarangire', to: '/tanzania-safari/parks/tarangire' },
       ]},
       { title: 'Tours', links: [
-        { label: 'All Safari Tours', to: '/tanzania-safari/tours' },
-        { label: 'Family Safaris', to: '/tanzania-safari/safari-with-kids' },
+       { label: 'All Safari Tours', to: { path: '/tours', query: { category: 'wildlife-safari' } } },
+{ label: 'Family Safaris', to: { path: '/tours', query: { category: 'wildlife-safari' } } },
+
       ]},
       { title: 'Resources', links: [
         { label: 'Packing List', to: '/tanzania-safari/packing-list' },
@@ -259,7 +260,7 @@ const navItems = [
         { label: 'Guides & Porters', to: '/climbing-kilimanjaro/guides-and-porters' },
       ]},
       { title: 'Tours', links: [
-        { label: 'Kilimanjaro Tours', to: '/climbing-kilimanjaro/kilimanjaro-tours' },
+        { label: 'Kilimanjaro Tours', to: { path: '/tours', query: { category: 'kilimanjaro-climb' } } },
       ]}
     ]
   },
@@ -270,6 +271,12 @@ const navItems = [
   { key: 'blog', label: 'Blog', to: '/blog', mega: false },
   { key: 'contact', label: 'Contact', to: '/contacts', mega: false },
 ]
+
+
+watch(() => route.path, () => {
+  openMega.value = null
+  menuOpenedByClick.value = false
+})
 
 // helpers
 function isActive(item) { if (!item.to) return false; return route.path.startsWith(item.to) }
@@ -444,14 +451,25 @@ async function positionPanel(key) {
 
 function panelStyle(key) {
   const pos = panelPositions.value[key]
+
+  // When panel is closed, force pointer-events:none
+  if (openMega.value !== key) {
+    return {
+      pointerEvents: 'none'
+    }
+  }
+
+  // When panel is open
   if (!pos) return { left: '50%', transform: 'translateX(-50%)' }
-  return { 
-    left: pos.left + 'px', 
-    width: pos.width + 'px', 
+
+  return {
+    left: pos.left + 'px',
+    width: pos.width + 'px',
     transform: 'none',
-    pointerEvents: 'auto' // Ensure panel is clickable
+    pointerEvents: 'auto'
   }
 }
+
 
 function onResize() {
   // Only recalculate mega panel position on desktop (width > 1024px)
@@ -738,6 +756,7 @@ onBeforeUnmount(() => {
   opacity:0; 
   pointer-events:none; 
   transform-origin:top center;
+  transform: translateY(-10px);   /* <-- FIX 2 */
   transition: opacity .14s ease, transform .14s ease; 
   z-index:1300;
   min-width:320px; 

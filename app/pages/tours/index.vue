@@ -4,7 +4,9 @@
     <div class="relative overflow-hidden bg-linear-to-br from-emerald-900 via-emerald-800 to-emerald-950 text-white">
       <div class="absolute inset-0 opacity-10">
         <div class="absolute top-10 left-1/4 w-32 h-32">
-          <svg class="w-full h-full" fill="currentColor" viewBox="0 0 100 100"><path d="M50,20 C60,15 75,20 80,35 C85,50 70,65 50,80 C30,65 15,50 20,35 C25,20 40,15 50,20 Z"/></svg>
+          <svg class="w-full h-full" fill="currentColor" viewBox="0 0 100 100">
+            <path d="M50,20 C60,15 75,20 80,35 C85,50 70,65 50,80 C30,65 15,50 20,35 C25,20 40,15 50,20 Z" />
+          </svg>
         </div>
       </div>
 
@@ -14,13 +16,20 @@
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
               <li class="inline-flex items-center">
                 <NuxtLink to="/" class="inline-flex items-center text-emerald-100 hover:text-white transition-colors">
-                  <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+                  <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                  </svg>
                   Home
                 </NuxtLink>
               </li>
               <li>
                 <div class="flex items-center">
-                  <svg class="w-6 h-6 text-emerald-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                  <svg class="w-6 h-6 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clip-rule="evenodd" />
+                  </svg>
                   <span class="ml-1 text-emerald-200 font-medium">Tours</span>
                 </div>
               </li>
@@ -29,13 +38,20 @@
         </div>
 
         <div class="max-w-3xl">
-          <div class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 mb-6">
-            <svg class="w-5 h-5 mr-2 text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/></svg>
+          <div
+            class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 mb-6">
+            <svg class="w-5 h-5 mr-2 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd"
+                d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z"
+                clip-rule="evenodd" />
+            </svg>
             <span class="text-sm font-semibold text-amber-300">Premium Safari Experiences</span>
           </div>
 
           <h1 class="text-4xl md:text-6xl font-bold mb-4 leading-tight">
-            Discover <span class="text-transparent bg-clip-text bg-linear-to-r from-amber-300 to-amber-200">Tanzania</span> Adventures
+            Discover <span
+              class="text-transparent bg-clip-text bg-linear-to-r from-amber-300 to-amber-200">Tanzania</span>
+            Adventures
           </h1>
 
           <p class="text-xl text-emerald-100 mb-8 max-w-2xl leading-relaxed">
@@ -50,17 +66,18 @@
       <!-- Search -->
       <div class="mb-12">
         <div class="relative max-w-3xl mx-auto">
-          <input
-            v-model="searchQuery"
-            type="text"
+          <input v-model="searchQuery" type="text"
             placeholder="Search for safaris, Kilimanjaro climbs, Zanzibar beaches..."
             class="w-full pl-14 pr-4 py-4 bg-white border-2 border-emerald-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/30 focus:border-emerald-500 shadow-xl text-lg transition-all duration-300"
-            @input="onSearchInput"
-          />
+            @input="onSearchInput" />
           <div class="absolute left-5 top-1/2 transform -translate-y-1/2">
-            <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
-          <button @click="applySearch" class="absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-2.5 bg-linear-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg">Search</button>
+          <button @click="applySearch"
+            class="absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-2.5 bg-linear-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg">Search</button>
         </div>
       </div>
 
@@ -68,24 +85,33 @@
         <!-- Filters -->
         <div class="lg:w-1/4">
           <div class="lg:hidden mb-6">
-            <button @click="showMobileFilters = !showMobileFilters" class="w-full flex items-center justify-between p-4 bg-linear-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-bold">
+            <button @click="showMobileFilters = !showMobileFilters"
+              class="w-full flex items-center justify-between p-4 bg-linear-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-bold">
               <span class="flex items-center">Filters & Options</span>
-              <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+              <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd" />
+              </svg>
             </button>
           </div>
 
           <div :class="['lg:block', showMobileFilters ? 'block' : 'hidden']">
             <!-- pass typeOptions so TourFilters can use full type labels -->
-            <TourFilters
+            <!-- replace existing TourFilters usage with this -->
+<TourFilters
   @filter="handleFilter"
   :type-options="typeOptions"
   :result-count="filteredTours.length"
+  :initial-category="route.query.category"
 />
+
 
             <div class="mt-8 bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
               <h4 class="font-bold text-gray-900 mb-4">Quick Categories</h4>
               <div class="space-y-2">
-                <button v-for="c in quickCategories" :key="c.id" @click="selectCategory(c.id)" :class="[ 'w-full text-left px-4 py-3 rounded-xl border transition-all duration-300 font-medium', activeCategory === c.id ? c.classes.active : c.classes.inactive ]">
+                <button v-for="c in quickCategories" :key="c.id" @click="selectCategory(c.id)"
+                  :class="['w-full text-left px-4 py-3 rounded-xl border transition-all duration-300 font-medium', activeCategory === c.id ? c.classes.active : c.classes.inactive]">
                   <div class="flex items-center justify-between">
                     <span>{{ c.name }}</span>
                     <span class="text-xs px-2 py-1 rounded-full bg-white/50">{{ c.count }}</span>
@@ -101,19 +127,25 @@
           <div class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 mb-8">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <p class="text-gray-700">Showing <span class="font-bold text-emerald-700">{{ displayedToursNormalized.length }}</span> of <span class="font-bold text-gray-900">{{ totalTours }}</span> adventures</p>
-                <p class="text-sm text-gray-500 mt-1">Sorted by: <span class="font-medium text-emerald-600">Most Popular</span></p>
+                <p class="text-gray-700">Showing <span class="font-bold text-emerald-700">{{
+                    displayedToursNormalized.length }}</span> of <span class="font-bold text-gray-900">{{ totalTours
+                    }}</span> adventures</p>
+                <p class="text-sm text-gray-500 mt-1">Sorted by: <span class="font-medium text-emerald-600">Most
+                    Popular</span></p>
               </div>
 
               <div class="flex items-center space-x-4">
                 <div class="flex items-center space-x-2">
-                  <button @click="gridView = false" :class="[ 'p-3 rounded-xl transition-all duration-300', !gridView ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' ]">List</button>
-                  <button @click="gridView = true" :class="[ 'p-3 rounded-xl transition-all duration-300', gridView ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' ]">Grid</button>
+                  <button @click="gridView = false"
+                    :class="['p-3 rounded-xl transition-all duration-300', !gridView ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">List</button>
+                  <button @click="gridView = true"
+                    :class="['p-3 rounded-xl transition-all duration-300', gridView ? 'bg-emerald-500 text-white shadow-lg' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">Grid</button>
                 </div>
 
                 <!-- Sort select with chevron icon -->
                 <div class="relative">
-                  <select v-model="sortBy" @change="onSortChange" class="pl-4 pr-10 py-3 bg-white border-2 border-emerald-200 rounded-xl appearance-none">
+                  <select v-model="sortBy" @change="onSortChange"
+                    class="pl-4 pr-10 py-3 bg-white border-2 border-emerald-200 rounded-xl appearance-none">
                     <option value="popular">Most Popular</option>
                     <option value="price-low">Price: Low to High</option>
                     <option value="price-high">Price: High to Low</option>
@@ -123,7 +155,9 @@
                   <!-- chevron/arrow on the right -->
                   <div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
                     <svg class="w-5 h-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      <path fill-rule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
                     </svg>
                   </div>
                 </div>
@@ -136,30 +170,42 @@
             <div class="inline-block">
               <div class="relative">
                 <div class="w-24 h-24 border-4 border-emerald-200 rounded-full"></div>
-                <div class="w-24 h-24 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                <div
+                  class="w-24 h-24 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin absolute top-0 left-0">
+                </div>
               </div>
               <p class="mt-6 text-gray-600 font-medium text-lg">Discovering Amazing Tours...</p>
             </div>
           </div>
 
-          <div v-else-if="error" class="text-center py-20 bg-linear-to-br from-red-50 to-amber-50 rounded-3xl border-2 border-red-100 p-8">
+          <div v-else-if="error"
+            class="text-center py-20 bg-linear-to-br from-red-50 to-amber-50 rounded-3xl border-2 border-red-100 p-8">
             <h3 class="text-2xl font-bold text-gray-900 mb-3">Unable to Load Tours</h3>
             <p class="text-gray-600 mb-6 max-w-md mx-auto">{{ error.message || 'We had trouble loading tours.' }}</p>
             <div class="flex items-center justify-center gap-4">
-              <button @click="refresh" class="px-6 py-3 bg-linear-to-r from-emerald-500 to-emerald-600 text-white rounded-xl">Try Again</button>
-              <NuxtLink to="/contact" class="px-6 py-3 bg-white text-emerald-600 rounded-xl border-2 border-emerald-200">Contact Support</NuxtLink>
+              <button @click="refresh"
+                class="px-6 py-3 bg-linear-to-r from-emerald-500 to-emerald-600 text-white rounded-xl">Try
+                Again</button>
+              <NuxtLink to="/contact"
+                class="px-6 py-3 bg-white text-emerald-600 rounded-xl border-2 border-emerald-200">Contact Support
+              </NuxtLink>
             </div>
           </div>
 
           <!-- Tours Grid -->
           <div v-else-if="displayedToursNormalized.length">
-            <div :class="[ 'grid gap-8', gridView ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1' ]">
-              <TourCard v-for="t in displayedToursNormalized" :key="t._id" :tour="t" :layout="gridView ? 'grid' : 'list'" />
+            <div
+              :class="['grid gap-8', gridView ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1']">
+              <TourCard v-for="t in displayedToursNormalized" :key="t._id" :tour="t"
+                :layout="gridView ? 'grid' : 'list'" />
             </div>
 
             <div v-if="displayedTours.length < filteredTours.length" class="text-center mt-12">
-              <button @click="loadMore" class="group px-8 py-4 bg-linear-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-2xl">Load More Tours</button>
-              <p class="text-gray-500 text-sm mt-3">Showing {{ displayedTours.length }} of {{ filteredTours.length }} tours</p>
+              <button @click="loadMore"
+                class="group px-8 py-4 bg-linear-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-2xl">Load
+                More Tours</button>
+              <p class="text-gray-500 text-sm mt-3">Showing {{ displayedTours.length }} of {{ filteredTours.length }}
+                tours</p>
             </div>
           </div>
 
@@ -167,12 +213,18 @@
             <h3 class="text-2xl font-bold text-gray-900 mb-3">No Tours Found</h3>
             <p class="text-gray-600 max-w-md mx-auto mb-8">We couldn't find any tours matching your search criteria.</p>
             <div class="flex flex-wrap gap-3 justify-center">
-              <button @click="resetFilters" class="px-6 py-3 bg-linear-to-r from-emerald-500 to-emerald-600 text-white rounded-xl">Reset All Filters</button>
-              <NuxtLink to="/contact" class="px-6 py-3 bg-white text-emerald-600 rounded-xl border-2 border-emerald-200">Request Custom Tour</NuxtLink>
+              <button @click="resetFilters"
+                class="px-6 py-3 bg-linear-to-r from-emerald-500 to-emerald-600 text-white rounded-xl">Reset All
+                Filters</button>
+              <NuxtLink to="/contact"
+                class="px-6 py-3 bg-white text-emerald-600 rounded-xl border-2 border-emerald-200">Request Custom Tour
+              </NuxtLink>
             </div>
           </div>
 
-          <div class="mt-16"><TourCTA /></div>
+          <div class="mt-16">
+            <TourCTA />
+          </div>
         </div>
       </div>
     </div>
@@ -184,6 +236,11 @@ import { ref, computed } from 'vue'
 import TourCard from '~/components/tours/TourCard.vue'
 import TourFilters from '~/components/tours/TourFilters.vue'
 import TourCTA from '~/components/tours/TourCTA.vue'
+
+const route = useRoute()
+
+
+
 
 /* ---------- Fetch once (do NOT redeclare these names later) ---------- */
 const { data, pending, error, refresh } = await useFetch('/api/tours', { method: 'get' })
@@ -197,6 +254,25 @@ const activeCategory = ref('all')
 const activeFilters = ref({})
 const toursPerPage = ref(9)
 const displayedCount = ref(9)
+
+
+watch(
+  () => route.query.category,
+  (newCategory) => {
+    if (!newCategory) return
+
+    activeCategory.value = newCategory
+
+    activeFilters.value = {
+      ...(activeFilters.value || {}),
+      category: newCategory
+    }
+
+    displayedCount.value = toursPerPage.value
+  },
+  { immediate: true }
+)
+
 
 /* ---------- helper to normalize text for matching (declare FIRST) ---------- */
 const norm = (s) => (s || '').toString().toLowerCase().trim()
@@ -426,10 +502,10 @@ const filteredTours = computed(() => {
 
   // sorting
   switch (sortBy.value) {
-    case 'price-low': list.sort((a,b) => (a.price || 0) - (b.price || 0)); break
-    case 'price-high': list.sort((a,b) => (b.price || 0) - (a.price || 0)); break
-    case 'duration': list.sort((a,b) => ((a.duration ?? (a.nights != null ? a.nights + 1 : 0)) - (b.duration ?? (b.nights != null ? b.nights + 1 : 0)))); break
-    case 'rating': list.sort((a,b) => (b.rating || 0) - (a.rating || 0)); break
+    case 'price-low': list.sort((a, b) => (a.price || 0) - (b.price || 0)); break
+    case 'price-high': list.sort((a, b) => (b.price || 0) - (a.price || 0)); break
+    case 'duration': list.sort((a, b) => ((a.duration ?? (a.nights != null ? a.nights + 1 : 0)) - (b.duration ?? (b.nights != null ? b.nights + 1 : 0)))); break
+    case 'rating': list.sort((a, b) => (b.rating || 0) - (a.rating || 0)); break
     default: break
   }
 
@@ -475,9 +551,27 @@ function getTourType(t) {
 
 <style scoped>
 /* small styles kept from your original file */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #10b981, #059669); border-radius: 4px; }
-button, a, .transition-all { transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
-.bg-safari-pattern { /* optional */ }
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #10b981, #059669);
+  border-radius: 4px;
+}
+
+button,
+a,
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bg-safari-pattern {
+  /* optional */
+}
 </style>

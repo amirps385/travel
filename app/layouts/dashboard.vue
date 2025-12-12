@@ -26,11 +26,13 @@
             >
               <span v-if="item.icon === 'dashboard'">📊</span>
               <span v-else-if="item.icon === 'leads'">👥</span>
+              <span v-else-if="item.icon === 'tours'">🧭</span>
               <span v-else-if="item.icon === 'itineraries'">📄</span>
               <span v-else-if="item.icon === 'hotels'">🏨</span>
               <span v-else-if="item.icon === 'activities'">📍</span>
               <span v-else-if="item.icon === 'transfers'">🚐</span>
               <span v-else-if="item.icon === 'cities'">🌆</span>
+              <span v-else-if="item.icon === 'animals'">🦁</span>
               <span v-else>•</span>
             </span>
             <span class="text-sm font-medium">{{ item.label }}</span>
@@ -65,8 +67,9 @@
             </div>
             <div>
               <p class="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">
-                Travel Itinerary Management
+                {{ currentSectionLabel }}
               </p>
+
               <h1 class="text-xl md:text-2xl font-bold text-slate-900">
                 {{ headerTitle }}
               </h1>
@@ -119,19 +122,18 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-// --- FIXED: use /admin prefix for all admin routes ---
-// Note: the admin "root" is /admin and the dashboard is at /admin/dashboard
+// --- admin nav (includes Animals) ---
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/admin/dashboard/leads', label: 'Leads', icon: 'leads' },
   { to: '/admin/dashboard/tours', label: 'Tours', icon: 'tours' },
+  { to: '/admin/dashboard/animals', label: 'Animals', icon: 'animals' },
   { to: '/admin/dashboard/itineraries', label: 'Itineraries', icon: 'itineraries' },
   { to: '/admin/dashboard/hotels', label: 'Hotels', icon: 'hotels' },
   { to: '/admin/dashboard/activities', label: 'Activities', icon: 'activities' },
   { to: '/admin/dashboard/transfers', label: 'Transfers', icon: 'transfers' },
   { to: '/admin/dashboard/cities', label: 'Cities', icon: 'cities' }
 ]
-
 
 // isActive: treat '/admin' as active (if you want), and match children via startsWith
 const isActive = (to) => {
@@ -145,9 +147,12 @@ const isActive = (to) => {
 }
 
 // header title / subtitle logic for admin routes (uses /admin prefix)
+// NOTE: checks for Tours & Animals are placed before the default to avoid fallback problems
 const headerTitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Dashboard Overview'
   if (route.path.startsWith('/admin/dashboard/leads')) return 'Leads Management'
+  if (route.path.startsWith('/admin/dashboard/tours')) return 'Tours'
+  if (route.path.startsWith('/admin/dashboard/animals')) return 'Animals'
   if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Itineraries'
   if (route.path.startsWith('/admin/dashboard/hotels')) return 'Hotels'
   if (route.path.startsWith('/admin/dashboard/activities')) return 'Activities'
@@ -159,6 +164,8 @@ const headerTitle = computed(() => {
 const headerSubtitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Welcome to your admin dashboard'
   if (route.path.startsWith('/admin/dashboard/leads')) return 'Track and manage all travel enquiries.'
+  if (route.path.startsWith('/admin/dashboard/tours')) return 'Manage safari packages, pricing and images.'
+  if (route.path.startsWith('/admin/dashboard/animals')) return 'Manage wildlife species, images, and content.'
   if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Review and edit created itineraries.'
   if (route.path.startsWith('/admin/dashboard/hotels')) return 'Configure hotel partners & pricing.'
   if (route.path.startsWith('/admin/dashboard/activities')) return 'Manage activities available for trips.'

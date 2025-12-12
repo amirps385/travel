@@ -20,6 +20,7 @@ const route = useRoute()
 const noPaddingPaths = [
   '/',           // Homepage
   '/tours',      // Tours index page
+  '/animals',    // Animals index page
 ]
 
 const mainClasses = computed(() => {

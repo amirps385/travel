@@ -33,6 +33,8 @@
               <span v-else-if="item.icon === 'transfers'">🚐</span>
               <span v-else-if="item.icon === 'cities'">🌆</span>
               <span v-else-if="item.icon === 'animals'">🦁</span>
+              <span v-else-if="item.icon === 'parks'">🏞️</span>
+
               <span v-else>•</span>
             </span>
             <span class="text-sm font-medium">{{ item.label }}</span>
@@ -127,6 +129,7 @@ const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/admin/dashboard/leads', label: 'Leads', icon: 'leads' },
   { to: '/admin/dashboard/tours', label: 'Tours', icon: 'tours' },
+   { to: '/admin/dashboard/parks', label: 'Parks', icon: 'parks' },
   { to: '/admin/dashboard/animals', label: 'Animals', icon: 'animals' },
   { to: '/admin/dashboard/itineraries', label: 'Itineraries', icon: 'itineraries' },
   { to: '/admin/dashboard/hotels', label: 'Hotels', icon: 'hotels' },
@@ -152,6 +155,7 @@ const headerTitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Dashboard Overview'
   if (route.path.startsWith('/admin/dashboard/leads')) return 'Leads Management'
   if (route.path.startsWith('/admin/dashboard/tours')) return 'Tours'
+  if (route.path.startsWith('/admin/dashboard/parks')) return 'National Parks'
   if (route.path.startsWith('/admin/dashboard/animals')) return 'Animals'
   if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Itineraries'
   if (route.path.startsWith('/admin/dashboard/hotels')) return 'Hotels'
@@ -161,18 +165,41 @@ const headerTitle = computed(() => {
   return 'Dashboard'
 })
 
+
 const headerSubtitle = computed(() => {
-  if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Welcome to your admin dashboard'
-  if (route.path.startsWith('/admin/dashboard/leads')) return 'Track and manage all travel enquiries.'
-  if (route.path.startsWith('/admin/dashboard/tours')) return 'Manage safari packages, pricing and images.'
-  if (route.path.startsWith('/admin/dashboard/animals')) return 'Manage wildlife species, images, and content.'
-  if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Review and edit created itineraries.'
-  if (route.path.startsWith('/admin/dashboard/hotels')) return 'Configure hotel partners & pricing.'
-  if (route.path.startsWith('/admin/dashboard/activities')) return 'Manage activities available for trips.'
-  if (route.path.startsWith('/admin/dashboard/transfers')) return 'Set up transfers and local transport.'
-  if (route.path.startsWith('/admin/dashboard/cities')) return 'Organise cities and regions.'
+  if (route.path === '/admin' || route.path === '/admin/dashboard')
+    return 'Welcome to your admin dashboard'
+
+  if (route.path.startsWith('/admin/dashboard/leads'))
+    return 'Track and manage all travel enquiries.'
+
+  if (route.path.startsWith('/admin/dashboard/tours'))
+    return 'Manage safari packages, pricing and images.'
+
+  if (route.path.startsWith('/admin/dashboard/parks'))
+    return 'Manage national parks, regions, wildlife highlights, and SEO.'
+
+  if (route.path.startsWith('/admin/dashboard/animals'))
+    return 'Manage wildlife species, images, and content.'
+
+  if (route.path.startsWith('/admin/dashboard/itineraries'))
+    return 'Review and edit created itineraries.'
+
+  if (route.path.startsWith('/admin/dashboard/hotels'))
+    return 'Configure hotel partners & pricing.'
+
+  if (route.path.startsWith('/admin/dashboard/activities'))
+    return 'Manage activities available for trips.'
+
+  if (route.path.startsWith('/admin/dashboard/transfers'))
+    return 'Set up transfers and local transport.'
+
+  if (route.path.startsWith('/admin/dashboard/cities'))
+    return 'Organise cities and regions.'
+
   return ''
 })
+
 
 const currentSectionLabel = computed(() => {
   const item = navItems.find((i) => isActive(i.to))

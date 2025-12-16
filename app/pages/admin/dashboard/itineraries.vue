@@ -1,27 +1,7 @@
 <template>
   <div class="min-h-[calc(100vh-5rem)] bg-slate-50">
     <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8 space-y-6">
-      <!-- HEADER -->
-      <div
-        class="bg-white/90 backdrop-blur rounded-2xl shadow border border-slate-100 px-5 md:px-7 py-4 flex items-center justify-between"
-      >
-        <div>
-          <p class="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">
-            Itineraries
-          </p>
-          <h1 class="text-xl md:text-2xl font-bold text-slate-900">
-            Created itineraries
-          </h1>
-          <p class="text-xs md:text-sm text-slate-500">
-            These itineraries are created from leads and can be previewed or shared via link.
-          </p>
-        </div>
-
-        <div class="text-xs text-slate-500 text-right">
-          <div>Total itineraries: <span class="font-semibold">{{ itineraries.length }}</span></div>
-          <div v-if="isLoading" class="text-[11px] text-slate-400">Loading…</div>
-        </div>
-      </div>
+   
 
       <!-- LIST CARD -->
       <div class="bg-white/90 backdrop-blur rounded-2xl shadow border border-slate-100 px-5 md:px-7 py-6">

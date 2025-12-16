@@ -21,6 +21,7 @@ const noPaddingPaths = [
   '/',           // Homepage
   '/tours',      // Tours index page
   '/animals',    // Animals index page
+  '/parks'       // Parks index page
 ]
 
 const mainClasses = computed(() => {

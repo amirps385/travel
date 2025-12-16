@@ -13,10 +13,10 @@ export default defineEventHandler(async (event) => {
     if (status === 'active') filter.isActive = true
     if (status === 'inactive') filter.isActive = false
 
-    // optional: add pagination params in future (limit, skip, search, sort)
-    const parks = await Park.find(filter).sort({ order: 1, createdAt: -1 }).lean()
-    // inside your existing handler, after you fetch parks:
-console.log('[api/parks] sample db doc (stringified):', JSON.stringify(parks.slice(0,5), null, 2))
+    const parks = await Park
+      .find(filter)
+      .sort({ order: 1, createdAt: -1 })
+      .lean()
 
     return { ok: true, data: parks }
   } catch (err: any) {

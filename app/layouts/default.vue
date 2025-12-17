@@ -21,7 +21,8 @@ const noPaddingPaths = [
   '/',           // Homepage
   '/tours',      // Tours index page
   '/animals',    // Animals index page
-  '/parks'       // Parks index page
+  '/parks',      // Parks index page
+  '/islands'     // ADD THIS LINE - Islands index page
 ]
 
 const mainClasses = computed(() => {
@@ -35,6 +36,9 @@ const mainClasses = computed(() => {
   // For tour detail pages (like /tours/some-slug)
   const isTourDetail = path.startsWith('/tours/') && path !== '/tours/'
   
-  return shouldHaveNoPadding || isTourDetail ? '' : 'pt-20'
+  // Also include island detail pages
+  const isIslandDetail = path.startsWith('/islands/') && path !== '/islands/'
+  
+  return shouldHaveNoPadding || isTourDetail || isIslandDetail ? '' : 'pt-20'
 })
 </script>

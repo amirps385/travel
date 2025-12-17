@@ -34,6 +34,7 @@
               <span v-else-if="item.icon === 'cities'">🌆</span>
               <span v-else-if="item.icon === 'animals'">🦁</span>
               <span v-else-if="item.icon === 'parks'">🏞️</span>
+              <span v-else-if="item.icon === 'islands'">🏝️</span>
 
               <span v-else>•</span>
             </span>
@@ -124,12 +125,13 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-// --- admin nav (includes Animals) ---
+// --- admin nav (includes Islands) ---
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/admin/dashboard/leads', label: 'Leads', icon: 'leads' },
   { to: '/admin/dashboard/tours', label: 'Tours', icon: 'tours' },
-   { to: '/admin/dashboard/parks', label: 'Parks', icon: 'parks' },
+  { to: '/admin/dashboard/parks', label: 'Parks', icon: 'parks' },
+  { to: '/admin/dashboard/islands', label: 'Islands', icon: 'islands' },
   { to: '/admin/dashboard/animals', label: 'Animals', icon: 'animals' },
   { to: '/admin/dashboard/itineraries', label: 'Itineraries', icon: 'itineraries' },
   { to: '/admin/dashboard/hotels', label: 'Hotels', icon: 'hotels' },
@@ -150,12 +152,13 @@ const isActive = (to) => {
 }
 
 // header title / subtitle logic for admin routes (uses /admin prefix)
-// NOTE: checks for Tours & Animals are placed before the default to avoid fallback problems
+// NOTE: checks for Islands placed before the default to avoid fallback
 const headerTitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Dashboard Overview'
   if (route.path.startsWith('/admin/dashboard/leads')) return 'Leads Management'
   if (route.path.startsWith('/admin/dashboard/tours')) return 'Tours'
   if (route.path.startsWith('/admin/dashboard/parks')) return 'National Parks'
+  if (route.path.startsWith('/admin/dashboard/islands')) return 'Islands'
   if (route.path.startsWith('/admin/dashboard/animals')) return 'Animals'
   if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Itineraries'
   if (route.path.startsWith('/admin/dashboard/hotels')) return 'Hotels'
@@ -178,6 +181,9 @@ const headerSubtitle = computed(() => {
 
   if (route.path.startsWith('/admin/dashboard/parks'))
     return 'Manage national parks, regions, wildlife highlights, and SEO.'
+
+  if (route.path.startsWith('/admin/dashboard/islands'))
+    return 'Manage island pages, images and metadata.'
 
   if (route.path.startsWith('/admin/dashboard/animals'))
     return 'Manage wildlife species, images, and content.'

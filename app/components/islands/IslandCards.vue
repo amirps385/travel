@@ -36,7 +36,7 @@
       role="listitem"
     >
       <!-- Image Container -->
-      <div class="relative h-48 md:h-56 overflow-hidden bg-gradient-to-br from-amber-100 to-slate-100">
+      <div class="relative h-48 md:h-56 overflow-hidden bg-linear-to-br from-amber-100 to-slate-100">
         <img
           :src="currentImage[island._id] || island.featuredImage || placeholderImage"
           :alt="island.name || 'Island image'"

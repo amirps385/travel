@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-amber-50 via-amber-50/80 to-slate-50">
+  <div class="min-h-screen bg-linear-to-b from-amber-50 via-amber-50/80 to-slate-50">
     <!-- Hero Section with Safari Theme -->
-    <div class="relative overflow-hidden bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900">
+    <div class="relative overflow-hidden bg-linear-to-r from-amber-900 via-amber-800 to-amber-900">
       <!-- Decorative elements -->
       <div class="absolute inset-0 opacity-5">
-        <div class="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-amber-400/20 to-transparent rounded-full blur-3xl"></div>
-        <div class="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-amber-500/10 to-transparent rounded-full blur-3xl"></div>
+        <div class="absolute top-0 left-0 w-64 h-64 bg-linear-to-br from-amber-400/20 to-transparent rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 w-96 h-96 bg-linear-to-tl from-amber-500/10 to-transparent rounded-full blur-3xl"></div>
       </div>
 
       <header class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
@@ -21,7 +21,7 @@
           </div>
           
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight">
-            <span class="bg-gradient-to-r from-amber-300 via-amber-200 to-amber-300 bg-clip-text text-transparent">
+            <span class="bg-linear-to-r from-amber-300 via-amber-200 to-amber-300 bg-clip-text text-transparent">
               Tanzanian Islands
             </span>
           </h1>
@@ -194,9 +194,9 @@
           </div>
 
           <!-- Empty State -->
-          <div v-else class="bg-gradient-to-br from-amber-50 to-white rounded-3xl shadow-lg border border-amber-100 p-12 text-center">
+          <div v-else class="bg-linear-to-br from-amber-50 to-white rounded-3xl shadow-lg border border-amber-100 p-12 text-center">
             <div class="max-w-md mx-auto">
-              <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl mb-6 shadow-inner">
+              <div class="inline-flex items-center justify-center w-24 h-24 bg-linear-to-br from-amber-100 to-amber-200 rounded-2xl mb-6 shadow-inner">
                 <svg class="w-12 h-12 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>

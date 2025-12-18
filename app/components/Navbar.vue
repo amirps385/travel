@@ -1,209 +1,206 @@
 <template>
-  <header class="header">
-    <div class="container">
-      <div class="row">
-        <div class="left">
-          <NuxtLink to="/" class="logo-link" aria-label="Zafstours home">
-            <img src="/images/logo.svg" alt="Zafstours" class="logo" />
-          </NuxtLink>
-        </div>
-
-        <!-- Desktop Navigation -->
-        <nav class="center-nav" aria-label="Primary navigation">
-          <ul class="nav-list">
-            <li v-for="item in navItems" :key="item.key" class="nav-item">
-              <NuxtLink
-                v-if="!item.mega"
-                :to="item.to"
-                class="nav-link"
-                :class="{ active: isActive(item) }"
-              >
-                <span class="nav-text">{{ item.label }}</span>
-                <span class="nav-ring" aria-hidden></span>
-              </NuxtLink>
-
-              <div v-else class="mega-wrap">
-                <button
-                  class="nav-link trigger"
-                  :aria-expanded="openMega === item.key"
-                  @click="toggleMegaMenu(item.key)"
-                  @mouseenter="() => handleMouseEnter(item.key)"
-                  @mouseleave="handleMouseLeave"
-                  @focus="() => handleMouseEnter(item.key)"
-                  @blur="handleBlur"
-                  :ref="el => setTriggerRef(item.key, el)"
+  <ClientOnly>
+    <header class="header">
+      <div class="container">
+        <div class="row">
+          <div class="left">
+            <NuxtLink to="/" class="logo-link" aria-label="Zafstours home">
+              <img src="/images/logo.svg" alt="Zafstours" class="logo" />
+            </NuxtLink>
+          </div>
+          <!-- Desktop Navigation -->
+          <nav class="center-nav" aria-label="Primary navigation">
+            <ul class="nav-list">
+              <li v-for="item in navItems" :key="item.key" class="nav-item">
+                <!-- Simple non-mega links (use resolveTo to ensure correct shape) -->
+                <NuxtLink
+                  v-if="!item.mega"
+                  :to="resolveTo(item)"
+                  class="nav-link"
+                  :class="{ active: isActive(item) }"
+                  @click="() => { closeMega(); }"
                 >
                   <span class="nav-text">{{ item.label }}</span>
-
-                  <svg
-                    class="chev"
-                    :class="{ 'chev-open': openMega === item.key }"
-                    viewBox="0 0 24 24"
-                    aria-hidden
-                    focusable="false"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-
                   <span class="nav-ring" aria-hidden></span>
-                </button>
-
-                <div
-                  v-if="item.mega"
-                  :ref="el => setPanelRef(item.key, el)"
-                  class="mega-panel"
-                  :class="{ open: openMega === item.key }"
-                  :style="panelStyle(item.key)"
-                  @mouseenter="handlePanelMouseEnter"
-                  @mouseleave="handlePanelMouseLeave"
+                </NuxtLink>
+                <!-- Mega menu -->
+                <div v-else class="mega-wrap">
+                  <button
+                    class="nav-link trigger"
+                    :aria-expanded="openMega === item.key"
+                    @click="toggleMegaMenu(item.key)"
+                    @mouseenter="() => handleMouseEnter(item.key)"
+                    @mouseleave="handleMouseLeave"
+                    @focus="() => handleMouseEnter(item.key)"
+                    @blur="handleBlur"
+                    :ref="el => setTriggerRef(item.key, el)"
+                  >
+                    <span class="nav-text">{{ item.label }}</span>
+                    <svg
+                      class="chev"
+                      :class="{ 'chev-open': openMega === item.key }"
+                      viewBox="0 0 24 24"
+                      aria-hidden
+                      focusable="false"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="nav-ring" aria-hidden></span>
+                  </button>
+                  <div
+                    v-if="item.mega"
+                    :ref="el => setPanelRef(item.key, el)"
+                    class="mega-panel"
+                    :class="{ open: openMega === item.key }"
+                    :style="panelStyle(item.key)"
+                    @mouseenter="handlePanelMouseEnter"
+                    @mouseleave="handlePanelMouseLeave"
+                  >
+                    <div class="mega-grid">
+                      <div class="mega-col" v-for="(col, idx) in item.megaCols" :key="idx">
+                        <h4 class="mega-title">{{ col.title }}</h4>
+                        <ul class="mega-links">
+                          <li v-for="link in col.links" :key="link.label">
+                            <!-- All mega links navigate programmatically to avoid accidental merging -->
+                            <a
+                              href="#"
+                              class="mega-link"
+                              @click.prevent="handleLinkClick(link)"
+                            >
+                              {{ link.label }}
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </nav>
+          <div class="right">
+            <button class="icon-btn search-btn" @click="openSiteSearch" aria-label="Search">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="6" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+            </button>
+            <!-- Currency Dropdown -->
+            <div class="currency">
+              <button
+                class="currency-btn"
+                @click="toggleCurrencyMenu"
+                :aria-expanded="showCurrency"
+                aria-haspopup="true"
+                ref="currencyButton"
+              >
+                <span class="currency-text">{{ selectedCurrency }}</span>
+                <svg
+                  class="chev-sm"
+                  :class="{ 'chev-sm-open': showCurrency }"
+                  viewBox="0 0 24 24"
+                  aria-hidden
+                  fill="none"
+                  stroke="currentColor"
                 >
-                  <div class="mega-grid">
-                    <div class="mega-col" v-for="(col, idx) in item.megaCols" :key="idx">
-                      <h4 class="mega-title">{{ col.title }}</h4>
-                      <ul class="mega-links">
-                        <li v-for="link in col.links" :key="link.label">
-                          <NuxtLink 
-                            :to="link.to" 
-                            class="mega-link"
-                            @click="handleMegaLinkClick"
+                  <path d="M6 9l6 6 6-6" stroke-width="2" />
+                </svg>
+              </button>
+              <div
+                v-if="showCurrency"
+                class="currency-menu"
+                role="menu"
+                ref="currencyMenu"
+              >
+                <ul>
+                  <li v-for="c in currencies" :key="c">
+                    <button class="currency-item" @click="selectCurrency(c)">{{ c }}</button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <NuxtLink :to="resolveTo({ to: '/inquire' })" class="cta">INQUIRE NOW</NuxtLink>
+            <button class="hamburger" @click="mobileOpen = !mobileOpen" :aria-expanded="mobileOpen" aria-label="Open menu">
+              <svg v-if="!mobileOpen" class="icon" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg v-else class="icon" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Mobile Navigation Panel -->
+      <transition name="slide">
+        <div v-if="mobileOpen" class="mobile-panel">
+          <div class="mobile-inner">
+            <ul class="mobile-list">
+              <li v-for="item in navItems" :key="item.key" class="mobile-item">
+                <div v-if="!item.mega">
+                  <NuxtLink :to="resolveTo(item)" class="mobile-link" @click="() => { mobileOpen = false; closeMega(); }">{{ item.label }}</NuxtLink>
+                </div>
+                <div v-else>
+                  <button class="mobile-link-toggle" @click="toggleMobile(item.key)">
+                    <span class="mobile-link-text">{{ item.label }}</span>
+                    <svg class="mobile-chev" :class="{ 'mobile-chev-open': mobileActive === item.key }" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor">
+                      <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <div v-if="mobileActive === item.key" class="mobile-sub">
+                    <div v-for="col in item.megaCols" :key="col.title" class="mobile-col">
+                      <h5 class="mobile-col-title">{{ col.title }}</h5>
+                      <ul class="mobile-sub-list">
+                        <li v-for="link in col.links" :key="link.label" class="mobile-sub-item">
+                          <a
+                            href="#"
+                            class="mobile-sub-link"
+                            @click.prevent="() => handleMobileLink(link)"
                           >
                             {{ link.label }}
-                          </NuxtLink>
+                          </a>
                         </li>
                       </ul>
                     </div>
                   </div>
                 </div>
+              </li>
+            </ul>
+            <div class="mobile-actions">
+              <div class="mobile-currency">
+                <select v-model="selectedCurrency" class="mobile-currency-select" @change="selectCurrency(selectedCurrency)">
+                  <option v-for="c in currencies" :key="c" :value="c">{{ c }}</option>
+                </select>
               </div>
-            </li>
-          </ul>
-        </nav>
-
-        <div class="right">
-          <button class="icon-btn search-btn" @click="showSearch = true" aria-label="Search">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="6" />
-              <path d="M21 21l-4.35-4.35" />
-            </svg>
-          </button>
-
-          <!-- Currency Dropdown - Removed mouseleave from container -->
-          <div class="currency">
-            <button 
-              class="currency-btn" 
-              @click="toggleCurrencyMenu" 
-              :aria-expanded="showCurrency" 
-              aria-haspopup="true" 
-              ref="currencyButton"
-            >
-              <span class="currency-text">{{ selectedCurrency }}</span>
-              <svg 
-                class="chev-sm" 
-                :class="{ 'chev-sm-open': showCurrency }" 
-                viewBox="0 0 24 24" 
-                aria-hidden 
-                fill="none" 
-                stroke="currentColor"
-              >
-                <path d="M6 9l6 6 6-6" stroke-width="2" />
-              </svg>
-            </button>
-
-            <div 
-              v-if="showCurrency" 
-              class="currency-menu" 
-              role="menu"
-              ref="currencyMenu"
-            >
-              <ul>
-                <li v-for="c in currencies" :key="c">
-                  <button class="currency-item" @click="selectCurrency(c)">{{ c }}</button>
-                </li>
-              </ul>
+              <NuxtLink :to="resolveTo({ to: '/inquire' })" class="mobile-cta" @click="mobileOpen = false">INQUIRE NOW</NuxtLink>
             </div>
           </div>
-
-          <NuxtLink to="/inquire" class="cta">INQUIRE NOW</NuxtLink>
-
-          <button class="hamburger" @click="mobileOpen = !mobileOpen" :aria-expanded="mobileOpen" aria-label="Open menu">
-            <svg v-if="!mobileOpen" class="icon" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else class="icon" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
         </div>
-      </div>
-    </div>
-
-    <!-- Mobile Navigation Panel -->
-    <transition name="slide">
-      <div v-if="mobileOpen" class="mobile-panel">
-        <div class="mobile-inner">
-          <ul class="mobile-list">
-            <li v-for="item in navItems" :key="item.key" class="mobile-item">
-              <div v-if="!item.mega">
-                <NuxtLink :to="item.to" class="mobile-link" @click="mobileOpen = false">{{ item.label }}</NuxtLink>
-              </div>
-              <div v-else>
-                <button class="mobile-link-toggle" @click="toggleMobile(item.key)">
-                  <span class="mobile-link-text">{{ item.label }}</span>
-                  <svg class="mobile-chev" :class="{ 'mobile-chev-open': mobileActive === item.key }" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor">
-                    <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                <div v-if="mobileActive === item.key" class="mobile-sub">
-                  <div v-for="col in item.megaCols" :key="col.title" class="mobile-col">
-                    <h5 class="mobile-col-title">{{ col.title }}</h5>
-                    <ul class="mobile-sub-list">
-                      <li v-for="link in col.links" :key="link.label" class="mobile-sub-item">
-                        <NuxtLink :to="link.to" class="mobile-sub-link" @click="mobileOpen = false">{{ link.label }}</NuxtLink>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </li>
-          </ul>
-
-          <div class="mobile-actions">
-            <div class="mobile-currency">
-              <select v-model="selectedCurrency" class="mobile-currency-select" @change="selectCurrency(selectedCurrency)">
-                <option v-for="c in currencies" :key="c" :value="c">{{ c }}</option>
-              </select>
+      </transition>
+      <!-- Search Overlay -->
+      <transition name="fade">
+        <div v-if="showSearch" class="search-overlay" role="dialog" aria-modal="true">
+          <div class="search-box">
+            <input v-model="searchQuery" @keydown.enter="performSearch" ref="searchInput" class="search-input" placeholder="Search tours, parks, routes, articles..." />
+            <div class="search-actions">
+              <button class="btn" @click="performSearch">Search</button>
+              <button class="btn alt" @click="closeSearch">Close</button>
             </div>
-            <NuxtLink to="/inquire" class="mobile-cta" @click="mobileOpen = false">INQUIRE NOW</NuxtLink>
           </div>
         </div>
-      </div>
-    </transition>
-
-    <!-- Search Overlay -->
-    <transition name="fade">
-      <div v-if="showSearch" class="search-overlay" role="dialog" aria-modal="true">
-        <div class="search-box">
-          <input v-model="searchQuery" @keydown.enter="performSearch" ref="searchInput" class="search-input" placeholder="Search tours, parks, routes, articles..." />
-          <div class="search-actions">
-            <button class="btn" @click="performSearch">Search</button>
-            <button class="btn alt" @click="closeSearch">Close</button>
-          </div>
-        </div>
-      </div>
-    </transition>
-  </header>
+      </transition>
+    </header>
+  </ClientOnly>
 </template>
 
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-
 const router = useRouter()
 const route = useRoute()
-
-// UI state
+// UI
 const mobileOpen = ref(false)
 const mobileActive = ref(null)
 const openMega = ref(null)
@@ -212,37 +209,43 @@ const searchQuery = ref('')
 const showCurrency = ref(false)
 const selectedCurrency = ref('USD')
 const currencies = ['USD','EUR','TZS']
-
-// Track if menu was opened by click (to keep it open) or hover
+// Hover/click state for mega
 const menuOpenedByClick = ref(false)
 const isMouseOverPanel = ref(false)
 const isMouseOverTrigger = ref(false)
-
-// Refs for currency dropdown
+// DOM refs
 const currencyButton = ref(null)
 const currencyMenu = ref(null)
-
-// NAV items - Modified for better tablet display
+const triggerRefs = ref({})
+const panelRefs = ref({})
+const panelPositions = ref({})
+const EDGE = 14
+// NAV items — park links marked with type:'park'
 const navItems = [
   {
     key: 'safari',
     label: 'Safari',
     mega: true,
     megaCols: [
-      { title: 'Parks', links: [
-        { label: 'Serengeti', to: '/tanzania-safari/parks/serengeti' },
-        { label: 'Ngorongoro', to: '/tanzania-safari/parks/ngorongoro' },
-        { label: 'Tarangire', to: '/tanzania-safari/parks/tarangire' },
-      ]},
-      { title: 'Tours', links: [
-       { label: 'All Safari Tours', to: { path: '/tours', query: { category: 'wildlife-safari' } } },
-{ label: 'Family Safaris', to: { path: '/tours', query: { category: 'wildlife-safari' } } },
-
-      ]},
-      { title: 'Resources', links: [
-        { label: 'Packing List', to: '/tanzania-safari/packing-list' },
-        { label: 'Articles', to: '/articles' },
-      ]}
+      {
+        title: 'Parks', links: [
+          { label: 'Serengeti', type: 'park', slug: 'serengeti' },
+          { label: 'Ngorongoro', type: 'park', slug: 'ngorongoro' },
+          { label: 'Tarangire', type: 'park', slug: 'tarangire' },
+        ]
+      },
+      {
+        title: 'Tours', links: [
+          { label: 'All Safari Tours', to: { path: '/tours', query: { category: 'wildlife-safari' } } },
+          { label: 'Family Safaris', to: { path: '/tours', query: { category: 'wildlife-safari', family: '1' } } },
+        ]
+      },
+      {
+        title: 'Resources', links: [
+          { label: 'Packing List', to: '/tanzania-safari/packing-list' },
+          { label: 'Articles', to: '/articles' },
+        ]
+      }
     ]
   },
   {
@@ -250,18 +253,24 @@ const navItems = [
     label: 'Trekking',
     mega: true,
     megaCols: [
-      { title: 'Routes', links: [
-        { label: 'Lemosho', to: '/climbing-kilimanjaro/routes/lemosho' },
-        { label: 'Machame', to: '/climbing-kilimanjaro/routes/machame' },
-        { label: 'Marangu', to: '/climbing-kilimanjaro/routes/marangu' },
-      ]},
-      { title: 'Planning', links: [
-        { label: 'Packing List', to: '/climbing-kilimanjaro/packing-list' },
-        { label: 'Guides & Porters', to: '/climbing-kilimanjaro/guides-and-porters' },
-      ]},
-      { title: 'Tours', links: [
-        { label: 'Kilimanjaro Tours', to: { path: '/tours', query: { category: 'kilimanjaro-climb' } } },
-      ]}
+      {
+        title: 'Routes', links: [
+          { label: 'Lemosho', to: '/climbing-kilimanjaro/routes/lemosho' },
+          { label: 'Machame', to: '/climbing-kilimanjaro/routes/machame' },
+          { label: 'Marangu', to: '/climbing-kilimanjaro/routes/marangu' },
+        ]
+      },
+      {
+        title: 'Planning', links: [
+          { label: 'Packing List', to: '/climbing-kilimanjaro/packing-list' },
+          { label: 'Guides & Porters', to: '/climbing-kilimanjaro/guides-and-porters' },
+        ]
+      },
+      {
+        title: 'Tours', links: [
+          { label: 'Kilimanjaro Tours', to: { path: '/tours', query: { category: 'kilimanjaro-climb' } } },
+        ]
+      }
     ]
   },
   { key: 'experiences', label: 'Experiences', to: '/experiences', mega: false },
@@ -271,74 +280,44 @@ const navItems = [
   { key: 'blog', label: 'Blog', to: '/blog', mega: false },
   { key: 'contact', label: 'Contact', to: '/contacts', mega: false },
 ]
-
-
-watch(() => route.path, () => {
-  openMega.value = null
-  menuOpenedByClick.value = false
-})
-
-// helpers
-function isActive(item) { if (!item.to) return false; return route.path.startsWith(item.to) }
+// Utilities
+function resolveTo(itemOrLink) {
+  const candidate = itemOrLink && itemOrLink.to !== undefined ? itemOrLink.to : itemOrLink
+  if (candidate === null || candidate === undefined) return '/'
+  if (typeof candidate === 'string') return String(candidate)
+  if (typeof candidate === 'object') {
+    // shallow clone object (path + query)
+    const obj = {}
+    if (candidate.path) obj.path = candidate.path
+    if (candidate.name) obj.name = candidate.name
+    obj.query = { ...(candidate.query || {}) }
+    return obj
+  }
+  return '/'
+}
+function isActive(item) {
+  if (!item) return false
+  const to = item.to
+  if (!to) return false
+  try {
+    const path = typeof to === 'string' ? to : (to.path || '')
+    return route.path.startsWith(path)
+  } catch {
+    return false
+  }
+}
 function toggleMobile(key) { mobileActive.value = mobileActive.value === key ? null : key }
-
-// search
-function closeSearch(){ showSearch.value = false; searchQuery.value = '' }
-function performSearch(){ if(!searchQuery.value) return; router.push({ path: '/search', query: { q: searchQuery.value } }); showSearch.value = false }
-
-// currency functions
-function toggleCurrencyMenu() {
-  showCurrency.value = !showCurrency.value
-}
-
-function selectCurrency(c) { 
-  selectedCurrency.value = c; 
-  showCurrency.value = false; // Close after selection
-  try { localStorage.setItem('zafs_currency', c) } catch(e){} 
-}
-
-// Function to handle clicks outside currency dropdown
-function handleClickOutside(event) {
-  // Check if click is outside currency button and menu
-  const isClickInsideCurrencyButton = currencyButton.value && currencyButton.value.contains(event.target)
-  const isClickInsideCurrencyMenu = currencyMenu.value && currencyMenu.value.contains(event.target)
-  
-  // If currency menu is open and click is outside, close it
-  if (showCurrency.value && !isClickInsideCurrencyButton && !isClickInsideCurrencyMenu) {
-    showCurrency.value = false
-  }
-  
-  // Check if click is outside mega menu triggers and panels
-  const isClickInsideTrigger = Object.values(triggerRefs.value).some(trigger => 
-    trigger && trigger.contains(event.target)
-  )
-  const isClickInsidePanel = Object.values(panelRefs.value).some(panel => 
-    panel && panel.contains(event.target)
-  )
-  
-  if (!isClickInsideTrigger && !isClickInsidePanel && openMega.value) {
-    openMega.value = null
-    menuOpenedByClick.value = false
-  }
-}
-
-// Mega menu functions
 function toggleMegaMenu(key) {
   if (openMega.value === key) {
-    // Close if clicking the same menu
     openMega.value = null
     menuOpenedByClick.value = false
   } else {
-    // Open new menu
     openMega.value = key
     menuOpenedByClick.value = true
-    // Position the panel
     positionPanel(key)
   }
 }
-
 async function handleMouseEnter(key) {
-  // Only open on hover if not already opened by click
   if (!menuOpenedByClick.value) {
     openMega.value = key
     isMouseOverTrigger.value = true
@@ -346,91 +325,145 @@ async function handleMouseEnter(key) {
     await positionPanel(key)
   }
 }
-
 function handleMouseLeave() {
   isMouseOverTrigger.value = false
-  // Close on mouse leave only if menu wasn't opened by click
   if (!menuOpenedByClick.value) {
     openMega.value = null
   }
 }
-
-function handlePanelMouseEnter() {
-  isMouseOverPanel.value = true
-}
-
+function handlePanelMouseEnter() { isMouseOverPanel.value = true }
 function handlePanelMouseLeave() {
   isMouseOverPanel.value = false
-  // Close on mouse leave only if menu wasn't opened by click
-  if (!menuOpenedByClick.value) {
-    openMega.value = null
-  }
+  if (!menuOpenedByClick.value) openMega.value = null
 }
-
 function handleBlur() {
-  // Only handle blur if not hovering over panel
   if (!isMouseOverPanel.value) {
     openMega.value = null
     menuOpenedByClick.value = false
   }
 }
-
-function handleMegaLinkClick() {
-  // Close mega menu when a link is clicked
+function closeMega() {
   openMega.value = null
   menuOpenedByClick.value = false
 }
-
-onMounted(() => { 
-  try { 
-    const saved = localStorage.getItem('zafs_currency'); 
-    if (saved) selectedCurrency.value = saved 
-  } catch(e){}
-  
-  // Close mobile menu when route changes
-  const unwatch = watch(() => route.path, () => {
-    mobileOpen.value = false
+async function handleLinkClick(link) {
+  // debug log to console to help diagnose steps
+  console.debug('[Navbar] click -> current route:', route.fullPath, 'link:', link)
+  closeMega()
+  mobileOpen.value = false
+  mobileActive.value = null
+  // Park type link: always /parks?search=...
+  if (link.type === 'park') {
+    await goToPark(link)
+    return
+  }
+  // If link.to is string -> direct navigateTo
+  if (link.to && typeof link.to === 'string') {
+    const url = String(link.to)
+    console.debug('[Navbar] navigating to (string):', url)
+    await navigateTo(url).catch(()=>{})
+    return
+  }
+  // If link.to is object and has path -> navigateTo with path and query
+  if (link.to && typeof link.to === 'object') {
+    if (link.to.path) {
+      const navigation = { path: link.to.path, query: link.to.query || {} }
+      console.debug('[Navbar] navigating to (object path):', navigation)
+      await navigateTo(navigation).catch(err => { console.debug('[Navbar] navigateTo error', err) })
+      return
+    }
+    // If only name is present, use navigateTo with name + query
+    if (link.to.name) {
+      console.debug('[Navbar] navigating to named route:', link.to.name, link.to.query || {})
+      await navigateTo({ name: link.to.name, query: link.to.query || {} }).catch(()=>{})
+      return
+    }
+    // Defensive fallback: if object lacks path and name but contains query only, try to deduce:
+    if (link.to.query) {
+      // best-effort: if link label contains 'tour' or 'tour', prefer /tours
+      const label = (link.label || '').toLowerCase()
+      const preferPath = label.includes('tour') ? '/tours' : '/'
+      const navigation = { path: preferPath, query: link.to.query || {} }
+      console.debug('[Navbar] fallback navigating to:', navigation)
+      await navigateTo(navigation).catch(()=>{})
+      return
+    }
+  }
+  // External href
+  if (link.href) {
+    console.debug('[Navbar] navigating to href:', link.href)
+    try { window.location.href = link.href } catch(e) { await navigateTo(String(link.href)).catch(()=>{}) }
+    return
+  }
+  // Nothing actionable
+  console.debug('[Navbar] handleLinkClick: nothing to navigate for link', link)
+}
+/* Programmatic park navigation */
+async function goToPark(link) {
+  const term = (link.slug && String(link.slug)) ? String(link.slug).replace(/[-_]+/g, ' ') : (link.label || '')
+  const navigation = { path: '/parks', query: term ? { search: term } : {} }
+  console.debug('[Navbar] goToPark ->', navigation)
+  await navigateTo(navigation).catch(()=>{})
+}
+/* Mobile handler uses same centralized function */
+async function handleMobileLink(link) {
+  await handleLinkClick(link)
+}
+/* Site search overlay */
+function openSiteSearch() {
+  showSearch.value = true
+  nextTick(() => {
+    try {
+      const el = document.querySelector('.search-input')
+      if (el && typeof el.focus === 'function') el.focus()
+    } catch {}
   })
-  
-  // Add click outside listener for both mega menu and currency dropdown
-  document.addEventListener('click', handleClickOutside)
-  
-  onBeforeUnmount(() => {
-    unwatch()
-    document.removeEventListener('click', handleClickOutside)
-  })
-})
-
-// --------------------
-// Mega panel positioning
-// --------------------
-const triggerRefs = ref({})
-const panelRefs = ref({})
-const panelPositions = ref({})
-const EDGE = 14
-
-function setTriggerRef(key, el) { 
-  if (el) {
-    triggerRefs.value[key] = el
-  } else {
-    delete triggerRefs.value[key]
+}
+function closeSearch(){ showSearch.value = false; searchQuery.value = '' }
+async function performSearch(){
+  if(!searchQuery.value) return;
+  await navigateTo({ path: '/search', query: { q: searchQuery.value } }).catch(()=>{})
+  showSearch.value = false
+}
+/* Currency */
+function toggleCurrencyMenu() { showCurrency.value = !showCurrency.value }
+function selectCurrency(c) {
+  selectedCurrency.value = c
+  showCurrency.value = false
+  try { localStorage.setItem('zafs_currency', c) } catch(e){}
+}
+/* Click outside handler */
+function handleClickOutside(event) {
+  const isClickInsideCurrencyButton = currencyButton.value && currencyButton.value.contains(event.target)
+  const isClickInsideCurrencyMenu = currencyMenu.value && currencyMenu.value.contains(event.target)
+  if (showCurrency.value && !isClickInsideCurrencyButton && !isClickInsideCurrencyMenu) {
+    showCurrency.value = false
+  }
+  const isClickInsideTrigger = Object.values(triggerRefs.value || {}).some(trigger =>
+    trigger && trigger.contains(event.target)
+  )
+  const isClickInsidePanel = Object.values(panelRefs.value || {}).some(panel =>
+    panel && panel.contains(event.target)
+  )
+  if (!isClickInsideTrigger && !isClickInsidePanel && openMega.value) {
+    openMega.value = null
+    menuOpenedByClick.value = false
   }
 }
-
-function setPanelRef(key, el) { 
-  if (el) {
-    panelRefs.value[key] = el
-  } else {
-    delete panelRefs.value[key]
-  }
+/* Panel positioning helpers */
+function setTriggerRef(key, el) {
+  if (el) triggerRefs.value[key] = el
+  else delete triggerRefs.value[key]
 }
-
+function setPanelRef(key, el) {
+  if (el) panelRefs.value[key] = el
+  else delete panelRefs.value[key]
+}
 async function positionPanel(key) {
   await nextTick()
   const trigger = triggerRefs.value[key]
   const panel = panelRefs.value[key]
   if (!trigger || !panel) return
-  
   const t = trigger.getBoundingClientRect()
   const p = panel.getBoundingClientRect()
   const vw = window.innerWidth
@@ -442,47 +475,39 @@ async function positionPanel(key) {
   const parent = panel.offsetParent || document.body
   const parentRect = parent.getBoundingClientRect()
   const leftRelative = clamped - parentRect.left
-  
-  panelPositions.value[key] = { 
-    left: Math.round(leftRelative), 
-    width: Math.round(p.width) 
+  panelPositions.value[key] = {
+    left: Math.round(leftRelative),
+    width: Math.round(p.width)
   }
 }
-
 function panelStyle(key) {
   const pos = panelPositions.value[key]
-
-  // When panel is closed, force pointer-events:none
-  if (openMega.value !== key) {
-    return {
-      pointerEvents: 'none'
-    }
-  }
-
-  // When panel is open
+  if (openMega.value !== key) return { pointerEvents: 'none' }
   if (!pos) return { left: '50%', transform: 'translateX(-50%)' }
-
-  return {
-    left: pos.left + 'px',
-    width: pos.width + 'px',
-    transform: 'none',
-    pointerEvents: 'auto'
-  }
+  return { left: pos.left + 'px', width: pos.width + 'px', transform: 'none', pointerEvents: 'auto' }
 }
-
-
 function onResize() {
-  // Only recalculate mega panel position on desktop (width > 1024px)
-  if (window.innerWidth > 1024 && openMega.value) {
-    positionPanel(openMega.value)
-  }
+  if (window.innerWidth > 1024 && openMega.value) positionPanel(openMega.value)
 }
-
-onMounted(() => { 
-  window.addEventListener('resize', onResize, { passive: true }) 
+/* Lifecycle */
+let unwatchRoute = null
+onMounted(() => {
+  try {
+    const saved = localStorage.getItem('zafs_currency')
+    if (saved) selectedCurrency.value = saved
+  } catch(e){}
+  unwatchRoute = watch(() => route.path, () => {
+    mobileOpen.value = false
+    openMega.value = null
+    menuOpenedByClick.value = false
+  })
+  document.addEventListener('click', handleClickOutside)
+  window.addEventListener('resize', onResize, { passive: true })
 })
-onBeforeUnmount(() => { 
-  window.removeEventListener('resize', onResize) 
+onBeforeUnmount(() => {
+  if (unwatchRoute) unwatchRoute()
+  document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('resize', onResize)
 })
 </script>
 
@@ -495,22 +520,18 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg,#0f6b68 0%, #0d5c5b 100%);
   box-shadow: 0 6px 20px rgba(6, 23, 22, 0.12);
 }
-
-
-.container { 
-  max-width: 1260px; 
-  margin: 0 auto; 
-  padding: 0 22px; 
+.container {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 0 22px;
 }
-
-.row { 
-  height: 72px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
+.row {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
 }
-
 /* Left: logo spacing */
 .left {
   flex: 0 0 auto;
@@ -523,7 +544,6 @@ onBeforeUnmount(() => {
   width: auto;
   object-fit: contain;
 }
-
 /* Center nav */
 .center-nav {
   flex: 1 1 auto;
@@ -532,7 +552,6 @@ onBeforeUnmount(() => {
   min-width: 0;
   overflow: visible;
 }
-
 .nav-list {
   display: flex;
   gap: 28px;
@@ -548,11 +567,10 @@ onBeforeUnmount(() => {
 .nav-item {
   flex-shrink: 0;
 }
-.nav-text { 
-  white-space: nowrap; 
+.nav-text {
+  white-space: nowrap;
   font-size: 14px;
 }
-
 /* Link */
 .nav-link {
   color: rgba(255,255,255,0.98);
@@ -571,53 +589,49 @@ onBeforeUnmount(() => {
   border: none;
   font-family: inherit;
 }
-.nav-link:hover { 
-  color: #ffffff; 
-  transform: translateY(-1px); 
+.nav-link:hover {
+  color: #ffffff;
+  transform: translateY(-1px);
 }
-
 /* Ring hover */
-.nav-ring { 
-  position: absolute; 
-  left: 50%; 
-  transform: translateX(-50%) scale(0.64); 
-  bottom: -16px; 
-  width: 10px; 
-  height: 10px; 
-  border-radius: 9999px; 
-  background: rgba(255,255,255,0.08); 
-  opacity: 0; 
-  transition: transform .18s cubic-bezier(.2,.9,.3,1), opacity .18s; 
+.nav-ring {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) scale(0.64);
+  bottom: -16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.08);
+  opacity: 0;
+  transition: transform .18s cubic-bezier(.2,.9,.3,1), opacity .18s;
 }
-.nav-link:hover .nav-ring, 
-.nav-link.active .nav-ring { 
-  opacity: 1; 
-  transform: translateX(-50%) scale(1); 
-  box-shadow: 0 8px 18px rgba(15,107,104,0.12), inset 0 0 0 6px rgba(255,255,255,0.02); 
+.nav-link:hover .nav-ring,
+.nav-link.active .nav-ring {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  box-shadow: 0 8px 18px rgba(15,107,104,0.12), inset 0 0 0 6px rgba(255,255,255,0.02);
 }
-
 /* Chevron rotation */
-.chev { 
-  width: 14px; 
-  height: 14px; 
-  color: rgba(255,255,255,0.95); 
-  transition: transform .18s ease; 
-  transform-origin: center; 
+.chev {
+  width: 14px;
+  height: 14px;
+  color: rgba(255,255,255,0.95);
+  transition: transform .18s ease;
+  transform-origin: center;
 }
-.chev-open { 
-  transform: rotate(180deg); 
+.chev-open {
+  transform: rotate(180deg);
 }
-
 /* Right actions */
-.right { 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
+.right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
   min-width: 180px; /* Reserve minimum space for right actions */
   justify-content: flex-end;
 }
-
 /* Search button */
 .search-btn {
   width: 40px;
@@ -634,35 +648,33 @@ onBeforeUnmount(() => {
   transition: background .12s ease;
   flex-shrink: 0;
 }
-.search-btn:hover { 
-  background: rgba(255,255,255,0.03); 
+.search-btn:hover {
+  background: rgba(255,255,255,0.03);
 }
-
 /* icon stroke */
-.icon { 
-  width: 18px; 
-  height: 18px; 
-  color: currentColor; 
-  stroke-width: 2; 
-  fill: none; 
+.icon {
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+  stroke-width: 2;
+  fill: none;
 }
-
 /* currency */
-.currency { 
-  position: relative; 
+.currency {
+  position: relative;
   flex-shrink: 0;
 }
-.currency-btn { 
-  display:inline-flex; 
-  align-items:center; 
-  gap:6px; 
-  padding:8px 12px; 
-  border-radius:10px; 
-  background: rgba(255,255,255,0.06); 
-  border:1px solid rgba(255,255,255,0.06); 
-  color:white; 
-  font-weight:600; 
-  cursor:pointer; 
+.currency-btn {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 12px;
+  border-radius:10px;
+  background: rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.06);
+  color:white;
+  font-weight:600;
+  cursor:pointer;
   white-space: nowrap;
   font-size: 14px;
   min-width: 70px;
@@ -673,47 +685,45 @@ onBeforeUnmount(() => {
 .currency-btn[aria-expanded="true"] {
   background: rgba(255,255,255,0.1);
 }
-.currency-menu { 
-  position:absolute; 
-  right:0; 
-  margin-top:10px; 
-  background:#fff; 
-  color:#102a43; 
-  border-radius:10px; 
-  box-shadow:0 14px 40px rgba(7,22,21,0.12); 
-  overflow:hidden; 
-  z-index:1400; 
-  min-width:140px; 
+.currency-menu {
+  position:absolute;
+  right:0;
+  margin-top:10px;
+  background:#fff;
+  color:#102a43;
+  border-radius:10px;
+  box-shadow:0 14px 40px rgba(7,22,21,0.12);
+  overflow:hidden;
+  z-index:1400;
+  min-width:140px;
 }
-.currency-item{ 
-  display:block; 
-  padding:10px 14px; 
-  width:100%; 
-  text-align:left; 
-  border:none; 
-  background:transparent; 
-  cursor:pointer; 
+.currency-item{
+  display:block;
+  padding:10px 14px;
+  width:100%;
+  text-align:left;
+  border:none;
+  background:transparent;
+  cursor:pointer;
   transition: background .12s ease;
 }
-.currency-item:hover { 
-  background: #f0f4f7; 
+.currency-item:hover {
+  background: #f0f4f7;
 }
-
 /* Currency chevron rotation */
-.chev-sm { 
-  width: 12px; 
-  height: 12px; 
-  color: rgba(255,255,255,0.95); 
-  transition: transform .18s ease; 
-  transform-origin: center; 
+.chev-sm {
+  width: 12px;
+  height: 12px;
+  color: rgba(255,255,255,0.95);
+  transition: transform .18s ease;
+  transform-origin: center;
 }
-.chev-sm-open { 
-  transform: rotate(180deg); 
+.chev-sm-open {
+  transform: rotate(180deg);
 }
-
 /* CTA */
 .cta {
-  white-space: nowrap; 
+  white-space: nowrap;
   display: inline-block;
   background: #f3c23b;
   color: #3b2f26;
@@ -732,83 +742,79 @@ onBeforeUnmount(() => {
   transform: translateY(-2px);
   filter: brightness(.96);
 }
-
 /* hamburger visible only on mobile */
-.hamburger { 
-  display: none; 
-  background: transparent; 
-  border: none; 
-  padding: 8px; 
-  color: white; 
-  cursor: pointer; 
+.hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  color: white;
+  cursor: pointer;
   flex-shrink: 0;
 }
-
 /* mega panel */
 .mega-panel {
-  position:absolute; 
-  top:100%; 
+  position:absolute;
+  top:100%;
   margin-top:14px;
-  background:#fff; 
-  border-radius:14px; 
+  background:#fff;
+  border-radius:14px;
   padding:22px;
   box-shadow:0 22px 60px rgba(6,22,21,0.12);
-  opacity:0; 
-  pointer-events:none; 
+  opacity:0;
+  pointer-events:none;
   transform-origin:top center;
-  transform: translateY(-10px);   /* <-- FIX 2 */
-  transition: opacity .14s ease, transform .14s ease; 
+  transform: translateY(-10px);
+  transition: opacity .14s ease, transform .14s ease;
   z-index:1300;
-  min-width:320px; 
-  max-width: min(1040px, 100vw - 20px); /* prevents overflow */
-overflow-x: hidden;
-  white-space:normal; 
-  word-break:break-word; 
+  min-width:320px;
+  max-width: min(1040px, 100vw - 20px);
+  overflow-x: hidden;
+  white-space:normal;
+  word-break:break-word;
   overflow-wrap:anywhere;
-  cursor: default; /* Prevent text cursor */
+  cursor: default;
 }
-.mega-panel.open { 
-  opacity:1; 
-  pointer-events:auto; 
-  transform: translateY(0); 
+.mega-panel.open {
+  opacity:1;
+  pointer-events:auto;
+  transform: translateY(0);
 }
-
 /* inside grid */
-.mega-grid { 
-  display:grid; 
-  grid-template-columns: repeat(3,1fr); 
-  gap:18px; 
+.mega-grid {
+  display:grid;
+  grid-template-columns: repeat(3,1fr);
+  gap:18px;
 }
-.mega-title { 
-  margin:0 0 10px 0; 
-  font-size:13px; 
-  font-weight:800; 
-  color:#0f1720; 
-  text-transform:uppercase; 
+.mega-title {
+  margin:0 0 10px 0;
+  font-size:13px;
+  font-weight:800;
+  color:#0f1720;
+  text-transform:uppercase;
   letter-spacing: 0.5px;
 }
-.mega-link { 
-  display:block; 
-  padding:8px 10px; 
-  color:#334155; 
-  font-size:14px; 
-  text-decoration:none; 
-  border-radius:6px; 
-  transition: background .1s ease, color .1s ease; 
+.mega-link {
+  display:block;
+  padding:8px 10px;
+  color:#334155;
+  font-size:14px;
+  text-decoration:none;
+  border-radius:6px;
+  transition: background .1s ease, color .1s ease;
   cursor: pointer;
 }
-.mega-link:hover { 
-  background:#f8fafb; 
-  color: #0f6b68; 
+.mega-link:hover {
+  background:#f8fafb;
+  color: #0f6b68;
 }
-
 /* mobile styles */
 .mobile-panel {
-  background: linear-gradient(180deg,#0f6b68 0%, #0d5c5b 100%); 
-  color: white; 
+  background: linear-gradient(180deg,#0f6b68 0%, #0d5c5b 100%);
+  color: white;
   border-top:1px solid rgba(255,255,255,0.04);
   position: absolute;
-  top: 72px; 
+  top: 72px;
   left: 0;
   right: 0;
   width: 100%;
@@ -817,15 +823,15 @@ overflow-x: hidden;
   z-index: 990;
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
-.mobile-inner { 
-  padding: 16px 20px 20px; 
+.mobile-inner {
+  padding: 16px 20px 20px;
 }
-.mobile-list { 
-  list-style:none; 
-  margin:0 0 20px 0; 
-  padding:0; 
-  display:grid; 
-  gap: 0; 
+.mobile-list {
+  list-style:none;
+  margin:0 0 20px 0;
+  padding:0;
+  display:grid;
+  gap: 0;
 }
 .mobile-item {
   border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -833,57 +839,55 @@ overflow-x: hidden;
 .mobile-item:last-child {
   border-bottom: none;
 }
-.mobile-link, 
-.mobile-link-toggle { 
-  display:flex; 
-  justify-content:space-between; 
-  align-items:center; 
-  color:white; 
-  font-size:16px; 
-  background:transparent; 
-  border:none; 
-  padding: 14px 0; 
-  width:100%; 
-  text-align:left; 
-  font-weight:600; 
-  cursor: pointer; 
+.mobile-link,
+.mobile-link-toggle {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:white;
+  font-size:16px;
+  background:transparent;
+  border:none;
+  padding: 14px 0;
+  width:100%;
+  text-align:left;
+  font-weight:600;
+  cursor: pointer;
 }
 .mobile-link-text {
   flex: 1;
 }
-
 /* Mobile chevron - smaller and properly sized */
-.mobile-chev { 
-  width: 16px; 
-  height: 16px; 
-  color: rgba(255,255,255,0.7); 
-  transition: transform .18s ease; 
+.mobile-chev {
+  width: 16px;
+  height: 16px;
+  color: rgba(255,255,255,0.7);
+  transition: transform .18s ease;
   transform-origin: center;
   margin-left: 8px;
   flex-shrink: 0;
 }
-.mobile-chev-open { 
-  transform: rotate(180deg); 
+.mobile-chev-open {
+  transform: rotate(180deg);
 }
-
-.mobile-sub { 
-  padding-left: 12px; 
+.mobile-sub {
+  padding-left: 12px;
   margin: 8px 0 12px;
-  background: rgba(255,255,255,0.03); 
-  border-radius: 8px; 
-  padding: 12px 0 8px 16px; 
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  padding: 12px 0 8px 16px;
 }
-.mobile-col { 
-  margin-bottom: 16px; 
+.mobile-col {
+  margin-bottom: 16px;
 }
 .mobile-col:last-child {
   margin-bottom: 0;
 }
-.mobile-col-title { 
-  font-weight:600; 
-  margin-bottom:8px; 
-  font-size: 14px; 
-  color: rgba(255,255,255,0.8); 
+.mobile-col-title {
+  font-weight:600;
+  margin-bottom:8px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -895,15 +899,14 @@ overflow-x: hidden;
 .mobile-sub-item {
   margin-bottom: 4px;
 }
-.mobile-sub-link { 
-  display:block; 
-  padding: 8px 0; 
-  color:rgba(255,255,255,0.92); 
-  text-decoration:none; 
-  font-size: 15px; 
+.mobile-sub-link {
+  display:block;
+  padding: 8px 0;
+  color:rgba(255,255,255,0.92);
+  text-decoration:none;
+  font-size: 15px;
   font-weight: 400;
 }
-
 /* Mobile actions */
 .mobile-actions {
   display: flex;
@@ -912,7 +915,6 @@ overflow-x: hidden;
   padding-top: 16px;
   border-top: 1px solid rgba(255,255,255,0.08);
 }
-
 .mobile-currency-select {
   width: 100%;
   padding: 12px 16px;
@@ -928,99 +930,91 @@ overflow-x: hidden;
   background-repeat: no-repeat;
   background-position: right 16px center;
   background-size: 16px;
-  padding-right: 44px;
 }
-
 .mobile-currency-select option {
   background: #0f6b68;
   color: white;
 }
-
-.mobile-cta { 
-  display:block; 
-  background:#f3c23b; 
-  color:#2b1a12; 
-  padding:16px; 
-  border-radius:12px; 
-  text-align:center; 
-  font-weight:800; 
-  text-decoration: none; 
+.mobile-cta {
+  display:block;
+  background:#f3c23b;
+  color:#2b1a12;
+  padding:16px;
+  border-radius:12px;
+  text-align:center;
+  font-weight:800;
+  text-decoration: none;
   font-size: 16px;
   transition: transform .12s ease;
 }
-
 .mobile-cta:hover {
   transform: translateY(-2px);
 }
-
 /* search overlay */
-.search-overlay { 
-  position:fixed; 
-  inset:0; 
-  background:rgba(0,0,0,0.45); 
-  display:flex; 
-  align-items:flex-start; 
-  justify-content:center; 
-  padding:40px 20px; 
-  z-index:1500; 
+.search-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:40px 20px;
+  z-index:1500;
 }
-.search-box { 
-  background:white; 
-  padding:18px; 
-  border-radius:12px; 
-  max-width:900px; 
-  width:100%; 
-  display:flex; 
-  gap:12px; 
-  align-items:center; 
+.search-box {
+  background:white;
+  padding:18px;
+  border-radius:12px;
+  max-width:900px;
+  width:100%;
+  display:flex;
+  gap:12px;
+  align-items:center;
 }
-.search-input { 
-  flex:1; 
-  padding:12px 14px; 
-  border-radius:8px; 
-  border:1px solid #e6e6e6; 
-  font-size: 16px; 
+.search-input {
+  flex:1;
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid #e6e6e6;
+  font-size: 16px;
 }
-.search-actions { 
-  display:flex; 
-  gap:8px; 
+.search-actions {
+  display:flex;
+  gap:8px;
 }
-.btn { 
-  padding:8px 12px; 
-  border-radius:8px; 
-  background:#0f6b68; 
-  color:white; 
-  border:none; 
-  cursor:pointer; 
-  font-weight: 600; 
+.btn {
+  padding:8px 12px;
+  border-radius:8px;
+  background:#0f6b68;
+  color:white;
+  border:none;
+  cursor:pointer;
+  font-weight: 600;
 }
-.btn.alt { 
-  background:transparent; 
-  color:#334155; 
-  border:1px solid #e6e6e6; 
+.btn.alt {
+  background:transparent;
+  color:#334155;
+  border:1px solid #e6e6e6;
 }
-
 /* transitions */
-.fade-enter-active, 
-.fade-leave-active { 
-  transition: opacity .15s ease; 
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity .15s ease;
 }
-.fade-enter-from, 
-.fade-leave-to { 
-  opacity: 0; 
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
-.slide-enter-active, 
-.slide-leave-active { 
-  transition: all .18s ease; 
+.slide-enter-active,
+.slide-leave-active {
+  transition: all .18s ease;
 }
-.slide-enter-from, 
-.slide-leave-to { 
-  transform: translateY(-8px); 
-  opacity: 0; 
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateY(-8px);
+  opacity: 0;
 }
-
 /* --- RESPONSIVE BREAKPOINTS --- */
-
 /* Large Desktop: 1440px+ */
 @media (min-width: 1440px) {
   .nav-list {
@@ -1030,7 +1024,6 @@ overflow-x: hidden;
     font-size: 15px;
   }
 }
-
 /* Desktop/Tablet Breakpoint: 1280px */
 @media (max-width: 1280px) {
   .nav-list {
@@ -1049,7 +1042,6 @@ overflow-x: hidden;
     min-width: 65px;
   }
 }
-
 /* Tablet Breakpoint: 1180px */
 @media (max-width: 1180px) {
   .nav-list {
@@ -1067,7 +1059,6 @@ overflow-x: hidden;
     font-size: 13px;
   }
 }
-
 /* Tablet Breakpoint: 1100px - Hide some nav items */
 @media (max-width: 1100px) {
   .nav-list {
@@ -1095,7 +1086,6 @@ overflow-x: hidden;
     height: 36px;
   }
 }
-
 /* Tablet Breakpoint: 1050px - Hide more nav items */
 @media (max-width: 1050px) {
   .nav-list {
@@ -1126,20 +1116,18 @@ overflow-x: hidden;
     height: 16px;
   }
 }
-
 /* Switch to mobile navigation: 1024px */
-@media (max-width: 1024px) { 
-  .hamburger { 
-    display: inline-block; 
+@media (max-width: 1024px) {
+  .hamburger {
+    display: inline-block;
   }
-  
+ 
   /* Hide desktop navigation and elements */
   .center-nav,
   .currency,
   .cta {
     display: none;
   }
-
   /* Layout adjustments */
   .logo {
     height: 48px;
@@ -1161,18 +1149,17 @@ overflow-x: hidden;
     width: 18px;
     height: 18px;
   }
-  
+ 
   /* Adjust header height for mobile */
   .row {
     height: 68px;
   }
-  
+ 
   .mobile-panel {
     top: 68px;
     max-height: calc(100vh - 68px);
   }
 }
-
 /* Small Tablet: 768px */
 @media (max-width: 768px) {
   .container {
@@ -1192,13 +1179,12 @@ overflow-x: hidden;
     width: 38px;
     height: 38px;
   }
-  
+ 
   .mobile-panel {
     top: 64px;
     max-height: calc(100vh - 64px);
   }
-  
-  /* Mobile menu adjustments */
+ 
   .mobile-inner {
     padding: 16px 18px 20px;
   }
@@ -1216,7 +1202,6 @@ overflow-x: hidden;
     padding: 7px 0;
   }
 }
-
 /* Mobile: 640px */
 @media (max-width: 640px) {
   .container {
@@ -1233,13 +1218,12 @@ overflow-x: hidden;
     width: 36px;
     height: 36px;
   }
-  
+ 
   .mobile-panel {
     top: 60px;
     max-height: calc(100vh - 60px);
   }
-  
-  /* Mobile panel adjustments */
+ 
   .mobile-inner {
     padding: 14px 16px 18px;
   }
@@ -1262,7 +1246,6 @@ overflow-x: hidden;
     background-position: right 12px center;
   }
 }
-
 /* Small Mobile: 480px */
 @media (max-width: 480px) {
   .row {
@@ -1276,13 +1259,12 @@ overflow-x: hidden;
     width: 34px;
     height: 34px;
   }
-  
+ 
   .mobile-panel {
     top: 56px;
     max-height: calc(100vh - 56px);
   }
-  
-  /* Mobile menu adjustments */
+ 
   .mobile-inner {
     padding: 12px 14px 16px;
   }
@@ -1313,7 +1295,7 @@ overflow-x: hidden;
     font-size: 14px;
     padding: 10px 14px 10px 40px;
   }
-  
+ 
   /* Search overlay adjustments */
   .search-overlay {
     padding: 20px 16px;
@@ -1336,7 +1318,6 @@ overflow-x: hidden;
     font-size: 15px;
   }
 }
-
 /* Extra Small Mobile: 360px */
 @media (max-width: 360px) {
   .container {
@@ -1360,12 +1341,12 @@ overflow-x: hidden;
     width: 16px;
     height: 16px;
   }
-  
+ 
   .mobile-panel {
     top: 52px;
     max-height: calc(100vh - 52px);
   }
-  
+ 
   .mobile-inner {
     padding: 10px 12px 14px;
   }

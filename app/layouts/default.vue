@@ -22,7 +22,9 @@ const noPaddingPaths = [
   '/tours',      // Tours index page
   '/animals',    // Animals index page
   '/parks',      // Parks index page
-  '/islands'     // ADD THIS LINE - Islands index page
+  '/islands',     // Islands index page
+  '/routes',      // Routes index page
+  '/zanzibar'     // Zanzibar index page
 ]
 
 const mainClasses = computed(() => {

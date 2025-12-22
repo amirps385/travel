@@ -22,22 +22,26 @@
           >
             <span
               class="inline-flex items-center justify-center w-7 h-7 rounded-lg"
-              :class="isActive(item.to) ? 'bg-slate-800 text-slate-50' : 'bg-slate-100 text-slate-500'"
+              :class="isActive(item.to)
+                ? 'bg-slate-800 text-slate-50'
+                : 'bg-slate-100 text-slate-500'"
             >
               <span v-if="item.icon === 'dashboard'">📊</span>
               <span v-else-if="item.icon === 'leads'">👥</span>
               <span v-else-if="item.icon === 'tours'">🧭</span>
+              <span v-else-if="item.icon === 'routes'">🗺️</span>
+              <span v-else-if="item.icon === 'parks'">🏞️</span>
+              <span v-else-if="item.icon === 'islands'">🏝️</span>
+              <span v-else-if="item.icon === 'zanzibar'">🏝️</span>
+              <span v-else-if="item.icon === 'animals'">🦁</span>
               <span v-else-if="item.icon === 'itineraries'">📄</span>
               <span v-else-if="item.icon === 'hotels'">🏨</span>
               <span v-else-if="item.icon === 'activities'">📍</span>
               <span v-else-if="item.icon === 'transfers'">🚐</span>
               <span v-else-if="item.icon === 'cities'">🌆</span>
-              <span v-else-if="item.icon === 'animals'">🦁</span>
-              <span v-else-if="item.icon === 'parks'">🏞️</span>
-              <span v-else-if="item.icon === 'islands'">🏝️</span>
-
               <span v-else>•</span>
             </span>
+
             <span class="text-sm font-medium">{{ item.label }}</span>
           </NuxtLink>
         </nav>
@@ -45,7 +49,7 @@
 
       <!-- MAIN CONTENT -->
       <section class="flex-1">
-        <!-- Top header -->
+        <!-- TOP HEADER -->
         <div
           class="bg-white/90 backdrop-blur rounded-2xl shadow border border-slate-100 px-5 md:px-7 py-4 flex items-center justify-between mb-6"
         >
@@ -68,11 +72,11 @@
                 />
               </svg>
             </div>
+
             <div>
               <p class="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">
                 {{ currentSectionLabel }}
               </p>
-
               <h1 class="text-xl md:text-2xl font-bold text-slate-900">
                 {{ headerTitle }}
               </h1>
@@ -93,12 +97,12 @@
           </div>
         </div>
 
-        <!-- here each dashboard page is rendered -->
+        <!-- PAGE CONTENT -->
         <slot />
       </section>
     </div>
 
-    <!-- Mobile top bar (instead of sidebar) -->
+    <!-- MOBILE HEADER -->
     <div class="md:hidden px-4 pb-4">
       <div
         class="bg-white/90 backdrop-blur rounded-2xl shadow border border-slate-100 px-5 py-4 flex items-center justify-between"
@@ -125,13 +129,23 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-// --- admin nav (includes Islands) ---
+/* -------------------------
+   SIDEBAR NAV ITEMS
+------------------------- */
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/admin/dashboard/leads', label: 'Leads', icon: 'leads' },
   { to: '/admin/dashboard/tours', label: 'Tours', icon: 'tours' },
+
+  // ✅ ROUTES ADDED HERE
+  { to: '/admin/dashboard/routes', label: 'Routes', icon: 'routes' },
+
   { to: '/admin/dashboard/parks', label: 'Parks', icon: 'parks' },
   { to: '/admin/dashboard/islands', label: 'Islands', icon: 'islands' },
+
+  // 👉 Zanzibar admin section
+  { to: '/admin/dashboard/zanzibar', label: 'Zanzibar', icon: 'zanzibar' },
+
   { to: '/admin/dashboard/animals', label: 'Animals', icon: 'animals' },
   { to: '/admin/dashboard/itineraries', label: 'Itineraries', icon: 'itineraries' },
   { to: '/admin/dashboard/hotels', label: 'Hotels', icon: 'hotels' },
@@ -140,25 +154,27 @@ const navItems = [
   { to: '/admin/dashboard/cities', label: 'Cities', icon: 'cities' }
 ]
 
-// isActive: treat '/admin' as active (if you want), and match children via startsWith
+/* -------------------------
+   ACTIVE STATE
+------------------------- */
 const isActive = (to) => {
   if (!to) return false
-  // exact match
   if (route.path === to) return true
-  // allow admin root to be considered active for dashboard
-  if (to === '/admin/dashboard' && (route.path === '/admin' || route.path === '/admin/')) return true
-  // children
+  if (to === '/admin/dashboard' && route.path === '/admin') return true
   return to !== '/admin/dashboard' && route.path.startsWith(to)
 }
 
-// header title / subtitle logic for admin routes (uses /admin prefix)
-// NOTE: checks for Islands placed before the default to avoid fallback
+/* -------------------------
+   HEADER TITLE
+------------------------- */
 const headerTitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Dashboard Overview'
   if (route.path.startsWith('/admin/dashboard/leads')) return 'Leads Management'
   if (route.path.startsWith('/admin/dashboard/tours')) return 'Tours'
+  if (route.path.startsWith('/admin/dashboard/routes')) return 'Kilimanjaro Routes'
   if (route.path.startsWith('/admin/dashboard/parks')) return 'National Parks'
   if (route.path.startsWith('/admin/dashboard/islands')) return 'Islands'
+  if (route.path.startsWith('/admin/dashboard/zanzibar')) return 'Zanzibar Experiences'
   if (route.path.startsWith('/admin/dashboard/animals')) return 'Animals'
   if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Itineraries'
   if (route.path.startsWith('/admin/dashboard/hotels')) return 'Hotels'
@@ -168,7 +184,9 @@ const headerTitle = computed(() => {
   return 'Dashboard'
 })
 
-
+/* -------------------------
+   HEADER SUBTITLE
+------------------------- */
 const headerSubtitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard')
     return 'Welcome to your admin dashboard'
@@ -179,26 +197,32 @@ const headerSubtitle = computed(() => {
   if (route.path.startsWith('/admin/dashboard/tours'))
     return 'Manage safari packages, pricing and images.'
 
+  if (route.path.startsWith('/admin/dashboard/routes'))
+    return 'Create Kilimanjaro routes, itineraries, group climbs and SEO.'
+
   if (route.path.startsWith('/admin/dashboard/parks'))
-    return 'Manage national parks, regions, wildlife highlights, and SEO.'
+    return 'Manage national parks, wildlife highlights and SEO.'
 
   if (route.path.startsWith('/admin/dashboard/islands'))
-    return 'Manage island pages, images and metadata.'
+    return 'Manage island pages and content.'
+
+  if (route.path.startsWith('/admin/dashboard/zanzibar'))
+    return 'Manage Zanzibar experiences, itineraries, galleries and FAQs.'
 
   if (route.path.startsWith('/admin/dashboard/animals'))
-    return 'Manage wildlife species, images, and content.'
+    return 'Manage wildlife species and images.'
 
   if (route.path.startsWith('/admin/dashboard/itineraries'))
-    return 'Review and edit created itineraries.'
+    return 'Review and edit itineraries.'
 
   if (route.path.startsWith('/admin/dashboard/hotels'))
-    return 'Configure hotel partners & pricing.'
+    return 'Configure hotel partners.'
 
   if (route.path.startsWith('/admin/dashboard/activities'))
-    return 'Manage activities available for trips.'
+    return 'Manage available activities.'
 
   if (route.path.startsWith('/admin/dashboard/transfers'))
-    return 'Set up transfers and local transport.'
+    return 'Manage transport and transfers.'
 
   if (route.path.startsWith('/admin/dashboard/cities'))
     return 'Organise cities and regions.'
@@ -206,12 +230,17 @@ const headerSubtitle = computed(() => {
   return ''
 })
 
-
+/* -------------------------
+   SECTION LABEL
+------------------------- */
 const currentSectionLabel = computed(() => {
   const item = navItems.find((i) => isActive(i.to))
   return item?.label || 'Dashboard'
 })
 
+/* -------------------------
+   DATE
+------------------------- */
 const today = computed(() => {
   const d = new Date()
   return d.toLocaleDateString(undefined, {

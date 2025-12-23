@@ -20,10 +20,10 @@
           <FeaturesSection />
         </section>
 
-        <!-- 2) SERVICES WE OFFER (bold blue band) -->
+        <!-- 2) SERVICES WE OFFER (bold blue band) 
         <section aria-labelledby="section-offer">
           <Offer />
-        </section>
+        </section> -->
 
         <!-- 3) WHY CHOOSE US (trust section) -->
         <section aria-labelledby="section-why-choose">

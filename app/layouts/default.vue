@@ -24,7 +24,12 @@ const noPaddingPaths = [
   '/parks',      // Parks index page
   '/islands',     // Islands index page
   '/routes',      // Routes index page
-  '/zanzibar'     // Zanzibar index page
+  '/zanzibar',     // Zanzibar index page
+  '/contact',    // Contact page
+  '/about',      // About page
+  '/blog',        // Blog index page
+  '/gallery',      // Gallery index page
+  '/experiences' // Experiences index page
 ]
 
 const mainClasses = computed(() => {

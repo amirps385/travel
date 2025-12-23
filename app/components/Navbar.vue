@@ -275,10 +275,10 @@ const navItems = [
   },
   { key: 'experiences', label: 'Experiences', to: '/experiences', mega: false },
   { key: 'zanzibar', label: 'Zanzibar', to: '/zanzibar', mega: false },
-  { key: 'about', label: 'About', to: '/about-us', mega: false },
+  { key: 'about', label: 'About', to: '/about', mega: false },
   { key: 'gallery', label: 'Gallery', to: '/gallery', mega: false },
   { key: 'blog', label: 'Blog', to: '/blog', mega: false },
-  { key: 'contact', label: 'Contact', to: '/contacts', mega: false },
+  { key: 'contact', label: 'Contact', to: '/contact', mega: false },
 ]
 // Utilities
 function resolveTo(itemOrLink) {

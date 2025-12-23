@@ -67,7 +67,7 @@ const stats = ref([
   {
     key: 'itineraries',
     title: 'Itineraries',
-    value: 42,
+    value: 0,
     subtitle: 'Created itineraries',
     icon: '📄',
     colorClass: 'bg-violet-50 text-violet-600'
@@ -97,6 +97,14 @@ function setStatValue (key, value) {
 }
 
 onMounted(async () => {
+  // ITINERARIES count (fetch first so dashboard shows it ASAP)
+  try {
+    const its = await $fetch('/api/itineraries').catch(() => [])
+    setStatValue('itineraries', (its || []).length)
+  } catch (err) {
+    console.error('Failed to load itineraries for stats', err)
+  }
+
   // LEADS -> New Leads + Total Leads
   try {
     const leads = await $fetch('/api/leads')

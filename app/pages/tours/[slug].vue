@@ -89,7 +89,7 @@
 
     <!-- Tour Content -->
     <div v-else-if="tour" class="max-w-7xl mx-auto px-4 py-8">
-      <!-- Hero Section (unchanged) -->
+      <!-- Hero Section -->
       <div class="relative rounded-3xl overflow-hidden shadow-2xl mb-12">
         <div 
           v-if="heroImage"
@@ -128,7 +128,7 @@
               {{ tour.title }}
             </h1>
 
-            <!-- Meta information (unchanged) -->
+            <!-- Meta information -->
             <div class="flex flex-wrap items-center gap-6 text-white/90 mb-8">
               <div class="flex items-center">
                 <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mr-3">
@@ -169,7 +169,7 @@
           </div>
         </div>
 
-        <!-- Quick Action Button (unchanged) -->
+        <!-- Quick Action Button -->
         <div class="absolute top-6 right-6">
           <button
             @click="scrollToBooking"
@@ -190,7 +190,7 @@
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-12">
 
-          <!-- Overview Section (unchanged) -->
+          <!-- Overview Section -->
           <section class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-8">
             <div class="flex items-center mb-8">
               <div class="w-12 h-12 rounded-2xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mr-4">
@@ -239,7 +239,7 @@
             </div>
           </section>
 
-          <!-- Highlights Section - UPDATED: show parsed title & description -->
+          <!-- Highlights Section -->
           <section class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-8">
             <div class="flex items-center mb-8">
               <div class="w-12 h-12 rounded-2xl bg-linear-to-br from-amber-500 to-amber-600 flex items-center justify-center mr-4">
@@ -285,10 +285,8 @@
             </div>
           </section>
 
-          <!-- rest of page unchanged... (Gallery, Itinerary etc) -->
           <!-- Gallery Section -->
           <section v-if="imagesList.length > 1" class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-8">
-            <!-- ... unchanged ... -->
             <div class="flex items-center justify-between mb-8">
               <div class="flex items-center">
                 <div class="w-12 h-12 rounded-2xl bg-linear-to-br from-sky-500 to-sky-600 flex items-center justify-center mr-4">
@@ -318,9 +316,8 @@
             </div>
           </section>
 
-          <!-- Itinerary Section (unchanged) -->
+          <!-- Itinerary Section -->
           <section class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-8">
-            <!-- itinerary rendering kept as-is (use getSampleItinerary fallback) -->
             <div class="flex items-center mb-8">
               <div class="w-12 h-12 rounded-2xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center mr-4">
                 <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -335,13 +332,17 @@
 
             <div class="space-y-6">
               <template v-if="tour.itinerary && tour.itinerary.length">
-                <div v-for="day in tour.itinerary" :key="day.day || day.title || Math.random()" class="bg-linear-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6">
+                <div
+                  v-for="(day, idx) in tour.itinerary"
+                  :key="(day.day ?? idx) + '-' + (day.title ?? idx)"
+                  class="bg-linear-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6"
+                >
                   <div class="flex items-start">
                     <div class="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mr-4 shrink-0">
-                      <span class="text-white font-bold">Day {{ day.day }}</span>
+                      <span class="text-white font-bold">Day {{ (day.day ?? (idx + 1)) }}</span>
                     </div>
                     <div>
-                      <h3 class="font-bold text-gray-900 text-lg mb-2">{{ day.title }}</h3>
+                      <h3 class="font-bold text-gray-900 text-lg mb-2">{{ day.title || `Day ${ (day.day ?? (idx+1)) }` }}</h3>
                       <p class="text-gray-700">{{ day.description }}</p>
                       <div class="flex flex-wrap gap-2 mt-4">
                         <span v-for="activity in (day.activities || [])" :key="activity" class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg border border-emerald-100">
@@ -381,11 +382,9 @@
           </section>
         </div>
 
-        <!-- Sidebar (unchanged) -->
+        <!-- Sidebar -->
         <div class="lg:col-span-1">
           <div class="sticky top-6 space-y-8">
-            <!-- Booking Card and quick facts etc. kept the same -->
-            <!-- ... -->
             <div class="bg-linear-to-br from-emerald-50 to-white rounded-2xl shadow-xl border border-emerald-200 p-8">
               <h3 class="text-2xl font-bold text-gray-900 mb-6">Book This Tour</h3>
               <div class="mb-8">
@@ -411,7 +410,6 @@
               </div>
             </div>
 
-            <!-- Quick Facts etc. (kept same) -->
             <div class="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6">
               <h4 class="font-bold text-gray-900 mb-6 text-lg">Quick Facts</h4>
               <div class="space-y-4">
@@ -463,9 +461,9 @@
         </div>
       </div>
 
-      <!-- Related Tours (unchanged) -->
+      <!-- Related Tours -->
       <section v-if="relatedTours.length" class="mt-24">
-        <!-- ... -->
+        <!-- ... optional related tours markup ... -->
       </section>
 
       <!-- Bottom CTA -->
@@ -474,7 +472,7 @@
       </div>
     </div>
 
-    <!-- Lightbox (unchanged) -->
+    <!-- Lightbox -->
     <div v-if="lightboxOpen && imagesList.length" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4" @click="closeLightbox" role="dialog" aria-modal="true">
       <button @click.stop="closeLightbox" class="absolute top-6 right-6 text-white hover:text-amber-300 transition-colors z-60" aria-label="Close gallery">
         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -576,7 +574,6 @@ function _extractString(value) {
         const v = value[k]
         if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v).trim()
         if (typeof v === 'object') {
-          // nested object: try 'en' or any string child
           if ('en' in v && (typeof v.en === 'string' || typeof v.en === 'number')) return String(v.en).trim()
           for (const sub of Object.values(v)) {
             if (typeof sub === 'string' || typeof sub === 'number' || typeof sub === 'boolean') return String(sub).trim()
@@ -584,7 +581,6 @@ function _extractString(value) {
         }
       }
     }
-    // fall back: try to find any primitive child
     for (const child of Object.values(value)) {
       if (typeof child === 'string' || typeof child === 'number' || typeof child === 'boolean') return String(child).trim()
       if (Array.isArray(child)) {
@@ -592,7 +588,6 @@ function _extractString(value) {
         if (join) return join
       }
     }
-    // last resort stringification
     try {
       return JSON.stringify(value)
     } catch (e) {
@@ -602,32 +597,22 @@ function _extractString(value) {
   return String(value)
 }
 
-// remove trailing pipes (common corruption) and collapse long repeated pipes
 function _cleanText(s) {
   if (!s) return ''
-  // collapse >3 pipes into single '|||' for splitting (preserve original double-pipes if user used)
   let out = String(s)
-  // replace long sequences of pipes with '|||'
   out = out.replace(/\|{4,}/g, '|||')
-  // trim trailing/leading pipes and whitespace
   out = out.replace(/^\|+/, '').replace(/\|+$/, '').trim()
   return out
 }
 
-/* parsedHighlights: robustly handle many shapes:
-   - string "title|||description"
-   - JSON string '{"title":"t","description":"d"}'
-   - object { title, description } or nested shapes
-*/
+/* parsedHighlights: robustly handle many shapes */
 const parsedHighlights = computed(() => {
   const t = tour.value
   if (!t || !Array.isArray(t.highlights)) return []
   return t.highlights.map(item => {
     if (item === null || item === undefined) return { title: '', description: '' }
 
-    // If item is an object, try to extract meaningful title & description
     if (typeof item === 'object') {
-      // quick check: any field contains '|||' (someone stored combined string inside an object)
       for (const v of Object.values(item)) {
         if (typeof v === 'string' && v.includes('|||')) {
           const s = _cleanText(v)
@@ -641,14 +626,12 @@ const parsedHighlights = computed(() => {
       const title = _cleanText(_extractString(rawTitle))
       const description = _cleanText(_extractString(rawDesc))
 
-      // if both empty, flatten the whole object to string and try to split
       if (!title && !description) {
         const flat = _cleanText(_extractString(item))
         if (flat.includes('|||')) {
           const [left, ...rest] = flat.split('|||')
           return { title: (left || '').trim(), description: (rest.join('|||') || '').trim() }
         }
-        // if flat contains JSON-like content, try parse again
         try {
           const parsed = typeof flat === 'string' && flat.startsWith('{') ? JSON.parse(flat) : null
           if (parsed && typeof parsed === 'object') {
@@ -660,24 +643,20 @@ const parsedHighlights = computed(() => {
         return { title: flat || '', description: '' }
       }
 
-      // clean trailing pipe junk (some stored values had many trailing pipes)
       const cleanedTitle = title.replace(/\|+$/g, '').trim()
       const cleanedDesc = description.replace(/\|+$/g, '').trim()
       return { title: cleanedTitle, description: cleanedDesc }
     }
 
-    // item is primitive (string/number)
     const sRaw = String(item || '').trim()
     if (!sRaw) return { title: '', description: '' }
 
-    // if string contains delimiter "|||", split on first occurrence
     if (sRaw.includes('|||')) {
       const cleaned = _cleanText(sRaw)
       const [left, ...rest] = cleaned.split('|||')
       return { title: (left || '').trim(), description: (rest.join('|||') || '').trim() }
     }
 
-    // try JSON parse (maybe stored as JSON string)
     try {
       const parsed = JSON.parse(sRaw)
       if (parsed && typeof parsed === 'object') {
@@ -685,21 +664,16 @@ const parsedHighlights = computed(() => {
         const d2 = _cleanText(_extractString(parsed.description ?? parsed.desc ?? parsed.body ?? parsed.text ?? ''))
         return { title: t2, description: d2 }
       }
-    } catch (e) {
-      // not JSON - continue
-    }
+    } catch (e) {}
 
-    // fallback: treat entire string as title (clean pipes)
     return { title: _cleanText(sRaw), description: '' }
   }).map(h => {
-    // final safety: ensure strings, trim trailing pipe characters left behind
     return {
       title: (h.title || '').toString().replace(/\|+$/g, '').trim(),
       description: (h.description || '').toString().replace(/\|+$/g, '').trim()
     }
   })
 })
-
 
 // lightbox state
 const lightboxOpen = ref(false)
@@ -710,7 +684,7 @@ const nextImage = () => { if (imagesList.value && lightboxIndex.value < imagesLi
 const prevImage = () => { if (lightboxIndex.value > 0) lightboxIndex.value-- }
 const scrollToBooking = () => { const bookingCard = document.querySelector('.sticky.top-6'); if (bookingCard) bookingCard.scrollIntoView({ behavior: 'smooth' }) }
 
-// helper functions (same heuristics as before)
+// helper functions
 const getTourType = (tourObj) => {
   const title = tourObj?.title?.toLowerCase() || ''
   if (title.includes('safari') || title.includes('serengeti') || title.includes('ngorongoro')) return 'Wildlife Safari'
@@ -772,13 +746,11 @@ const getAgeRange = (tourObj) => {
   }
 }
 
-// sample itinerary (unchanged)
+// sample itinerary (fallback)
 const getSampleItinerary = (tourObj) => {
   const duration = (tourObj?.nights != null) ? (tourObj.nights + 1) : (tourObj?.duration ?? 7)
   const type = getTourType(tourObj)
-  const itineraries = { /* same sample data as before - omitted for brevity in this function block; paste your existing sample blocks if needed */ }
-
-  // fallback generic
+  const itineraries = {}
   return itineraries[type]?.slice(0, duration) || Array.from({ length: duration }, (_, i) => ({
     day: i + 1,
     title: `Day ${i + 1}: Adventure Continues`,
@@ -820,15 +792,8 @@ definePageMeta({ layout: 'default' })
 </script>
 
 <style scoped>
-/* prevent highlight/key chips from behaving like links (no pointer cursor) */
 .no-link { cursor: default; }
-
-/* Custom scrollbar for lightbox */
 body.lightbox-open { overflow: hidden; }
-
-/* Smooth transitions */
 .prose p { margin-bottom: 1em; line-height: 1.7; }
-
-/* Safari theme pattern */
 .bg-safari-pattern { /* keep your existing pattern if needed */ }
 </style>

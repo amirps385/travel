@@ -501,16 +501,25 @@ async function openEditModal(t) {
     }
 
     // deep clone to avoid mutating array
-    form.value = JSON.parse(JSON.stringify(tourObj || {}))
+    const cloned = JSON.parse(JSON.stringify(tourObj || {}))
 
-    // normalize arrays & itinerary structure
-    form.value.highlights = form.value.highlights || []
-    form.value.activities = form.value.activities || []
-    form.value.keyLocations = form.value.keyLocations || []
-    form.value.itinerary = (form.value.itinerary || []).map(d => ({ ...(d || {}), activities: d?.activities || [], activitiesInput: '' }))
+    // Normalize arrays & itinerary structure — ensure day number present
+    cloned.highlights = cloned.highlights || []
+    cloned.activities = cloned.activities || []
+    cloned.keyLocations = cloned.keyLocations || []
+    cloned.itinerary = (cloned.itinerary || []).map((d, idx) => {
+      const safe = d || {}
+      return {
+        day: Number(safe.day ?? (idx + 1)),
+        title: safe.title ?? `Day ${idx + 1}`,
+        description: safe.description ?? '',
+        activities: Array.isArray(safe.activities) ? safe.activities : (safe.activities ? String(safe.activities).split(',').map(s=>s.trim()).filter(Boolean) : []),
+        activitiesInput: ''
+      }
+    })
 
     // normalize highlights to objects {title, description}
-    form.value.highlights = (form.value.highlights || []).map(h => {
+    cloned.highlights = (cloned.highlights || []).map(h => {
       if (!h) return { title: '', description: '' }
       if (typeof h === 'string') {
         const str = h.trim()
@@ -531,33 +540,34 @@ async function openEditModal(t) {
       }
     }).filter(h => h.title || h.description)
 
-    if (!form.value.highlights.length) form.value.highlights = [{ title: '', description: '' }]
+    if (!cloned.highlights.length) cloned.highlights = [{ title: '', description: '' }]
 
     // pre-populate suggestion filters for existing highlights
-    form.value.highlights.forEach((_, idx) => {
+    cloned.highlights.forEach((_, idx) => {
       highlightSuggestionsFilteredByIndex[idx] = []
     })
 
     // parse bestTime into two selects if possible
-    if (form.value.bestTime && typeof form.value.bestTime === 'string' && form.value.bestTime.includes('-')) {
-      const parts = form.value.bestTime.split('-').map(s => s.trim())
+    if (cloned.bestTime && typeof cloned.bestTime === 'string' && cloned.bestTime.includes('-')) {
+      const parts = cloned.bestTime.split('-').map(s => s.trim())
       bestTimeFrom.value = parts[0] || ''
       bestTimeTo.value = parts[1] || ''
     } else {
-      bestTimeFrom.value = (form.value.bestTime && typeof form.value.bestTime === 'string' && months.includes(form.value.bestTime)) ? form.value.bestTime : ''
+      bestTimeFrom.value = (cloned.bestTime && typeof cloned.bestTime === 'string' && months.includes(cloned.bestTime)) ? cloned.bestTime : ''
       bestTimeTo.value = ''
     }
 
-    groupMin.value = form.value.groupSize?.min ?? 2
-    groupMax.value = form.value.groupSize?.max ?? 12
+    groupMin.value = cloned.groupSize?.min ?? 2
+    groupMax.value = cloned.groupSize?.max ?? 12
 
-    if (!ageRangeOptions.includes(form.value.ageRange) && form.value.ageRange) {
-      customAgeRange.value = form.value.ageRange
-      form.value.ageRange = 'custom'
+    if (!ageRangeOptions.includes(cloned.ageRange) && cloned.ageRange) {
+      customAgeRange.value = cloned.ageRange
+      cloned.ageRange = 'custom'
     } else {
       customAgeRange.value = ''
     }
 
+    form.value = cloned
     isEditing.value = true
     showModal.value = true
   } catch (err) {
@@ -704,10 +714,22 @@ function filterActivitySuggestions() {
 
 /* ---------- itinerary helpers (with per-day suggestions) ---------- */
 function addItineraryDay() {
-  form.value.itinerary.push({ title: `Day ${form.value.itinerary.length + 1}`, description: '', activities: [], activitiesInput: '' })
+  const next = (form.value.itinerary?.length ?? 0) + 1
+  form.value.itinerary.push({
+    day: next,
+    title: `Day ${next}`,
+    description: '',
+    activities: [],
+    activitiesInput: ''
+  })
+  itineraryActivitySuggestions[form.value.itinerary.length - 1] = []
 }
 function removeItineraryDay(i) { 
   form.value.itinerary.splice(i,1)
+  // re-index remaining days so day numbers remain sequential
+  for (let j = 0; j < form.value.itinerary.length; j++) {
+    form.value.itinerary[j].day = j + 1
+  }
   delete itineraryActivitySuggestions[i]
 }
 function pushDayActivities(dayIdx) {
@@ -797,6 +819,18 @@ async function saveTour() {
   // normalize highlights to array of objects before sending (server expects {title, description})
   const payload = JSON.parse(JSON.stringify(form.value))
   payload.highlights = normalizeHighlightsForSave(payload.highlights)
+
+  // Ensure itinerary day numbering is set and sequential before save
+  if (Array.isArray(payload.itinerary)) {
+    payload.itinerary = payload.itinerary.map((d, i) => ({
+      day: Number(d?.day ?? (i + 1)),
+      title: d?.title ?? `Day ${i + 1}`,
+      description: d?.description ?? '',
+      activities: Array.isArray(d?.activities) ? d.activities : (d?.activities ? String(d.activities).split(',').map(s => s.trim()).filter(Boolean) : [])
+    }))
+  } else {
+    payload.itinerary = []
+  }
 
   try {
     if (isEditing.value && payload._id) {

@@ -29,10 +29,15 @@
           <option v-for="s in statusOptions" :key="s.key" :value="s.key">{{ s.label }}</option>
         </select>
 
+        <select v-model="leadPriorityFilter" class="border rounded-lg px-3 py-2 text-sm">
+          <option value="all">All priorities</option>
+          <option v-for="p in priorityOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
+        </select>
+
         <select v-model="leadSort" class="border rounded-lg px-3 py-2 text-sm">
           <option value="createdDesc">Newest</option>
           <option value="createdAsc">Oldest</option>
-          <option value="priorityDesc">Priority</option>
+          <option value="priorityDesc">Priority (High to Low)</option>
         </select>
 
         <div class="ml-auto flex gap-2">
@@ -65,6 +70,7 @@
               <th class="p-3">Trip</th>
               <th class="p-3">Source</th>
               <th class="p-3">Status</th>
+              <th class="p-3">Priority</th>
               <th class="p-3">Owner</th>
               <th class="p-3 text-right">Actions</th>
             </tr>
@@ -120,6 +126,16 @@
                 </span>
               </td>
 
+              <!-- PRIORITY -->
+              <td class="p-3">
+                <span
+                  class="px-3 py-1 rounded-full text-xs font-semibold inline-block"
+                  :class="priorityPillClass(lead.priority)"
+                >
+                  {{ priorityLabelFrom(lead.priority) }}
+                </span>
+              </td>
+
               <!-- OWNER -->
               <td class="p-3 text-slate-600">
                 {{ lead.assignedTo?.name || 'Unassigned' }}
@@ -145,13 +161,13 @@
             </tr>
 
             <tr v-if="!sortedFilteredLeads.length && !isLoading">
-              <td colspan="7" class="p-6 text-center text-xs text-slate-500">
+              <td colspan="8" class="p-6 text-center text-xs text-slate-500">
                 No leads found
               </td>
             </tr>
 
             <tr v-if="isLoading">
-              <td colspan="7" class="p-6 text-center text-xs text-slate-500">
+              <td colspan="8" class="p-6 text-center text-xs text-slate-500">
                 Loading leads…
               </td>
             </tr>
@@ -186,7 +202,12 @@
                     <input v-model="editForm.email" placeholder="Email" class="border rounded px-2 py-1 text-sm" />
                     <div class="flex gap-1">
                       <input v-model="editForm.countryCode" placeholder="+255" class="w-20 border rounded px-2 py-1 text-sm" />
-                      <input v-model="editForm.phone" placeholder="Phone" class="border rounded px-2 py-1 text-sm" />
+                      <input 
+                        v-model="editForm.phone" 
+                        placeholder="Phone (10 digits)" 
+                        class="border rounded px-2 py-1 text-sm"
+                        @input="validatePhoneNumber"
+                      />
                     </div>
                   </div>
                 </div>
@@ -198,13 +219,15 @@
                   <strong class="ml-2">{{ selectedLead.leadSourceDetail || selectedLead.source || 'form' }}</strong>
                 </div>
 
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg" :class="scoreBadgeClass(selectedLead.score)">
-                  <strong class="text-sm">{{ selectedLead.score ?? 0 }}</strong>
-                  <span class="text-xs text-slate-700">Score</span>
-                </div>
-
-                <div v-if="selectedLead.priority" class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-sm font-medium">
-                  {{ selectedLead.priority }}
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg" :class="priorityBadgeClass(selectedLead.priority)">
+                  <strong class="text-sm">{{ priorityLabelFrom(selectedLead.priority) }}</strong>
+                  <span class="text-xs text-slate-700">Priority</span>
+                  <button 
+                    class="ml-2 text-xs text-slate-500 hover:text-slate-700"
+                    @click="openPriorityModal"
+                  >
+                    ✏️
+                  </button>
                 </div>
 
                 <div v-if="selectedLead.assignedTo?.name" class="px-3 py-1.5 rounded-lg bg-slate-50 text-sm font-medium border">
@@ -213,7 +236,7 @@
               </div>
             </div>
 
-            <div class="flex-shrink-0 flex items-center gap-2">
+            <div class="shrink-0 flex items-center gap-2">
               <div v-if="!isEditingLead" class="flex items-center gap-2">
                 <button class="px-4 py-2 rounded-lg bg-white border" @click="openStatusModal(selectedLead)">Change status</button>
 
@@ -240,7 +263,7 @@
 
           <!-- SUMMARY STRIP -->
           <div class="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4 border-b">
-            <div class="p-4 rounded-xl bg-gradient-to-r from-white to-slate-50 border flex items-center justify-between">
+            <div class="p-4 rounded-xl bg-linear-to-r from-white to-slate-50 border flex items-center justify-between">
               <div>
                 <div class="text-xs text-slate-500">Status</div>
                 <div class="mt-1 text-lg font-semibold">{{ statusLabelFrom(selectedLead.status) }}</div>
@@ -249,16 +272,19 @@
               <div class="text-3xl">{{ statusIcon(selectedLead.status) }}</div>
             </div>
 
-            <div class="p-4 rounded-xl bg-gradient-to-r from-white to-slate-50 border">
-              <div class="text-xs text-slate-500">Next follow-up</div>
-              <div class="mt-1 text-lg font-semibold">{{ selectedLead.nextFollowUpAt ? formatDateTime(selectedLead.nextFollowUpAt) : 'Not set' }}</div>
-              <div class="mt-2 text-xs text-slate-400">Set or schedule a follow-up below</div>
+            <div class="p-4 rounded-xl bg-linear-to-r from-white to-slate-50 border">
+              <div class="text-xs text-slate-500">Priority</div>
+              <div class="mt-1 text-lg font-semibold">{{ priorityLabelFrom(selectedLead.priority) }}</div>
+              <div class="mt-2 text-xs text-slate-400">
+                <span v-if="selectedLead.priorityUpdatedBy">Updated by: {{ selectedLead.priorityUpdatedBy }}</span>
+                <span v-else>Not set</span>
+              </div>
             </div>
 
-            <div class="p-4 rounded-xl bg-gradient-to-r from-white to-slate-50 border">
+            <div class="p-4 rounded-xl bg-linear-to-r from-white to-slate-50 border">
               <div class="text-xs text-slate-500">Last activity</div>
               <div class="mt-1 text-lg font-semibold">{{ lastEventSummary(selectedLead) }}</div>
-              <div class="mt-2 text-xs text-slate-400">Events: {{ (selectedLead.events || []).length }}</div>
+              <div class="mt-2 text-xs text-slate-400">By: {{ lastEventBy(selectedLead) || '—' }}</div>
             </div>
           </div>
 
@@ -306,7 +332,7 @@
                     </div>
                     <div>
                       <label class="block text-xs text-slate-500 mb-1">Email</label>
-                      <input v-model="editForm.email" class="w-full border rounded px-2 py-1" />
+                      <input v-model="editForm.email" type="email" class="w-full border rounded px-2 py-1" />
                     </div>
                     <div class="flex gap-2">
                       <div class="w-28">
@@ -314,13 +340,22 @@
                         <input v-model="editForm.countryCode" placeholder="+255" class="w-full border rounded px-2 py-1" />
                       </div>
                       <div class="flex-1">
-                        <label class="block text-xs text-slate-500 mb-1">Phone</label>
-                        <input v-model="editForm.phone" class="w-full border rounded px-2 py-1" />
+                        <label class="block text-xs text-slate-500 mb-1">Phone (10 digits)</label>
+                        <input 
+                          v-model="editForm.phone" 
+                          type="tel" 
+                          class="w-full border rounded px-2 py-1"
+                          @input="validatePhoneNumber"
+                          maxlength="10"
+                        />
+                        <div v-if="editForm.phone && editForm.phone.length !== 10" class="text-xs text-rose-600 mt-1">
+                          Phone number must be 10 digits
+                        </div>
                       </div>
                     </div>
                     <div>
                       <label class="block text-xs text-slate-500 mb-1">Age</label>
-                      <input type="number" v-model.number="editForm.age" class="w-full border rounded px-2 py-1" />
+                      <input type="number" v-model.number="editForm.age" min="1" max="120" class="w-full border rounded px-2 py-1" />
                     </div>
                     <div>
                       <label class="block text-xs text-slate-500 mb-1">Origin city</label>
@@ -420,25 +455,49 @@
 
               <!-- Tasks -->
               <div class="border rounded-xl p-4 bg-slate-50/60">
-                <h3 class="text-xs font-semibold text-slate-500 mb-2">Tasks</h3>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-xs font-semibold text-slate-500">Tasks</h3>
+                  <span class="text-xs text-slate-400">{{ tasksForSelectedLead.length }} tasks</span>
+                </div>
                 <div v-if="tasksForSelectedLead.length" class="space-y-2">
                   <div v-for="t in tasksForSelectedLead" :key="t.id" class="flex items-start justify-between gap-3 bg-white p-3 rounded-lg border">
                     <div class="flex-1">
                       <div class="font-medium text-slate-900">{{ t.title }}</div>
-                      <div class="text-xs text-slate-500">{{ formatDateTime(t.due) }}</div>
                       <div v-if="t.note" class="text-xs text-slate-400 mt-1">{{ t.note }}</div>
+                      <div class="flex items-center gap-3 mt-2">
+                        <span class="text-xs text-slate-500">{{ formatDateTime(t.due) }}</span>
+                        <span class="text-xs text-slate-400">•</span>
+                        <span class="text-xs text-slate-400">
+                          Created by: {{ t.createdBy || currentUser.name }} • {{ formatDateShort(t.createdAt) }}
+                        </span>
+                        <span v-if="t.updatedBy" class="text-xs text-slate-400">
+                          • Updated by: {{ t.updatedBy }} • {{ formatDateShort(t.updatedAt) }}
+                        </span>
+                      </div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right flex items-start gap-2">
                       <select 
-                        v-model="t.completed" 
+                        v-model="t.status" 
                         @change="updateTaskStatus(t)"
                         class="text-xs border rounded px-2 py-1"
                       >
-                        <option :value="false">Open</option>
-                        <option :value="true">Completed</option>
+                        <option v-for="status in taskStatusOptions" :key="status.value" :value="status.value">
+                          {{ status.label }}
+                        </option>
                       </select>
-                      <div class="text-xs text-slate-500 mt-2">
-                        {{ formatDateTime(t.createdAt) }}
+                      <div class="flex flex-col gap-1">
+                        <button 
+                          class="text-xs text-sky-600 hover:text-sky-800"
+                          @click="openEditTaskModal(t)"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          class="text-xs text-rose-600 hover:text-rose-800"
+                          @click="deleteTask(t)"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -448,15 +507,25 @@
 
               <!-- Notes -->
               <div class="border rounded-xl p-4 bg-slate-50/60">
-                <h3 class="text-xs font-semibold text-slate-500 mb-2">Notes</h3>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-xs font-semibold text-slate-500">Notes</h3>
+                  <span class="text-xs text-slate-400">{{ notesForSelectedLead.length }} notes</span>
+                </div>
                 <div v-if="notesForSelectedLead.length" class="space-y-2">
                   <div v-for="note in notesForSelectedLead" :key="note.id" class="flex items-start justify-between gap-3 bg-white p-3 rounded-lg border">
                     <div class="flex-1">
                       <div class="font-medium text-slate-900">{{ note.title || 'Note' }}</div>
                       <div class="text-sm text-slate-700 mt-1">{{ note.content }}</div>
-                      <div class="text-xs text-slate-500 mt-2">{{ formatDateTime(note.createdAt) }}</div>
+                      <div class="flex items-center gap-3 mt-2">
+                        <span class="text-xs text-slate-400">
+                          Created by: {{ note.by?.name || currentUser.name }} • {{ formatDateShort(note.createdAt) }}
+                        </span>
+                        <span v-if="note.updatedBy" class="text-xs text-slate-400">
+                          • Updated by: {{ note.updatedBy }} • {{ formatDateShort(note.updatedAt) }}
+                        </span>
+                      </div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right flex items-start gap-2">
                       <select 
                         v-model="note.status" 
                         @change="updateNoteStatus(note)"
@@ -466,12 +535,20 @@
                         <option value="archived">Archived</option>
                         <option value="resolved">Resolved</option>
                       </select>
-                      <button 
-                        class="text-xs text-rose-600 mt-2 block"
-                        @click="deleteNote(note)"
-                      >
-                        Delete
-                      </button>
+                      <div class="flex flex-col gap-1">
+                        <button 
+                          class="text-xs text-sky-600 hover:text-sky-800"
+                          @click="openEditNoteModal(note)"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          class="text-xs text-rose-600 hover:text-rose-800"
+                          @click="deleteNote(note)"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -480,19 +557,27 @@
 
               <!-- Calls -->
               <div class="border rounded-xl p-4 bg-slate-50/60">
-                <h3 class="text-xs font-semibold text-slate-500 mb-2">Calls</h3>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-xs font-semibold text-slate-500">Calls</h3>
+                  <span class="text-xs text-slate-400">{{ callsForSelectedLead.length }} calls</span>
+                </div>
                 <div v-if="callsForSelectedLead.length" class="space-y-2">
                   <div v-for="call in callsForSelectedLead" :key="call.id" class="flex items-start justify-between gap-3 bg-white p-3 rounded-lg border">
                     <div class="flex-1">
                       <div class="font-medium text-slate-900">{{ call.title || 'Call' }}</div>
                       <div class="text-sm text-slate-700 mt-1">{{ call.summary }}</div>
-                      <div class="flex gap-3 mt-2">
+                      <div class="flex flex-wrap items-center gap-3 mt-2">
                         <span class="text-xs text-slate-500">Duration: {{ call.duration }}m</span>
                         <span class="text-xs text-slate-500">Outcome: {{ call.outcome }}</span>
+                        <span class="text-xs text-slate-400">
+                          • Logged by: {{ call.by?.name || currentUser.name }} • {{ formatDateShort(call.createdAt) }}
+                        </span>
+                        <span v-if="call.updatedBy" class="text-xs text-slate-400">
+                          • Updated by: {{ call.updatedBy }} • {{ formatDateShort(call.updatedAt) }}
+                        </span>
                       </div>
-                      <div class="text-xs text-slate-500 mt-1">{{ formatDateTime(call.createdAt) }}</div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right flex items-start gap-2">
                       <select 
                         v-model="call.status" 
                         @change="updateCallStatus(call)"
@@ -503,12 +588,20 @@
                         <option value="missed">Missed</option>
                         <option value="cancelled">Cancelled</option>
                       </select>
-                      <button 
-                        class="text-xs text-rose-600 mt-2 block"
-                        @click="deleteCall(call)"
-                      >
-                        Delete
-                      </button>
+                      <div class="flex flex-col gap-1">
+                        <button 
+                          class="text-xs text-sky-600 hover:text-sky-800"
+                          @click="openEditCallModal(call)"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          class="text-xs text-rose-600 hover:text-rose-800"
+                          @click="deleteCall(call)"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -522,6 +615,7 @@
                   <div v-for="doc in selectedLead.documents" :key="doc.url" class="flex items-center gap-3">
                     <a :href="doc.url" target="_blank" class="text-emerald-600 font-medium text-sm">{{ doc.name || 'document' }}</a>
                     <div class="text-xs text-slate-500">{{ formatDateTime(doc.uploadedAt) }}</div>
+                    <div class="text-xs text-slate-400">Uploaded by: {{ doc.uploadedBy || '—' }}</div>
                   </div>
                 </div>
               </div>
@@ -546,7 +640,7 @@
                       <div class="flex items-start justify-between gap-2">
                         <div>
                           <div class="font-medium text-slate-900">{{ eventTitle(ev) }}</div>
-                          <div class="text-xs text-slate-500">{{ ev.by?.name || ev.by || 'System' }} • {{ formatDateTime(ev.at) }}</div>
+                          <div class="text-xs text-slate-500">{{ ev.by?.name || ev.by || currentUser.name }} • {{ formatDateTime(ev.at) }}</div>
                         </div>
                         <div class="text-xs text-slate-400">{{ ev.metadata?.short || '' }}</div>
                       </div>
@@ -565,7 +659,7 @@
                   <div v-for="l in logsForSelectedLead" :key="l.at + l.type" class="flex items-start justify-between gap-2">
                     <div>
                       <div class="font-medium text-slate-900">{{ eventTitle(l) }}</div>
-                      <div class="text-xs text-slate-500">{{ l.by?.name || l.by || 'System' }} • {{ formatDateTime(l.at) }}</div>
+                      <div class="text-xs text-slate-500">{{ l.by?.name || l.by || currentUser.name }} • {{ formatDateTime(l.at) }}</div>
                       <div v-if="l.metadata?.short" class="text-xs text-slate-400 mt-1">{{ l.metadata.short }}</div>
                     </div>
                     <div class="text-xs text-slate-400">{{ l.type }}</div>
@@ -584,10 +678,24 @@
       <div v-if="showAddNote" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
         <div class="w-full max-w-2xl bg-white rounded-2xl p-6">
           <h3 class="text-lg font-semibold mb-3">Add note</h3>
-          <textarea v-model="noteText" rows="6" class="w-full border rounded p-3"></textarea>
+          <textarea v-model="noteText" rows="6" class="w-full border rounded p-3" placeholder="Enter note content..."></textarea>
           <div class="mt-4 flex justify-end gap-2">
             <button class="px-4 py-2 rounded border" @click="closeAddNote">Cancel</button>
             <button class="px-4 py-2 rounded bg-emerald-600 text-white" @click="addNote" :disabled="!noteText.trim()">Save note</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODALS: Edit Note -->
+    <transition name="fade">
+      <div v-if="showEditNote" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-2xl bg-white rounded-2xl p-6">
+          <h3 class="text-lg font-semibold mb-3">Edit note</h3>
+          <textarea v-model="editNoteText" rows="6" class="w-full border rounded p-3"></textarea>
+          <div class="mt-4 flex justify-end gap-2">
+            <button class="px-4 py-2 rounded border" @click="closeEditNote">Cancel</button>
+            <button class="px-4 py-2 rounded bg-emerald-600 text-white" @click="saveEditedNote" :disabled="!editNoteText.trim()">Update note</button>
           </div>
         </div>
       </div>
@@ -599,20 +707,24 @@
         <div class="w-full max-w-xl bg-white rounded-2xl p-6">
           <h3 class="text-lg font-semibold mb-3">Log call</h3>
           <label class="block text-xs text-slate-500 mb-1">Call summary</label>
-          <textarea v-model="callNote" rows="4" class="w-full border rounded p-3"></textarea>
+          <textarea v-model="callNote" rows="4" class="w-full border rounded p-3" placeholder="Enter call summary..."></textarea>
 
           <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs text-slate-500 mb-1">Duration (mins)</label>
-              <input type="number" v-model.number="callDuration" class="w-full border rounded px-2 py-1" />
+              <input type="number" v-model.number="callDuration" class="w-full border rounded px-2 py-1" min="0" />
             </div>
             <div>
               <label class="block text-xs text-slate-500 mb-1">Outcome</label>
               <select v-model="callOutcome" class="w-full border rounded px-2 py-1">
-                <option value="">Select</option>
+                <option value="">Select outcome</option>
                 <option value="interested">Interested</option>
                 <option value="not-interested">Not interested</option>
                 <option value="follow-up">Needs follow-up</option>
+                <option value="left-voicemail">Left voicemail</option>
+                <option value="no-answer">No answer</option>
+                <option value="callback-requested">Callback requested</option>
+                <option value="information-sent">Information sent</option>
               </select>
             </div>
           </div>
@@ -625,24 +737,107 @@
       </div>
     </transition>
 
+    <!-- MODALS: Edit Call -->
+    <transition name="fade">
+      <div v-if="showEditCall" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-xl bg-white rounded-2xl p-6">
+          <h3 class="text-lg font-semibold mb-3">Edit call</h3>
+          <label class="block text-xs text-slate-500 mb-1">Call summary</label>
+          <textarea v-model="editCallNote" rows="4" class="w-full border rounded p-3"></textarea>
+
+          <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">Duration (mins)</label>
+              <input type="number" v-model.number="editCallDuration" class="w-full border rounded px-2 py-1" min="0" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">Outcome</label>
+              <select v-model="editCallOutcome" class="w-full border rounded px-2 py-1">
+                <option value="">Select outcome</option>
+                <option value="interested">Interested</option>
+                <option value="not-interested">Not interested</option>
+                <option value="follow-up">Needs follow-up</option>
+                <option value="left-voicemail">Left voicemail</option>
+                <option value="no-answer">No answer</option>
+                <option value="callback-requested">Callback requested</option>
+                <option value="information-sent">Information sent</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-4 flex justify-end gap-2">
+            <button class="px-4 py-2 rounded border" @click="closeEditCall">Cancel</button>
+            <button class="px-4 py-2 rounded bg-emerald-600 text-white" @click="saveEditedCall">Update call</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- MODALS: Create Task -->
     <transition name="fade">
       <div v-if="showCreateTask" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
         <div class="w-full max-w-2xl bg-white rounded-2xl p-6">
           <h3 class="text-lg font-semibold mb-3">Create task</h3>
 
-          <label class="block text-xs text-slate-500 mb-1">Title</label>
-          <input v-model="taskTitle" class="w-full border rounded px-2 py-2 mb-3" />
+          <label class="block text-xs text-slate-500 mb-1">Title *</label>
+          <input v-model="taskTitle" class="w-full border rounded px-2 py-2 mb-3" placeholder="Enter task title..." />
 
-          <label class="block text-xs text-slate-500 mb-1">Due</label>
-          <input type="datetime-local" v-model="taskDue" class="w-full border rounded px-2 py-2 mb-3" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">Due date</label>
+              <input type="datetime-local" v-model="taskDue" class="w-full border rounded px-2 py-2" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">Status</label>
+              <select v-model="taskStatus" class="w-full border rounded px-2 py-2">
+                <option v-for="status in taskStatusOptions" :key="status.value" :value="status.value">
+                  {{ status.label }}
+                </option>
+              </select>
+            </div>
+          </div>
 
           <label class="block text-xs text-slate-500 mb-1">Notes (optional)</label>
-          <textarea v-model="taskNote" rows="3" class="w-full border rounded p-2"></textarea>
+          <textarea v-model="taskNote" rows="3" class="w-full border rounded p-2" placeholder="Enter task notes..."></textarea>
 
           <div class="mt-4 flex justify-end gap-2">
             <button class="px-4 py-2 rounded border" @click="closeCreateTask">Cancel</button>
             <button class="px-4 py-2 rounded bg-emerald-600 text-white" @click="createTask" :disabled="!taskTitle.trim()">Create</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- MODALS: Edit Task -->
+    <transition name="fade">
+      <div v-if="showEditTask" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-2xl bg-white rounded-2xl p-6">
+          <h3 class="text-lg font-semibold mb-3">Edit task</h3>
+
+          <label class="block text-xs text-slate-500 mb-1">Title *</label>
+          <input v-model="editTaskTitle" class="w-full border rounded px-2 py-2 mb-3" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">Due date</label>
+              <input type="datetime-local" v-model="editTaskDue" class="w-full border rounded px-2 py-2" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">Status</label>
+              <select v-model="editTaskStatus" class="w-full border rounded px-2 py-2">
+                <option v-for="status in taskStatusOptions" :key="status.value" :value="status.value">
+                  {{ status.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <label class="block text-xs text-slate-500 mb-1">Notes (optional)</label>
+          <textarea v-model="editTaskNote" rows="3" class="w-full border rounded p-2"></textarea>
+
+          <div class="mt-4 flex justify-end gap-2">
+            <button class="px-4 py-2 rounded border" @click="closeEditTask">Cancel</button>
+            <button class="px-4 py-2 rounded bg-emerald-600 text-white" @click="saveEditedTask" :disabled="!editTaskTitle.trim()">Update</button>
           </div>
         </div>
       </div>
@@ -689,6 +884,28 @@
         </div>
       </div>
     </transition>
+
+    <!-- MODAL: Change Priority -->
+    <transition name="fade">
+      <div v-if="showPriorityModal" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-md bg-white rounded-2xl p-6">
+          <h3 class="text-lg font-semibold mb-3">Change Priority</h3>
+
+          <label class="block text-xs text-slate-500 mb-1">Priority level</label>
+          <select v-model="priorityChange" class="w-full border rounded px-2 py-2 mb-3">
+            <option v-for="p in priorityOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
+          </select>
+
+          <label class="block text-xs text-slate-500 mb-1">Reason (optional)</label>
+          <textarea v-model="priorityReason" rows="3" class="w-full border rounded p-2 mb-3"></textarea>
+
+          <div class="flex justify-end gap-2">
+            <button class="px-4 py-2 rounded border" @click="closePriorityModal">Cancel</button>
+            <button class="px-4 py-2 rounded bg-amber-600 text-white" @click="confirmChangePriority">Save</button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -702,6 +919,21 @@ definePageMeta({
 })
 
 const router = useRouter()
+
+// ---- Current User (you can replace this with actual auth) ----
+const currentUser = ref({
+  id: 'admin-1',
+  name: 'Juma Hassan',
+  email: 'juma@example.com'
+})
+
+// ---- Task Status Options ----
+const taskStatusOptions = [
+  { value: 'open', label: 'Open' },
+  { value: 'in-progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'done', label: 'Done' }
+]
 
 // ---- Simple "today" text ----
 const today = computed(() => {
@@ -717,6 +949,7 @@ const today = computed(() => {
 // ---- UI state ----
 const leadSearch = ref('')
 const leadStatusFilter = ref('all')
+const leadPriorityFilter = ref('all')
 const leadSort = ref('createdDesc')
 const selectAll = ref(false)
 const selectedIds = ref([])
@@ -734,6 +967,14 @@ const admins = ref([
   { id: 'admin-1', name: 'Juma Hassan' },
   { id: 'admin-2', name: 'Sarah Mwamba' }
 ])
+
+// Priority options
+const priorityOptions = [
+  { value: 'low', label: 'Low', color: 'text-slate-700', bg: 'bg-slate-100' },
+  { value: 'medium', label: 'Medium', color: 'text-amber-700', bg: 'bg-amber-50' },
+  { value: 'high', label: 'High', color: 'text-rose-700', bg: 'bg-rose-50' },
+  { value: 'very-high', label: 'Very High', color: 'text-rose-800', bg: 'bg-rose-100' }
+]
 
 // Edit/contact form state
 const isEditingLead = ref(false)
@@ -753,19 +994,40 @@ const isSavingContact = ref(false)
 // simple UI controls & modals
 const showAddNote = ref(false)
 const noteText = ref('')
+const showEditNote = ref(false)
+const editNoteText = ref('')
+const editingNote = ref(null)
+
 const showLogCall = ref(false)
 const callNote = ref('')
 const callDuration = ref(0)
 const callOutcome = ref('')
+const showEditCall = ref(false)
+const editCallNote = ref('')
+const editCallDuration = ref(0)
+const editCallOutcome = ref('')
+const editingCall = ref(null)
+
 const showCreateTask = ref(false)
 const taskTitle = ref('')
 const taskDue = ref('')
 const taskNote = ref('')
+const taskStatus = ref('open')
+const showEditTask = ref(false)
+const editTaskTitle = ref('')
+const editTaskDue = ref('')
+const editTaskNote = ref('')
+const editTaskStatus = ref('open')
+const editingTask = ref(null)
+
 const showBulkAssign = ref(false)
 const bulkAssignTo = ref(null)
 const showStatusModal = ref(false)
 const statusChange = ref('new')
 const statusReason = ref('')
+const showPriorityModal = ref(false)
+const priorityChange = ref('medium')
+const priorityReason = ref('')
 const isLoadingPatch = ref(false)
 const isLoadingBulk = ref(false)
 
@@ -784,12 +1046,35 @@ function statusLabelFrom (s) {
   return found ? found.label : 'New'
 }
 
+function priorityLabelFrom (p) {
+  if (!p) return 'Not Set'
+  const found = priorityOptions.find(x => x.value === p)
+  return found ? found.label : p
+}
+
+function taskStatusLabelFrom (s) {
+  const found = taskStatusOptions.find(x => x.value === s)
+  return found ? found.label : 'Open'
+}
+
 function prettyDateFrom (d) {
   if (!d) return '—'
   try {
     return new Date(d).toLocaleDateString()
   } catch {
     return d
+  }
+}
+
+// Phone number validation
+function validatePhoneNumber() {
+  if (editForm.value.phone) {
+    // Remove any non-digit characters
+    editForm.value.phone = editForm.value.phone.replace(/\D/g, '')
+    // Limit to 10 digits
+    if (editForm.value.phone.length > 10) {
+      editForm.value.phone = editForm.value.phone.substring(0, 10)
+    }
   }
 }
 
@@ -805,10 +1090,21 @@ function normalizeLead (l) {
   copy.assignedTo = copy.assignedTo || copy.assignedToId ? admins.value.find(a => a.id === copy.assignedToId) : copy.assignedTo || null
   copy.status = copy.status || 'new'
   copy.statusLabel = statusLabelFrom(copy.status)
+  copy.priority = copy.priority || 'medium'
+  copy.priorityLabel = priorityLabelFrom(copy.priority)
   copy.prettyDate = prettyDateFrom(copy.date || copy.travelDate)
   copy.nextFollowUpAt = copy.nextFollowUpAt || null
-  copy.score = copy.score ?? 0
-  copy.priority = copy.priority || null
+  
+  // Normalize tasks
+  if (copy.tasks) {
+    copy.tasks = copy.tasks.map(task => ({
+      ...task,
+      status: task.status || 'open',
+      createdBy: task.createdBy || currentUser.value.name,
+      createdAt: task.createdAt || new Date().toISOString()
+    }))
+  }
+  
   // contact fields
   copy.age = copy.age ?? null
   copy.originCity = copy.originCity || ''
@@ -842,6 +1138,10 @@ const filteredLeads = computed(() => {
       return (lead.status || 'new') === leadStatusFilter.value
     })
     .filter(lead => {
+      if (leadPriorityFilter.value === 'all') return true
+      return (lead.priority || 'medium') === leadPriorityFilter.value
+    })
+    .filter(lead => {
       const q = leadSearch.value.trim().toLowerCase()
       if (!q) return true
       const name = (lead.name || '').toLowerCase()
@@ -858,7 +1158,8 @@ const sortedFilteredLeads = computed(() => {
   } else if (leadSort.value === 'createdAsc') {
     arr.sort((a, b) => new Date(a.createdAt || a.date || 0) - new Date(b.createdAt || b.date || 0))
   } else if (leadSort.value === 'priorityDesc') {
-    arr.sort((a, b) => (b.priorityScore || b.score || 0) - (a.priorityScore || a.score || 0))
+    const priorityOrder = { 'very-high': 4, 'high': 3, 'medium': 2, 'low': 1 }
+    arr.sort((a, b) => (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0))
   }
   return arr
 })
@@ -877,7 +1178,10 @@ const notesForSelectedLead = computed(() => {
       title: 'Note',
       content: note.note,
       status: note.status || 'active',
+      by: note.by || { name: currentUser.value.name },
       createdAt: note.at,
+      updatedBy: note.updatedBy,
+      updatedAt: note.updatedAt,
       ...note
     }))
 })
@@ -893,7 +1197,10 @@ const callsForSelectedLead = computed(() => {
       duration: call.durationMinutes || 0,
       outcome: call.outcome || '',
       status: call.status || 'completed',
+      by: call.by || { name: currentUser.value.name },
       createdAt: call.at,
+      updatedBy: call.updatedBy,
+      updatedAt: call.updatedAt,
       ...call
     }))
 })
@@ -941,8 +1248,11 @@ function closeLeadDetails () {
     leadSourceDetail: ''
   }
   showAddNote.value = false
+  showEditNote.value = false
   showCreateTask.value = false
+  showEditTask.value = false
   showLogCall.value = false
+  showEditCall.value = false
 }
 
 // start edit
@@ -981,6 +1291,11 @@ function cancelEdit () {
 // save edits
 async function saveContactEdits () {
   if (!selectedLead.value) return
+  if (editForm.value.phone && editForm.value.phone.length !== 10) {
+    alert('Phone number must be exactly 10 digits')
+    return
+  }
+  
   isSavingContact.value = true
   const id = selectedLead.value._id
   const patchBody = {
@@ -992,7 +1307,8 @@ async function saveContactEdits () {
     originCity: editForm.value.originCity,
     country: editForm.value.country,
     source: editForm.value.source,
-    leadSourceDetail: editForm.value.leadSourceDetail
+    leadSourceDetail: editForm.value.leadSourceDetail,
+    updatedBy: currentUser.value.name
   }
 
   try {
@@ -1000,7 +1316,7 @@ async function saveContactEdits () {
     pushEvent(normalizeLead(updated), {
       type: 'contact_edited',
       at: new Date().toISOString(),
-      by: { name: 'Admin' },
+      by: { name: currentUser.value.name },
       metadata: { short: 'Contact details updated' }
     })
     const refreshed = leads.value.find(l => (l._id || l.id) === (updated._id || updated.id))
@@ -1055,11 +1371,14 @@ async function assignLeadToSelected (adminId) {
   pushEvent(selectedLead.value, {
     type: 'assign',
     at: new Date().toISOString(),
-    by: { name: 'Admin' },
+    by: { name: currentUser.value.name },
     metadata: { short: admin ? `Assigned to ${admin.name}` : 'Unassigned' }
   })
   try {
-    await patchLead(selectedLead.value._id, { assignedToId: adminId })
+    await patchLead(selectedLead.value._id, { 
+      assignedToId: adminId,
+      updatedBy: currentUser.value.name
+    })
   } catch (err) {
     console.error('assign failed', err)
   }
@@ -1085,10 +1404,13 @@ async function performBulkAssign () {
       pushEvent(lead, {
         type: 'assign',
         at: new Date().toISOString(),
-        by: { name: 'Bulk assign' },
+        by: { name: currentUser.value.name },
         metadata: { short: `Assigned to ${lead.assignedTo?.name || '—'}` }
       })
-      await patchLead(lead._id, { assignedToId: bulkAssignTo.value }).catch(e => {
+      await patchLead(lead._id, { 
+        assignedToId: bulkAssignTo.value,
+        updatedBy: currentUser.value.name
+      }).catch(e => {
         console.error('bulk patch failed for', id, e)
       })
     }
@@ -1127,11 +1449,14 @@ async function setNextFollowUp () {
   pushEvent(selectedLead.value, {
     type: 'followup_set',
     at: iso,
-    by: { name: 'Admin' },
+    by: { name: currentUser.value.name },
     metadata: { short: `Follow-up set ${formatDateTime(iso)}` }
   })
   try {
-    await patchLead(selectedLead.value._id, { nextFollowUpAt: iso })
+    await patchLead(selectedLead.value._id, { 
+      nextFollowUpAt: iso,
+      updatedBy: currentUser.value.name
+    })
   } catch (err) {
     console.error('patch followup failed', err)
   }
@@ -1143,11 +1468,14 @@ async function clearFollowUp () {
   pushEvent(selectedLead.value, {
     type: 'followup_cleared',
     at: new Date().toISOString(),
-    by: { name: 'Admin' },
+    by: { name: currentUser.value.name },
     metadata: { short: 'Follow-up cleared' }
   })
   try {
-    await patchLead(selectedLead.value._id, { nextFollowUpAt: null })
+    await patchLead(selectedLead.value._id, { 
+      nextFollowUpAt: null,
+      updatedBy: currentUser.value.name
+    })
   } catch (err) {
     console.error('clear followup failed', err)
   }
@@ -1162,13 +1490,25 @@ function closeAddNote () {
   showAddNote.value = false
   noteText.value = ''
 }
+
+function openEditNoteModal (note) {
+  editingNote.value = note
+  editNoteText.value = note.content
+  showEditNote.value = true
+}
+function closeEditNote () {
+  showEditNote.value = false
+  editingNote.value = null
+  editNoteText.value = ''
+}
+
 async function addNote () {
   if (!selectedLead.value || !noteText.value.trim()) return
   const note = noteText.value.trim()
   const ev = {
     type: 'note',
     at: new Date().toISOString(),
-    by: { name: 'Admin' },
+    by: { name: currentUser.value.name },
     note,
     status: 'active',
     metadata: { short: note.slice(0, 80) }
@@ -1177,11 +1517,45 @@ async function addNote () {
   closeAddNote()
   try {
     await patchLead(selectedLead.value._id, { 
-      events: selectedLead.value.events 
+      events: selectedLead.value.events,
+      updatedBy: currentUser.value.name
     })
   } catch (err) {
     console.error('failed to persist note', err)
   }
+}
+
+async function saveEditedNote () {
+  if (!selectedLead.value || !editingNote.value || !editNoteText.value.trim()) return
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => 
+    e.type === 'note' && e.at === editingNote.value.at
+  )
+  
+  if (index !== -1) {
+    events[index].note = editNoteText.value.trim()
+    events[index].updatedBy = currentUser.value.name
+    events[index].updatedAt = new Date().toISOString()
+    
+    pushEvent(selectedLead.value, {
+      type: 'note_updated',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: { short: 'Note updated' }
+    })
+    
+    try {
+      await patchLead(selectedLead.value._id, { 
+        events,
+        updatedBy: currentUser.value.name
+      })
+    } catch (err) {
+      console.error('Failed to update note', err)
+    }
+  }
+  
+  closeEditNote()
 }
 
 // LOG CALL
@@ -1194,12 +1568,28 @@ function openLogCallModal () {
 function closeLogCall () {
   showLogCall.value = false
 }
+
+function openEditCallModal (call) {
+  editingCall.value = call
+  editCallNote.value = call.summary
+  editCallDuration.value = call.duration
+  editCallOutcome.value = call.outcome
+  showEditCall.value = true
+}
+function closeEditCall () {
+  showEditCall.value = false
+  editingCall.value = null
+  editCallNote.value = ''
+  editCallDuration.value = 0
+  editCallOutcome.value = ''
+}
+
 async function saveLogCall () {
   if (!selectedLead.value) return
   const ev = {
     type: 'call',
     at: new Date().toISOString(),
-    by: { name: 'Admin' },
+    by: { name: currentUser.value.name },
     note: callNote.value || '',
     status: 'completed',
     metadata: { 
@@ -1212,11 +1602,47 @@ async function saveLogCall () {
   closeLogCall()
   try {
     await patchLead(selectedLead.value._id, { 
-      events: selectedLead.value.events 
+      events: selectedLead.value.events,
+      updatedBy: currentUser.value.name
     })
   } catch (err) {
     console.error('failed to persist call', err)
   }
+}
+
+async function saveEditedCall () {
+  if (!selectedLead.value || !editingCall.value) return
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => 
+    e.type === 'call' && e.at === editingCall.value.at
+  )
+  
+  if (index !== -1) {
+    events[index].note = editCallNote.value.trim()
+    events[index].durationMinutes = editCallDuration.value
+    events[index].outcome = editCallOutcome.value
+    events[index].updatedBy = currentUser.value.name
+    events[index].updatedAt = new Date().toISOString()
+    
+    pushEvent(selectedLead.value, {
+      type: 'call_updated',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: { short: 'Call updated' }
+    })
+    
+    try {
+      await patchLead(selectedLead.value._id, { 
+        events,
+        updatedBy: currentUser.value.name
+      })
+    } catch (err) {
+      console.error('Failed to update call', err)
+    }
+  }
+  
+  closeEditCall()
 }
 
 // TASKS
@@ -1224,11 +1650,30 @@ function openCreateTaskModal () {
   taskTitle.value = ''
   taskDue.value = ''
   taskNote.value = ''
+  taskStatus.value = 'open'
   showCreateTask.value = true
 }
 function closeCreateTask () {
   showCreateTask.value = false
 }
+
+function openEditTaskModal (task) {
+  editingTask.value = task
+  editTaskTitle.value = task.title
+  editTaskDue.value = task.due ? new Date(task.due).toISOString().slice(0, 16) : ''
+  editTaskNote.value = task.note || ''
+  editTaskStatus.value = task.status || 'open'
+  showEditTask.value = true
+}
+function closeEditTask () {
+  showEditTask.value = false
+  editingTask.value = null
+  editTaskTitle.value = ''
+  editTaskDue.value = ''
+  editTaskNote.value = ''
+  editTaskStatus.value = 'open'
+}
+
 async function createTask () {
   if (!selectedLead.value || !taskTitle.value.trim()) return
   const t = {
@@ -1236,33 +1681,76 @@ async function createTask () {
     title: taskTitle.value.trim(),
     due: taskDue.value ? new Date(taskDue.value).toISOString() : null,
     note: taskNote.value,
-    completed: false,
-    createdAt: new Date().toISOString()
+    status: taskStatus.value,
+    createdAt: new Date().toISOString(),
+    createdBy: currentUser.value.name
   }
   selectedLead.value.tasks = selectedLead.value.tasks || []
   selectedLead.value.tasks.push(t)
   pushEvent(selectedLead.value, {
     type: 'task_created',
     at: new Date().toISOString(),
-    by: { name: 'Admin' },
+    by: { name: currentUser.value.name },
     metadata: { short: t.title }
   })
   closeCreateTask()
   try {
     await patchLead(selectedLead.value._id, { 
       tasks: selectedLead.value.tasks, 
-      events: selectedLead.value.events 
+      events: selectedLead.value.events,
+      updatedBy: currentUser.value.name
     })
   } catch (err) {
     console.error('failed to persist task', err)
   }
 }
 
+async function saveEditedTask () {
+  if (!selectedLead.value || !editingTask.value || !editTaskTitle.value.trim()) return
+  
+  const taskIndex = selectedLead.value.tasks.findIndex(t => t.id === editingTask.value.id)
+  if (taskIndex !== -1) {
+    selectedLead.value.tasks[taskIndex].title = editTaskTitle.value.trim()
+    selectedLead.value.tasks[taskIndex].due = editTaskDue.value ? new Date(editTaskDue.value).toISOString() : null
+    selectedLead.value.tasks[taskIndex].note = editTaskNote.value
+    selectedLead.value.tasks[taskIndex].status = editTaskStatus.value
+    selectedLead.value.tasks[taskIndex].updatedBy = currentUser.value.name
+    selectedLead.value.tasks[taskIndex].updatedAt = new Date().toISOString()
+    
+    pushEvent(selectedLead.value, {
+      type: 'task_updated',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: { short: editTaskTitle.value.trim() }
+    })
+    
+    try {
+      await patchLead(selectedLead.value._id, { 
+        tasks: selectedLead.value.tasks,
+        updatedBy: currentUser.value.name
+      })
+    } catch (err) {
+      console.error('Failed to update task', err)
+    }
+  }
+  
+  closeEditTask()
+}
+
 // Update functions for tasks, notes, and calls
 async function updateTaskStatus(task) {
+  task.updatedBy = currentUser.value.name
+  task.updatedAt = new Date().toISOString()
   try {
     await patchLead(selectedLead.value._id, { 
-      tasks: selectedLead.value.tasks 
+      tasks: selectedLead.value.tasks,
+      updatedBy: currentUser.value.name
+    })
+    pushEvent(selectedLead.value, {
+      type: 'task_status_changed',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: { short: `${task.title} → ${taskStatusLabelFrom(task.status)}` }
     })
   } catch (err) {
     console.error('Failed to update task', err)
@@ -1277,8 +1765,13 @@ async function updateNoteStatus(note) {
   )
   if (index !== -1) {
     events[index].status = note.status
+    events[index].updatedBy = currentUser.value.name
+    events[index].updatedAt = new Date().toISOString()
     try {
-      await patchLead(selectedLead.value._id, { events })
+      await patchLead(selectedLead.value._id, { 
+        events,
+        updatedBy: currentUser.value.name
+      })
     } catch (err) {
       console.error('Failed to update note', err)
     }
@@ -1293,11 +1786,38 @@ async function updateCallStatus(call) {
   )
   if (index !== -1) {
     events[index].status = call.status
+    events[index].updatedBy = currentUser.value.name
+    events[index].updatedAt = new Date().toISOString()
     try {
-      await patchLead(selectedLead.value._id, { events })
+      await patchLead(selectedLead.value._id, { 
+        events,
+        updatedBy: currentUser.value.name
+      })
     } catch (err) {
       console.error('Failed to update call', err)
     }
+  }
+}
+
+async function deleteTask(task) {
+  if (!confirm('Delete this task?')) return
+  
+  selectedLead.value.tasks = selectedLead.value.tasks.filter(t => t.id !== task.id)
+  
+  pushEvent(selectedLead.value, {
+    type: 'task_deleted',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    metadata: { short: task.title }
+  })
+  
+  try {
+    await patchLead(selectedLead.value._id, { 
+      tasks: selectedLead.value.tasks,
+      updatedBy: currentUser.value.name
+    })
+  } catch (err) {
+    console.error('Failed to delete task', err)
   }
 }
 
@@ -1310,8 +1830,18 @@ async function deleteNote(note) {
   )
   selectedLead.value.events = filteredEvents
   
+  pushEvent(selectedLead.value, {
+    type: 'note_deleted',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    metadata: { short: 'Note deleted' }
+  })
+  
   try {
-    await patchLead(selectedLead.value._id, { events: filteredEvents })
+    await patchLead(selectedLead.value._id, { 
+      events: filteredEvents,
+      updatedBy: currentUser.value.name
+    })
   } catch (err) {
     console.error('Failed to delete note', err)
   }
@@ -1326,22 +1856,21 @@ async function deleteCall(call) {
   )
   selectedLead.value.events = filteredEvents
   
+  pushEvent(selectedLead.value, {
+    type: 'call_deleted',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    metadata: { short: 'Call deleted' }
+  })
+  
   try {
-    await patchLead(selectedLead.value._id, { events: filteredEvents })
+    await patchLead(selectedLead.value._id, { 
+      events: filteredEvents,
+      updatedBy: currentUser.value.name
+    })
   } catch (err) {
     console.error('Failed to delete call', err)
   }
-}
-
-function toggleTaskComplete (t) {
-  t.completed = !t.completed
-  pushEvent(selectedLead.value, {
-    type: t.completed ? 'task_completed' : 'task_reopened',
-    at: new Date().toISOString(),
-    by: { name: 'Admin' },
-    metadata: { short: t.title }
-  })
-  patchLead(selectedLead.value._id, { tasks: selectedLead.value.tasks }).catch(e => console.error(e))
 }
 
 // STATUS change
@@ -1362,17 +1891,62 @@ async function confirmChangeStatus () {
   pushEvent(selectedLead.value, {
     type: 'status_change',
     at: new Date().toISOString(),
-    by: { name: 'Admin' },
+    by: { name: currentUser.value.name },
     note: statusReason.value || '',
     reason: statusReason.value || '',
     metadata: { short: `Status ${prev} → ${statusChange.value}` }
   })
   closeStatusModal()
   try {
-    await patchLead(selectedLead.value._id, { status: statusChange.value, events: selectedLead.value.events })
+    await patchLead(selectedLead.value._id, { 
+      status: statusChange.value, 
+      events: selectedLead.value.events,
+      updatedBy: currentUser.value.name
+    })
   } catch (err) {
     console.error('status patch failed', err)
     alert('Failed to save status change')
+  }
+}
+
+// PRIORITY change
+function openPriorityModal () {
+  priorityChange.value = selectedLead.value?.priority || 'medium'
+  priorityReason.value = ''
+  showPriorityModal.value = true
+}
+function closePriorityModal () {
+  showPriorityModal.value = false
+}
+async function confirmChangePriority () {
+  if (!selectedLead.value) return
+  const prev = selectedLead.value.priority
+  selectedLead.value.priority = priorityChange.value
+  selectedLead.value.priorityLabel = priorityLabelFrom(priorityChange.value)
+  selectedLead.value.priorityUpdatedBy = currentUser.value.name
+  selectedLead.value.priorityUpdatedAt = new Date().toISOString()
+  
+  pushEvent(selectedLead.value, {
+    type: 'priority_change',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: priorityReason.value || '',
+    reason: priorityReason.value || '',
+    metadata: { short: `Priority ${priorityLabelFrom(prev)} → ${priorityLabelFrom(priorityChange.value)}` }
+  })
+  
+  closePriorityModal()
+  try {
+    await patchLead(selectedLead.value._id, { 
+      priority: priorityChange.value, 
+      priorityUpdatedBy: currentUser.value.name,
+      priorityUpdatedAt: new Date().toISOString(),
+      events: selectedLead.value.events,
+      updatedBy: currentUser.value.name
+    })
+  } catch (err) {
+    console.error('priority patch failed', err)
+    alert('Failed to save priority change')
   }
 }
 
@@ -1393,10 +1967,21 @@ function lastEventAt (lead) {
   if (!lead || !lead.events || !lead.events.length) return null
   return lead.events[lead.events.length - 1].at
 }
+
+function lastEventBy (lead) {
+  if (!lead || !lead.events || !lead.events.length) return null
+  const e = lead.events[lead.events.length - 1]
+  return e.by?.name || e.by || null
+}
+
 function lastEventSummary (lead) {
   if (!lead || !lead.events || !lead.events.length) return '—'
   const e = lead.events[lead.events.length - 1]
   if (e.type === 'note') return (e.note || '').slice(0, 60) || 'Note'
+  if (e.type === 'call') return 'Call logged'
+  if (e.type === 'task_created') return 'Task created'
+  if (e.type === 'status_change') return 'Status changed'
+  if (e.type === 'priority_change') return 'Priority changed'
   return e.type
 }
 
@@ -1405,25 +1990,31 @@ const logsForSelectedLead = computed(() => {
   if (!selectedLead.value) return []
   const events = selectedLead.value.events || []
   return events
-    .filter(e => ['note', 'call', 'status_change', 'contact_edited', 'task_created'].includes(e.type))
+    .filter(e => ['note', 'call', 'status_change', 'contact_edited', 'task_created', 'priority_change', 'note_updated', 'call_updated', 'task_updated'].includes(e.type))
     .slice()
     .sort((a, b) => new Date(b.at) - new Date(a.at))
 })
 
 function eventIcon (type) {
-  if (type === 'note') return '✍️'
-  if (type === 'call') return '📞'
-  if (type === 'task_created') return '🗒️'
+  if (type === 'note' || type === 'note_updated') return '✍️'
+  if (type === 'call' || type === 'call_updated') return '📞'
+  if (type === 'task_created' || type === 'task_updated' || type === 'task_status_changed') return '🗒️'
   if (type === 'status_change') return '🔁'
   if (type === 'contact_edited') return '✏️'
+  if (type === 'priority_change') return '🎯'
   return '•'
 }
 function eventTitle (ev) {
   if (ev.type === 'note') return 'Note added'
+  if (ev.type === 'note_updated') return 'Note updated'
   if (ev.type === 'call') return 'Call logged'
+  if (ev.type === 'call_updated') return 'Call updated'
   if (ev.type === 'task_created') return 'Task created'
+  if (ev.type === 'task_updated') return 'Task updated'
+  if (ev.type === 'task_status_changed') return 'Task status changed'
   if (ev.type === 'status_change') return 'Status changed'
   if (ev.type === 'contact_edited') return 'Contact edited'
+  if (ev.type === 'priority_change') return 'Priority changed'
   return ev.type
 }
 
@@ -1435,6 +2026,23 @@ function statusPillClass (status) {
   if (status === 'converted') return 'bg-indigo-50 text-indigo-700'
   return 'bg-slate-100 text-slate-700'
 }
+
+function priorityPillClass (priority) {
+  if (priority === 'low') return 'bg-slate-100 text-slate-700'
+  if (priority === 'medium') return 'bg-amber-50 text-amber-700'
+  if (priority === 'high') return 'bg-rose-50 text-rose-700'
+  if (priority === 'very-high') return 'bg-rose-100 text-rose-800'
+  return 'bg-slate-100 text-slate-700'
+}
+
+function priorityBadgeClass (priority) {
+  if (priority === 'low') return 'bg-slate-50 text-slate-700'
+  if (priority === 'medium') return 'bg-amber-50 text-amber-700'
+  if (priority === 'high') return 'bg-rose-50 text-rose-700'
+  if (priority === 'very-high') return 'bg-rose-100 text-rose-800'
+  return 'bg-slate-50 text-slate-700'
+}
+
 function statusIcon (s) {
   if (s === 'working') return '🔄'
   if (s === 'qualified') return '⭐'
@@ -1442,10 +2050,15 @@ function statusIcon (s) {
   if (s === 'unqualified') return '❌'
   return '🟢'
 }
-function scoreBadgeClass (score) {
-  if (score >= 70) return 'bg-rose-50 text-rose-700'
-  if (score >= 40) return 'bg-amber-50 text-amber-700'
-  return 'bg-slate-50 text-slate-700'
+
+// Format date short (just date)
+function formatDateShort(value) {
+  if (!value) return '—'
+  try {
+    return new Date(value).toLocaleDateString()
+  } catch {
+    return value
+  }
 }
 
 // PATCH helper to update single lead on server

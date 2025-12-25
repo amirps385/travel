@@ -642,7 +642,37 @@
                           <div class="font-medium text-slate-900">{{ eventTitle(ev) }}</div>
                           <div class="text-xs text-slate-500">{{ ev.by?.name || ev.by || currentUser.name }} • {{ formatDateTime(ev.at) }}</div>
                         </div>
-                        <div class="text-xs text-slate-400">{{ ev.metadata?.short || '' }}</div>
+                       <div class="text-xs text-slate-400">
+  <!-- Status change: show from -> to -->
+  <div v-if="ev.type === 'status_change'">
+    <div>{{ ev.metadata?.short || (ev.metadata?.from + ' → ' + ev.metadata?.to) }}</div>
+    <div v-if="ev.reason" class="text-xs text-rose-600 italic">Reason: {{ ev.reason }}</div>
+  </div>
+
+  <!-- Priority or assign: same pattern -->
+  <div v-else-if="['priority_change','assign'].includes(ev.type)">
+    <div>{{ ev.metadata?.short || '' }}</div>
+    <div v-if="ev.metadata?.from !== undefined">
+      <small>From: {{ ev.metadata.from ?? '—' }} → To: {{ ev.metadata.to ?? '—' }}</small>
+    </div>
+  </div>
+
+  <!-- Contact edits: list fields and their previous values -->
+  <div v-else-if="ev.type === 'contact_edited'">
+    <div>{{ ev.metadata?.short || 'Contact updated' }}</div>
+    <div v-if="ev.metadata?.changes" class="mt-1">
+      <div v-for="(chg, key) in ev.metadata.changes" :key="key" class="text-xs text-slate-500">
+        {{ key }}: <strong>{{ chg.from ?? '—' }}</strong> → <strong>{{ chg.to ?? '—' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- fallback -->
+  <div v-else>
+    {{ ev.metadata?.short || '' }}
+  </div>
+</div>
+
                       </div>
                       <div v-if="ev.note" class="mt-2 text-sm text-slate-700">{{ ev.note }}</div>
                       <div v-if="ev.reason" class="mt-1 text-xs text-rose-600 italic">Reason: {{ ev.reason }}</div>
@@ -909,6 +939,7 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -1041,6 +1072,21 @@ const statusOptions = [
 ]
 
 // helper functions reused in UI
+
+function lastStatusChangeReason (lead) {
+  if (!lead || !Array.isArray(lead.events) || !lead.events.length) return ''
+  // look from newest to oldest for a status_change
+  const ev = (lead.events || []).slice().reverse().find(e => e.type === 'status_change')
+  if (!ev) return ''
+  // prefer explicit reason, then note, then metadata.short
+  return (ev.reason && String(ev.reason).trim()) ||
+         (ev.note && String(ev.note).trim()) ||
+         (ev.metadata && String(ev.metadata.short || '').trim()) ||
+         ''
+}
+
+
+
 function statusLabelFrom (s) {
   const found = statusOptions.find(x => x.key === s)
   return found ? found.label : 'New'
@@ -1172,7 +1218,7 @@ const tasksForSelectedLead = computed(() => {
 const notesForSelectedLead = computed(() => {
   if (!selectedLead.value) return []
   return (selectedLead.value.events || [])
-    .filter(e => e.type === 'note')
+    .filter(e => e.type === 'note' && e.status !== 'deleted' && e.status !== 'archived') // hide deleted notes
     .map((note, index) => ({
       id: `note-${index}-${note.at}`,
       title: 'Note',
@@ -1185,6 +1231,7 @@ const notesForSelectedLead = computed(() => {
       ...note
     }))
 })
+
 
 const callsForSelectedLead = computed(() => {
   if (!selectedLead.value) return []
@@ -1295,9 +1342,11 @@ async function saveContactEdits () {
     alert('Phone number must be exactly 10 digits')
     return
   }
-  
+
   isSavingContact.value = true
   const id = selectedLead.value._id
+
+  // Build patch body with new contact fields
   const patchBody = {
     name: editForm.value.name,
     email: editForm.value.email,
@@ -1311,14 +1360,41 @@ async function saveContactEdits () {
     updatedBy: currentUser.value.name
   }
 
-  try {
-    const updated = await patchLead(id, patchBody)
-    pushEvent(normalizeLead(updated), {
+  // Compute changes (previous -> next) for fields we care about
+  const fields = ['name','email','phone','countryCode','age','originCity','country','source','leadSourceDetail']
+  const changes = {}
+  fields.forEach(f => {
+    const prev = selectedLead.value[f] === undefined ? null : selectedLead.value[f]
+    const next = patchBody[f] === undefined ? null : patchBody[f]
+    // treat numbers vs strings carefully; convert to string for comparison
+    if (String(prev ?? '') !== String(next ?? '')) {
+      changes[f] = { from: prev, to: next }
+    }
+  })
+
+  // If there are changes, create an event describing them
+  if (Object.keys(changes).length) {
+    const shortParts = Object.keys(changes).map(k => {
+      const c = changes[k]
+      return `${k}: ${c.from ?? '—'} → ${c.to ?? '—'}`
+    }).slice(0,5) // limit length
+    const ev = {
       type: 'contact_edited',
       at: new Date().toISOString(),
       by: { name: currentUser.value.name },
-      metadata: { short: 'Contact details updated' }
-    })
+      metadata: {
+        short: `Contact updated: ${shortParts.join(', ')}`,
+        changes
+      }
+    }
+    selectedLead.value.events = selectedLead.value.events || []
+    selectedLead.value.events.push(ev)
+    // include events in the patchBody so server persists the history
+    patchBody.events = selectedLead.value.events
+  }
+
+  try {
+    const updated = await patchLead(id, patchBody)
     const refreshed = leads.value.find(l => (l._id || l.id) === (updated._id || updated.id))
     if (refreshed) selectedLead.value = refreshed
     isEditingLead.value = false
@@ -1336,10 +1412,12 @@ async function saveContactEdits () {
   } catch (err) {
     console.error('Failed to save contact edits', err)
     alert('Failed to save contact changes. Please try again.')
+    await loadLeads()
   } finally {
     isSavingContact.value = false
   }
 }
+
 
 // COPY PUBLIC LINK
 async function copyPublicLink () {
@@ -1366,23 +1444,44 @@ function goToBuild (lead) {
 async function assignLeadToSelected (adminId) {
   if (!selectedLead.value || !selectedLead.value._id) return
   const admin = admins.value.find(a => a.id === adminId) || null
+
+  const prevAssigned = selectedLead.value.assignedTo?.name || null
+  const nextAssigned = admin?.name || null
+
+  // update local UI
   selectedLead.value.assignedTo = admin
   selectedLead.value.assignedToId = adminId
-  pushEvent(selectedLead.value, {
+
+  // create assign event
+  const ev = {
     type: 'assign',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    metadata: { short: admin ? `Assigned to ${admin.name}` : 'Unassigned' }
-  })
+    metadata: {
+      short: `Assigned ${prevAssigned || 'Unassigned'} → ${nextAssigned || 'Unassigned'}`,
+      from: prevAssigned,
+      to: nextAssigned,
+      changes: { assignedTo: { from: prevAssigned, to: nextAssigned } }
+    }
+  }
+
+  selectedLead.value.events = selectedLead.value.events || []
+  selectedLead.value.events.push(ev)
+
   try {
     await patchLead(selectedLead.value._id, { 
       assignedToId: adminId,
+      assignedTo: selectedLead.value.assignedTo, // optional, server may ignore
+      events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
   } catch (err) {
     console.error('assign failed', err)
+    alert('Failed to assign lead')
+    await loadLeads()
   }
 }
+
 
 // bulk assign
 function openBulkAssignModal () {
@@ -1401,12 +1500,6 @@ async function performBulkAssign () {
       if (!lead) continue
       lead.assignedToId = bulkAssignTo.value
       lead.assignedTo = admins.value.find(a => a.id === bulkAssignTo.value) || null
-      pushEvent(lead, {
-        type: 'assign',
-        at: new Date().toISOString(),
-        by: { name: currentUser.value.name },
-        metadata: { short: `Assigned to ${lead.assignedTo?.name || '—'}` }
-      })
       await patchLead(lead._id, { 
         assignedToId: bulkAssignTo.value,
         updatedBy: currentUser.value.name
@@ -1446,12 +1539,6 @@ async function setNextFollowUp () {
   }
   const iso = new Date(followUpInput.value).toISOString()
   selectedLead.value.nextFollowUpAt = iso
-  pushEvent(selectedLead.value, {
-    type: 'followup_set',
-    at: iso,
-    by: { name: currentUser.value.name },
-    metadata: { short: `Follow-up set ${formatDateTime(iso)}` }
-  })
   try {
     await patchLead(selectedLead.value._id, { 
       nextFollowUpAt: iso,
@@ -1465,12 +1552,6 @@ async function setNextFollowUp () {
 async function clearFollowUp () {
   if (!selectedLead.value) return
   selectedLead.value.nextFollowUpAt = null
-  pushEvent(selectedLead.value, {
-    type: 'followup_cleared',
-    at: new Date().toISOString(),
-    by: { name: currentUser.value.name },
-    metadata: { short: 'Follow-up cleared' }
-  })
   try {
     await patchLead(selectedLead.value._id, { 
       nextFollowUpAt: null,
@@ -1513,11 +1594,14 @@ async function addNote () {
     status: 'active',
     metadata: { short: note.slice(0, 80) }
   }
-  pushEvent(selectedLead.value, ev)
+  // Add to local state
+  selectedLead.value.events = selectedLead.value.events || []
+  selectedLead.value.events.push(ev)
   closeAddNote()
   try {
+    // Send the updated events array
     await patchLead(selectedLead.value._id, { 
-      events: selectedLead.value.events,
+      events: selectedLead.value.events, // Send ALL events
       updatedBy: currentUser.value.name
     })
   } catch (err) {
@@ -1538,16 +1622,10 @@ async function saveEditedNote () {
     events[index].updatedBy = currentUser.value.name
     events[index].updatedAt = new Date().toISOString()
     
-    pushEvent(selectedLead.value, {
-      type: 'note_updated',
-      at: new Date().toISOString(),
-      by: { name: currentUser.value.name },
-      metadata: { short: 'Note updated' }
-    })
-    
+    // Send the updated events array
     try {
       await patchLead(selectedLead.value._id, { 
-        events,
+        events: events, // Send ALL events
         updatedBy: currentUser.value.name
       })
     } catch (err) {
@@ -1598,11 +1676,14 @@ async function saveLogCall () {
     durationMinutes: callDuration.value || 0,
     outcome: callOutcome.value || ''
   }
-  pushEvent(selectedLead.value, ev)
+  // Add to local state
+  selectedLead.value.events = selectedLead.value.events || []
+  selectedLead.value.events.push(ev)
   closeLogCall()
   try {
+    // Send the updated events array
     await patchLead(selectedLead.value._id, { 
-      events: selectedLead.value.events,
+      events: selectedLead.value.events, // Send ALL events
       updatedBy: currentUser.value.name
     })
   } catch (err) {
@@ -1625,16 +1706,10 @@ async function saveEditedCall () {
     events[index].updatedBy = currentUser.value.name
     events[index].updatedAt = new Date().toISOString()
     
-    pushEvent(selectedLead.value, {
-      type: 'call_updated',
-      at: new Date().toISOString(),
-      by: { name: currentUser.value.name },
-      metadata: { short: 'Call updated' }
-    })
-    
+    // Send the updated events array
     try {
       await patchLead(selectedLead.value._id, { 
-        events,
+        events: events, // Send ALL events
         updatedBy: currentUser.value.name
       })
     } catch (err) {
@@ -1687,17 +1762,11 @@ async function createTask () {
   }
   selectedLead.value.tasks = selectedLead.value.tasks || []
   selectedLead.value.tasks.push(t)
-  pushEvent(selectedLead.value, {
-    type: 'task_created',
-    at: new Date().toISOString(),
-    by: { name: currentUser.value.name },
-    metadata: { short: t.title }
-  })
   closeCreateTask()
   try {
+    // Send the updated tasks array
     await patchLead(selectedLead.value._id, { 
-      tasks: selectedLead.value.tasks, 
-      events: selectedLead.value.events,
+      tasks: selectedLead.value.tasks, // Send ALL tasks
       updatedBy: currentUser.value.name
     })
   } catch (err) {
@@ -1717,16 +1786,10 @@ async function saveEditedTask () {
     selectedLead.value.tasks[taskIndex].updatedBy = currentUser.value.name
     selectedLead.value.tasks[taskIndex].updatedAt = new Date().toISOString()
     
-    pushEvent(selectedLead.value, {
-      type: 'task_updated',
-      at: new Date().toISOString(),
-      by: { name: currentUser.value.name },
-      metadata: { short: editTaskTitle.value.trim() }
-    })
-    
     try {
+      // Send the updated tasks array
       await patchLead(selectedLead.value._id, { 
-        tasks: selectedLead.value.tasks,
+        tasks: selectedLead.value.tasks, // Send ALL tasks
         updatedBy: currentUser.value.name
       })
     } catch (err) {
@@ -1739,23 +1802,39 @@ async function saveEditedTask () {
 
 // Update functions for tasks, notes, and calls
 async function updateTaskStatus(task) {
-  task.updatedBy = currentUser.value.name
-  task.updatedAt = new Date().toISOString()
-  try {
-    await patchLead(selectedLead.value._id, { 
-      tasks: selectedLead.value.tasks,
-      updatedBy: currentUser.value.name
-    })
-    pushEvent(selectedLead.value, {
+  const prev = task.prevStatus || null // if you stored prev status earlier; else we'll compute
+  const idx = selectedLead.value.tasks.findIndex(t => t.id === task.id)
+  const newStatus = task.status
+  if (idx !== -1) {
+    const before = selectedLead.value.tasks[idx].status || null
+    selectedLead.value.tasks[idx].updatedBy = currentUser.value.name
+    selectedLead.value.tasks[idx].updatedAt = new Date().toISOString()
+    // Build event describing the change
+    const ev = {
       type: 'task_status_changed',
       at: new Date().toISOString(),
       by: { name: currentUser.value.name },
-      metadata: { short: `${task.title} → ${taskStatusLabelFrom(task.status)}` }
-    })
-  } catch (err) {
-    console.error('Failed to update task', err)
+      metadata: {
+        short: `Task "${task.title}" ${before} → ${newStatus}`,
+        taskId: task.id,
+        changes: { status: { from: before, to: newStatus } }
+      }
+    }
+    selectedLead.value.events = selectedLead.value.events || []
+    selectedLead.value.events.push(ev)
+    try {
+      await patchLead(selectedLead.value._id, { 
+        tasks: selectedLead.value.tasks,
+        events: selectedLead.value.events,
+        updatedBy: currentUser.value.name
+      })
+    } catch (err) {
+      console.error('Failed to update task', err)
+      await loadLeads()
+    }
   }
 }
+
 
 async function updateNoteStatus(note) {
   // Find and update the note in events
@@ -1768,8 +1847,9 @@ async function updateNoteStatus(note) {
     events[index].updatedBy = currentUser.value.name
     events[index].updatedAt = new Date().toISOString()
     try {
+      // Send the updated events array
       await patchLead(selectedLead.value._id, { 
-        events,
+        events: events, // Send ALL events
         updatedBy: currentUser.value.name
       })
     } catch (err) {
@@ -1789,8 +1869,9 @@ async function updateCallStatus(call) {
     events[index].updatedBy = currentUser.value.name
     events[index].updatedAt = new Date().toISOString()
     try {
+      // Send the updated events array
       await patchLead(selectedLead.value._id, { 
-        events,
+        events: events, // Send ALL events
         updatedBy: currentUser.value.name
       })
     } catch (err) {
@@ -1804,16 +1885,10 @@ async function deleteTask(task) {
   
   selectedLead.value.tasks = selectedLead.value.tasks.filter(t => t.id !== task.id)
   
-  pushEvent(selectedLead.value, {
-    type: 'task_deleted',
-    at: new Date().toISOString(),
-    by: { name: currentUser.value.name },
-    metadata: { short: task.title }
-  })
-  
   try {
+    // Send the updated tasks array
     await patchLead(selectedLead.value._id, { 
-      tasks: selectedLead.value.tasks,
+      tasks: selectedLead.value.tasks, // Send ALL tasks
       updatedBy: currentUser.value.name
     })
   } catch (err) {
@@ -1823,29 +1898,52 @@ async function deleteTask(task) {
 
 async function deleteNote(note) {
   if (!confirm('Delete this note?')) return
-  
-  const events = selectedLead.value.events || []
-  const filteredEvents = events.filter(e => 
-    !(e.type === 'note' && e.at === note.at)
-  )
-  selectedLead.value.events = filteredEvents
-  
-  pushEvent(selectedLead.value, {
+  if (!selectedLead.value) return
+
+  // defensive copy of events
+  const events = Array.isArray(selectedLead.value.events) ? [...selectedLead.value.events] : []
+
+  // mark the original note as deleted (if found)
+  const index = events.findIndex(e => e.type === 'note' && e.at === note.at)
+  if (index !== -1) {
+    events[index] = {
+      ...events[index],
+      status: 'deleted',
+      updatedBy: currentUser.value.name,
+      updatedAt: new Date().toISOString()
+    }
+  }
+
+  // Add a deletion marker event so timeline keeps record
+  const delEv = {
     type: 'note_deleted',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    metadata: { short: 'Note deleted' }
-  })
-  
+    metadata: { short: 'Note deleted' },
+    originalAt: note.at // helpful reference to link back to original note
+  }
+
+  // Append the deletion event
+  const newEvents = events.concat([delEv])
+  selectedLead.value.events = newEvents
+
   try {
-    await patchLead(selectedLead.value._id, { 
-      events: filteredEvents,
+    // send the whole events array so server persists both the deleted flag and the deletion marker
+    await patchLead(selectedLead.value._id, {
+      events: newEvents,
       updatedBy: currentUser.value.name
     })
   } catch (err) {
     console.error('Failed to delete note', err)
+    alert('Failed to delete note. Please try again.')
+    // reload to revert local changes
+    await loadLeads()
+    const found = leads.value.find(l => (l._id || l.id) === (selectedLead.value?._id || selectedLead.value?.id))
+    if (found) selectedLead.value = found
   }
 }
+
+
 
 async function deleteCall(call) {
   if (!confirm('Delete this call?')) return
@@ -1856,16 +1954,10 @@ async function deleteCall(call) {
   )
   selectedLead.value.events = filteredEvents
   
-  pushEvent(selectedLead.value, {
-    type: 'call_deleted',
-    at: new Date().toISOString(),
-    by: { name: currentUser.value.name },
-    metadata: { short: 'Call deleted' }
-  })
-  
   try {
+    // Send the filtered events array
     await patchLead(selectedLead.value._id, { 
-      events: filteredEvents,
+      events: filteredEvents, // Send filtered events
       updatedBy: currentUser.value.name
     })
   } catch (err) {
@@ -1876,38 +1968,80 @@ async function deleteCall(call) {
 // STATUS change
 function openStatusModal (lead = null) {
   if (lead) openLeadDetails(lead)
+  // prefill status selector from current lead
   statusChange.value = selectedLead.value?.status || 'new'
-  statusReason.value = ''
+  // prefill reason from last status_change event (makes old reason visible)
+  statusReason.value = lastStatusChangeReason(selectedLead.value) || ''
   showStatusModal.value = true
 }
+
+
 function closeStatusModal () {
   showStatusModal.value = false
 }
 async function confirmChangeStatus () {
   if (!selectedLead.value) return
-  const prev = selectedLead.value.status
-  selectedLead.value.status = statusChange.value
-  selectedLead.value.statusLabel = statusLabelFrom(statusChange.value)
-  pushEvent(selectedLead.value, {
+
+  // previous status
+  const prevStatus = selectedLead.value.status || null
+
+  // find last status_change event to get previous reason (if any)
+  const lastStatusEv = (selectedLead.value.events || []).slice().reverse().find(e => e.type === 'status_change')
+  const prevReason = lastStatusEv?.reason ?? lastStatusEv?.note ?? (selectedLead.value.reason ?? '') || ''
+
+  // new values from modal
+  const newStatus = statusChange.value
+  const newReason = (statusReason.value || '').trim()
+
+  // optimistic UI update
+  selectedLead.value.status = newStatus
+  selectedLead.value.statusLabel = statusLabelFrom(newStatus)
+
+  // build event recording both old and new values
+  const ev = {
     type: 'status_change',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    note: statusReason.value || '',
-    reason: statusReason.value || '',
-    metadata: { short: `Status ${prev} → ${statusChange.value}` }
-  })
+    note: newReason || '',       // short note retained for compatibility
+    reason: newReason || '',     // explicit reason field
+    metadata: {
+      short: `Status ${prevStatus || '—'} → ${newStatus}`,
+      from: prevStatus,
+      to: newStatus,
+      // store fine-grained changes including previous/new reason
+      changes: {
+        status: { from: prevStatus, to: newStatus },
+        reason: { from: prevReason || null, to: newReason || null }
+      }
+    }
+  }
+
+  // append to local events array
+  selectedLead.value.events = selectedLead.value.events || []
+  selectedLead.value.events.push(ev)
+
+  // close UI
   closeStatusModal()
+
+  // PATCH to server — include events so server persists the audit trail
   try {
-    await patchLead(selectedLead.value._id, { 
-      status: statusChange.value, 
+    await patchLead(selectedLead.value._id, {
+      status: newStatus,
+      reason: newReason || '',
+      note: newReason || '',           // keep compatibility if backend expects note
       events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
   } catch (err) {
     console.error('status patch failed', err)
-    alert('Failed to save status change')
+    alert('Failed to save status change — reloading data.')
+    // revert / reload from server to keep consistent
+    await loadLeads()
   }
 }
+
+
+
 
 // PRIORITY change
 function openPriorityModal () {
@@ -1920,44 +2054,48 @@ function closePriorityModal () {
 }
 async function confirmChangePriority () {
   if (!selectedLead.value) return
-  const prev = selectedLead.value.priority
-  selectedLead.value.priority = priorityChange.value
-  selectedLead.value.priorityLabel = priorityLabelFrom(priorityChange.value)
+  const prev = selectedLead.value.priority || null
+  const next = priorityChange.value
+  selectedLead.value.priority = next
+  selectedLead.value.priorityLabel = priorityLabelFrom(next)
   selectedLead.value.priorityUpdatedBy = currentUser.value.name
   selectedLead.value.priorityUpdatedAt = new Date().toISOString()
-  
-  pushEvent(selectedLead.value, {
+
+  // Build event with from/to
+  const ev = {
     type: 'priority_change',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
     note: priorityReason.value || '',
-    reason: priorityReason.value || '',
-    metadata: { short: `Priority ${priorityLabelFrom(prev)} → ${priorityLabelFrom(priorityChange.value)}` }
-  })
-  
+    metadata: {
+      short: `Priority ${prev || 'Not set'} → ${next}`,
+      from: prev,
+      to: next,
+      changes: { priority: { from: prev, to: next } }
+    }
+  }
+
+  selectedLead.value.events = selectedLead.value.events || []
+  selectedLead.value.events.push(ev)
+
   closePriorityModal()
   try {
     await patchLead(selectedLead.value._id, { 
-      priority: priorityChange.value, 
+      priority: next, 
       priorityUpdatedBy: currentUser.value.name,
-      priorityUpdatedAt: new Date().toISOString(),
+      priorityUpdatedAt: selectedLead.value.priorityUpdatedAt,
       events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
   } catch (err) {
     console.error('priority patch failed', err)
     alert('Failed to save priority change')
+    await loadLeads()
   }
 }
 
-// UTILS for events / timeline
-function pushEvent (lead, ev) {
-  lead.events = lead.events || []
-  lead.events.push(ev)
-  const idx = leads.value.findIndex(l => (l._id || l.id) === (lead._id || lead.id))
-  if (idx !== -1) leads.value[idx] = lead
-}
 
+// UTILS for events / timeline
 const timelineSorted = computed(() => {
   if (!selectedLead.value) return []
   return (selectedLead.value.events || []).slice().sort((a, b) => new Date(b.at) - new Date(a.at))
@@ -1990,33 +2128,53 @@ const logsForSelectedLead = computed(() => {
   if (!selectedLead.value) return []
   const events = selectedLead.value.events || []
   return events
-    .filter(e => ['note', 'call', 'status_change', 'contact_edited', 'task_created', 'priority_change', 'note_updated', 'call_updated', 'task_updated'].includes(e.type))
+    .filter(e => [
+      'note', 'note_updated', 'note_deleted',
+      'call', 'call_updated', 'call_deleted',
+      'status_change', 'followup_set', 'followup_cleared',
+      'contact_edited', 'task_created', 'task_updated', 'task_deleted',
+      'priority_change', 'assign'
+    ].includes(e.type))
     .slice()
     .sort((a, b) => new Date(b.at) - new Date(a.at))
 })
 
+
 function eventIcon (type) {
   if (type === 'note' || type === 'note_updated') return '✍️'
+  if (type === 'note_deleted') return '🗑️'
   if (type === 'call' || type === 'call_updated') return '📞'
+  if (type === 'call_deleted') return '🗑️'
   if (type === 'task_created' || type === 'task_updated' || type === 'task_status_changed') return '🗒️'
+  if (type === 'task_deleted') return '🗑️'
   if (type === 'status_change') return '🔁'
+  if (type === 'followup_set') return '⏰'
+  if (type === 'followup_cleared') return '⌛'
   if (type === 'contact_edited') return '✏️'
   if (type === 'priority_change') return '🎯'
+  if (type === 'assign') return '👤'
   return '•'
 }
 function eventTitle (ev) {
   if (ev.type === 'note') return 'Note added'
   if (ev.type === 'note_updated') return 'Note updated'
+  if (ev.type === 'note_deleted') return 'Note deleted'
   if (ev.type === 'call') return 'Call logged'
   if (ev.type === 'call_updated') return 'Call updated'
+  if (ev.type === 'call_deleted') return 'Call deleted'
   if (ev.type === 'task_created') return 'Task created'
   if (ev.type === 'task_updated') return 'Task updated'
+  if (ev.type === 'task_deleted') return 'Task deleted'
   if (ev.type === 'task_status_changed') return 'Task status changed'
   if (ev.type === 'status_change') return 'Status changed'
+  if (ev.type === 'followup_set') return 'Follow-up set'
+  if (ev.type === 'followup_cleared') return 'Follow-up cleared'
+  if (ev.type === 'assign') return 'Assigned'
   if (ev.type === 'contact_edited') return 'Contact edited'
   if (ev.type === 'priority_change') return 'Priority changed'
   return ev.type
 }
+
 
 function statusPillClass (status) {
   if (status === 'new') return 'bg-sky-50 text-sky-700'
@@ -2124,6 +2282,7 @@ onMounted(() => {
   loadLeads()
 })
 </script>
+
 
 <style scoped>
 .fade-enter-active,.fade-leave-active{transition:all .15s ease}

@@ -197,9 +197,9 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-const router = useRouter()
+import { useRoute } from 'vue-router'
 const route = useRoute()
+
 // UI
 const mobileOpen = ref(false)
 const mobileActive = ref(null)
@@ -209,10 +209,12 @@ const searchQuery = ref('')
 const showCurrency = ref(false)
 const selectedCurrency = ref('USD')
 const currencies = ['USD','EUR','TZS']
+
 // Hover/click state for mega
 const menuOpenedByClick = ref(false)
 const isMouseOverPanel = ref(false)
 const isMouseOverTrigger = ref(false)
+
 // DOM refs
 const currencyButton = ref(null)
 const currencyMenu = ref(null)
@@ -220,7 +222,9 @@ const triggerRefs = ref({})
 const panelRefs = ref({})
 const panelPositions = ref({})
 const EDGE = 14
-// NAV items — park links marked with type:'park'
+
+// NAV items — park links marked with type:'park', route links marked type:'route'
+// ONLY include a short list of famous parks and 6 famous trekking routes
 const navItems = [
   {
     key: 'safari',
@@ -228,20 +232,26 @@ const navItems = [
     mega: true,
     megaCols: [
       {
-        title: 'Parks', links: [
+        title: 'Parks',
+        links: [
           { label: 'Serengeti', type: 'park', slug: 'serengeti' },
           { label: 'Ngorongoro', type: 'park', slug: 'ngorongoro' },
           { label: 'Tarangire', type: 'park', slug: 'tarangire' },
+          { label: 'Lake Manyara', type: 'park', slug: 'lake-manyara' },
+          { label: 'Ruaha', type: 'park', slug: 'ruaha' },
+          { label: 'Nyerere (Selous)', type: 'park', slug: 'nyerere' }
         ]
       },
       {
-        title: 'Tours', links: [
+        title: 'Tours',
+        links: [
           { label: 'All Safari Tours', to: { path: '/tours', query: { category: 'wildlife-safari' } } },
           { label: 'Family Safaris', to: { path: '/tours', query: { category: 'wildlife-safari', family: '1' } } },
         ]
       },
       {
-        title: 'Resources', links: [
+        title: 'Resources',
+        links: [
           { label: 'Packing List', to: '/tanzania-safari/packing-list' },
           { label: 'Articles', to: '/articles' },
         ]
@@ -254,20 +264,26 @@ const navItems = [
     mega: true,
     megaCols: [
       {
-        title: 'Routes', links: [
-          { label: 'Lemosho', to: '/climbing-kilimanjaro/routes/lemosho' },
-          { label: 'Machame', to: '/climbing-kilimanjaro/routes/machame' },
-          { label: 'Marangu', to: '/climbing-kilimanjaro/routes/marangu' },
+        title: 'Routes',
+        links: [
+          { label: 'Lemosho', type: 'route', slug: 'lemosho' },
+          { label: 'Machame', type: 'route', slug: 'machame' },
+          { label: 'Marangu', type: 'route', slug: 'marangu' },
+          { label: 'Rongai', type: 'route', slug: 'rongai' },
+          { label: 'Umbwe', type: 'route', slug: 'umbwe' },
+          { label: 'Northern Circuit', type: 'route', slug: 'northern-circuit' }
         ]
       },
       {
-        title: 'Planning', links: [
+        title: 'Planning',
+        links: [
           { label: 'Packing List', to: '/climbing-kilimanjaro/packing-list' },
           { label: 'Guides & Porters', to: '/climbing-kilimanjaro/guides-and-porters' },
         ]
       },
       {
-        title: 'Tours', links: [
+        title: 'Tours',
+        links: [
           { label: 'Kilimanjaro Tours', to: { path: '/tours', query: { category: 'kilimanjaro-climb' } } },
         ]
       }
@@ -280,6 +296,7 @@ const navItems = [
   { key: 'blog', label: 'Blog', to: '/blog', mega: false },
   { key: 'contact', label: 'Contact', to: '/contact', mega: false },
 ]
+
 // Utilities
 function resolveTo(itemOrLink) {
   const candidate = itemOrLink && itemOrLink.to !== undefined ? itemOrLink.to : itemOrLink
@@ -357,6 +374,11 @@ async function handleLinkClick(link) {
     await goToPark(link)
     return
   }
+  // Route type link: redirect to /routes?q=term (so routes page can search)
+  if (link.type === 'route') {
+    await goToRoute(link)
+    return
+  }
   // If link.to is string -> direct navigateTo
   if (link.to && typeof link.to === 'string') {
     const url = String(link.to)
@@ -403,6 +425,13 @@ async function goToPark(link) {
   const term = (link.slug && String(link.slug)) ? String(link.slug).replace(/[-_]+/g, ' ') : (link.label || '')
   const navigation = { path: '/parks', query: term ? { search: term } : {} }
   console.debug('[Navbar] goToPark ->', navigation)
+  await navigateTo(navigation).catch(()=>{})
+}
+/* Programmatic route navigation -> sends user to /routes?q=term */
+async function goToRoute(link) {
+  const term = (link.slug && String(link.slug)) ? String(link.slug).replace(/[-_]+/g, ' ') : (link.label || '')
+  const navigation = { path: '/routes', query: term ? { q: term } : {} }
+  console.debug('[Navbar] goToRoute ->', navigation)
   await navigateTo(navigation).catch(()=>{})
 }
 /* Mobile handler uses same centralized function */
@@ -1015,7 +1044,6 @@ onBeforeUnmount(() => {
   opacity: 0;
 }
 /* --- RESPONSIVE BREAKPOINTS --- */
-/* Large Desktop: 1440px+ */
 @media (min-width: 1440px) {
   .nav-list {
     gap: 32px;
@@ -1024,7 +1052,6 @@ onBeforeUnmount(() => {
     font-size: 15px;
   }
 }
-/* Desktop/Tablet Breakpoint: 1280px */
 @media (max-width: 1280px) {
   .nav-list {
     gap: 22px;
@@ -1042,7 +1069,6 @@ onBeforeUnmount(() => {
     min-width: 65px;
   }
 }
-/* Tablet Breakpoint: 1180px */
 @media (max-width: 1180px) {
   .nav-list {
     gap: 18px;
@@ -1059,7 +1085,6 @@ onBeforeUnmount(() => {
     font-size: 13px;
   }
 }
-/* Tablet Breakpoint: 1100px - Hide some nav items */
 @media (max-width: 1100px) {
   .nav-list {
     gap: 16px;
@@ -1067,7 +1092,6 @@ onBeforeUnmount(() => {
   .nav-text {
     font-size: 12.5px;
   }
-  /* Hide less important nav items on very tight screens */
   .nav-item:nth-last-child(1),
   .nav-item:nth-last-child(2) {
     display: none;
@@ -1086,7 +1110,6 @@ onBeforeUnmount(() => {
     height: 36px;
   }
 }
-/* Tablet Breakpoint: 1050px - Hide more nav items */
 @media (max-width: 1050px) {
   .nav-list {
     gap: 14px;
@@ -1094,7 +1117,6 @@ onBeforeUnmount(() => {
   .nav-text {
     font-size: 12px;
   }
-  /* Hide more items */
   .nav-item:nth-last-child(3),
   .nav-item:nth-last-child(4) {
     display: none;
@@ -1116,19 +1138,15 @@ onBeforeUnmount(() => {
     height: 16px;
   }
 }
-/* Switch to mobile navigation: 1024px */
 @media (max-width: 1024px) {
   .hamburger {
     display: inline-block;
   }
- 
-  /* Hide desktop navigation and elements */
   .center-nav,
   .currency,
   .cta {
     display: none;
   }
-  /* Layout adjustments */
   .logo {
     height: 48px;
     max-height: 48px;
@@ -1149,18 +1167,14 @@ onBeforeUnmount(() => {
     width: 18px;
     height: 18px;
   }
- 
-  /* Adjust header height for mobile */
   .row {
     height: 68px;
   }
- 
   .mobile-panel {
     top: 68px;
     max-height: calc(100vh - 68px);
   }
 }
-/* Small Tablet: 768px */
 @media (max-width: 768px) {
   .container {
     padding: 0 18px;
@@ -1179,12 +1193,10 @@ onBeforeUnmount(() => {
     width: 38px;
     height: 38px;
   }
- 
   .mobile-panel {
     top: 64px;
     max-height: calc(100vh - 64px);
   }
- 
   .mobile-inner {
     padding: 16px 18px 20px;
   }
@@ -1202,7 +1214,6 @@ onBeforeUnmount(() => {
     padding: 7px 0;
   }
 }
-/* Mobile: 640px */
 @media (max-width: 640px) {
   .container {
     padding: 0 16px;
@@ -1218,12 +1229,10 @@ onBeforeUnmount(() => {
     width: 36px;
     height: 36px;
   }
- 
   .mobile-panel {
     top: 60px;
     max-height: calc(100vh - 60px);
   }
- 
   .mobile-inner {
     padding: 14px 16px 18px;
   }
@@ -1246,7 +1255,6 @@ onBeforeUnmount(() => {
     background-position: right 12px center;
   }
 }
-/* Small Mobile: 480px */
 @media (max-width: 480px) {
   .row {
     height: 56px;
@@ -1259,12 +1267,10 @@ onBeforeUnmount(() => {
     width: 34px;
     height: 34px;
   }
- 
   .mobile-panel {
     top: 56px;
     max-height: calc(100vh - 56px);
   }
- 
   .mobile-inner {
     padding: 12px 14px 16px;
   }
@@ -1295,8 +1301,6 @@ onBeforeUnmount(() => {
     font-size: 14px;
     padding: 10px 14px 10px 40px;
   }
- 
-  /* Search overlay adjustments */
   .search-overlay {
     padding: 20px 16px;
     align-items: flex-start;
@@ -1318,7 +1322,6 @@ onBeforeUnmount(() => {
     font-size: 15px;
   }
 }
-/* Extra Small Mobile: 360px */
 @media (max-width: 360px) {
   .container {
     padding: 0 12px;
@@ -1341,12 +1344,10 @@ onBeforeUnmount(() => {
     width: 16px;
     height: 16px;
   }
- 
   .mobile-panel {
     top: 52px;
     max-height: calc(100vh - 52px);
   }
- 
   .mobile-inner {
     padding: 10px 12px 14px;
   }

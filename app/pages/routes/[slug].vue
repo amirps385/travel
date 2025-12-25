@@ -1,467 +1,638 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- 1) HERO SECTION -->
-    <section class="relative h-[80vh] w-full overflow-hidden">
-      <div class="absolute inset-0 z-0">
-        <img 
-          :src="experience.heroImage"
-          :alt="experience.title"
-          class="h-full w-full object-cover"
-        />
-        <div class="absolute inset-0 bg-linear-to-b from-gray-900/90 via-gray-900/70 to-gray-900/30"></div>
-      </div>
+  <div>
+    <!-- Image Modal -->
+    <div v-if="modalOpen" class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/90"
+         @click.self="closeModal">
+      <!-- Close Button -->
+      <button @click="closeModal" 
+              class="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
       
-      <div class="relative z-10 flex h-full flex-col justify-end px-4 pb-20 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-7xl">
-          <div class="mb-6">
-            <span class="rounded-full bg-white/20 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-white">
-              {{ experience.type }}
-            </span>
+      <div class="relative max-w-7xl w-full h-full flex items-center justify-center">
+        <div class="relative w-full max-h-[85vh] flex flex-col">
+          <!-- Image Container -->
+          <div class="flex-1 flex items-center justify-center overflow-hidden">
+            <img :src="modalImage" :alt="modalAlt" 
+                 class="max-w-full max-h-full object-contain rounded-lg" />
           </div>
           
-          <h1 class="mb-4 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            {{ experience.title }}
-          </h1>
-          
-          <p class="mb-8 max-w-3xl text-xl font-light text-gray-100">
-            {{ experience.tagline }}
-          </p>
-          
-          <!-- Quick Facts Strip -->
-          <div class="mb-10 flex flex-wrap gap-4">
-            <div class="flex items-center rounded-full bg-white/10 backdrop-blur-sm px-4 py-2 text-white">
-              <span class="mr-2 text-lg">📍</span>
-              <span class="font-medium">{{ experience.region }}</span>
-            </div>
-            <div class="flex items-center rounded-full bg-white/10 backdrop-blur-sm px-4 py-2 text-white">
-              <span class="mr-2 text-lg">⏱️</span>
-              <span class="font-medium">{{ experience.durationLabel }}</span>
-            </div>
-            <div class="flex items-center rounded-full bg-white/10 backdrop-blur-sm px-4 py-2 text-white">
-              <span class="mr-2 text-lg">⭐</span>
-              <span class="font-medium">{{ experience.highlights[0] }}</span>
-            </div>
-            <div v-if="experience.priceFrom" class="flex items-center rounded-full bg-amber-500/90 backdrop-blur-sm px-4 py-2 text-white">
-              <span class="mr-2 text-lg">💵</span>
-              <span class="font-medium">From ${{ experience.priceFrom }}</span>
-            </div>
-          </div>
-          
-          <!-- CTA Buttons -->
-          <div class="flex flex-col gap-4 sm:flex-row">
-            <button class="rounded-2xl bg-amber-500 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:bg-amber-600 hover:shadow-xl focus:ring-2 focus:ring-amber-300">
-              Inquire Now
+          <!-- Navigation arrows for gallery images -->
+          <div v-if="isGalleryModal && experience.gallery.length > 1" 
+               class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-between px-4">
+            <button @click.stop="prevImage" 
+                    class="p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors disabled:opacity-30"
+                    :disabled="currentGalleryIndex <= 0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
-            <button class="rounded-2xl border-2 border-white bg-transparent px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:bg-white/10 hover:shadow-xl focus:ring-2 focus:ring-white">
-              Talk to an Expert
+            <button @click.stop="nextImage" 
+                    class="p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                    :disabled="currentGalleryIndex >= experience.gallery.length - 1">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 2) OVERVIEW -->
-    <section class="py-16 bg-white">
-      <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <h2 class="mb-8 text-3xl font-bold text-gray-900 lg:text-4xl">
-          Experience Overview
-        </h2>
-        
-        <div class="prose prose-lg max-w-none text-gray-600">
-          <p class="mb-6 leading-relaxed">
-            {{ experience.description }}
-          </p>
-        </div>
-        
-        <div class="mt-10 rounded-2xl bg-linear-to-r from-amber-50 to-yellow-50 p-6">
-          <h3 class="mb-4 text-xl font-semibold text-gray-900">Key Highlights</h3>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div v-for="(highlight, index) in experience.highlights" :key="index" class="flex items-start">
-              <div class="mr-3 mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-100">
-                <div class="h-2 w-2 rounded-full bg-amber-500"></div>
-              </div>
-              <span class="text-gray-700">{{ highlight }}</span>
-            </div>
+          
+          <!-- Image caption -->
+          <div v-if="modalAlt" class="mt-4 text-center text-white text-sm md:text-base">
+            {{ modalAlt }}
+          </div>
+          
+          <!-- Gallery counter -->
+          <div v-if="isGalleryModal && experience.gallery.length > 1" 
+               class="mt-2 text-center text-white/80 text-sm">
+            {{ currentGalleryIndex + 1 }} / {{ experience.gallery.length }}
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- 3) EXPERIENCE DETAILS -->
-    <section class="py-16 bg-gray-50">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 class="mb-10 text-center text-3xl font-bold text-gray-900 lg:text-4xl">
-          Experience Details
-        </h2>
-        
-        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-          <div class="rounded-2xl bg-white p-6 text-center shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div class="mb-3 text-3xl">🎯</div>
-            <h3 class="mb-2 text-sm font-semibold text-gray-500">Type</h3>
-            <p class="text-xl font-bold text-gray-900">{{ experience.type }}</p>
-          </div>
-          
-          <div class="rounded-2xl bg-white p-6 text-center shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div class="mb-3 text-3xl">📍</div>
-            <h3 class="mb-2 text-sm font-semibold text-gray-500">Region</h3>
-            <p class="text-xl font-bold text-gray-900">{{ experience.region }}</p>
-          </div>
-          
-          <div class="rounded-2xl bg-white p-6 text-center shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div class="mb-3 text-3xl">⏱️</div>
-            <h3 class="mb-2 text-sm font-semibold text-gray-500">Duration</h3>
-            <p class="text-xl font-bold text-gray-900">{{ experience.durationLabel }}</p>
-          </div>
-          
-          <div class="rounded-2xl bg-white p-6 text-center shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div class="mb-3 text-3xl">💵</div>
-            <h3 class="mb-2 text-sm font-semibold text-gray-500">Starting Price</h3>
-            <p v-if="experience.priceFrom" class="text-xl font-bold text-amber-600">${{ experience.priceFrom }}</p>
-            <p v-else class="text-xl font-bold text-gray-900">Price on request</p>
-          </div>
-          
-          <div class="rounded-2xl bg-white p-6 text-center shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div class="mb-3 text-3xl">🌤️</div>
-            <h3 class="mb-2 text-sm font-semibold text-gray-500">Best Time</h3>
-            <p class="text-xl font-bold text-gray-900">Year-round</p>
-          </div>
-        </div>
+    <!-- Loading -->
+    <div v-if="loading" class="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+        <p class="mt-4 text-gray-600">Loading route...</p>
       </div>
-    </section>
+    </div>
 
-    <!-- 4) ITINERARY / WHAT YOU'LL DO -->
-    <section class="py-16 bg-white">
-      <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <h2 class="mb-10 text-3xl font-bold text-gray-900 lg:text-4xl">
-          What You'll Do
-        </h2>
-        
-        <div class="space-y-8">
-          <div v-for="(step, index) in experience.itinerary" :key="index" 
-            class="group overflow-hidden rounded-2xl bg-gray-50 shadow-sm transition-all duration-300 hover:shadow-lg">
-            <div class="p-6 sm:p-8">
-              <div class="flex items-start">
-                <div class="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-amber-500 to-yellow-500 text-xl font-bold text-white">
-                  {{ index + 1 }}
-                </div>
-                <div class="flex-1">
-                  <h3 class="mb-3 text-xl font-bold text-gray-900">{{ step.title }}</h3>
-                  <p class="text-gray-600">{{ step.description }}</p>
+    <!-- Error -->
+    <div v-else-if="error" class="min-h-screen bg-gray-50 flex items-center justify-center px-6">
+      <div class="text-center max-w-xl">
+        <div class="text-6xl mb-4">😞</div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ error.statusCode === 404 ? 'Route Not Found' : 'Error' }}</h2>
+        <p class="text-gray-600 mb-6">{{ error.message || 'Something went wrong while loading the route.' }}</p>
+        <NuxtLink to="/routes" class="inline-block px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600">Back to routes</NuxtLink>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <main v-else class="bg-white">
+      <!-- HERO -->
+      <header class="relative w-full">
+        <div class="h-[60vh] md:h-[72vh] lg:h-[80vh] w-full relative overflow-hidden">
+          <img
+            :src="experience.heroImage || experience.featuredImage || placeholderHero"
+            :alt="experience.name"
+            class="absolute inset-0 w-full h-full object-cover cursor-zoom-in"
+            loading="lazy"
+            @click="openModal(experience.heroImage || experience.featuredImage || placeholderHero, experience.name)"
+          />
+          <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/40 to-transparent"></div>
+
+          <div class="absolute inset-0 flex items-end pb-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div class="bg-white/6 backdrop-blur-sm rounded-2xl p-6 md:p-8 lg:p-10">
+                <nav class="text-sm text-white/90 mb-3" aria-label="Breadcrumb">
+                  <NuxtLink to="/" class="text-white/80 hover:underline">Home</NuxtLink>
+                  <span class="mx-2">/</span>
+                  <NuxtLink to="/routes" class="text-white/80 hover:underline">Routes</NuxtLink>
+                  <span class="mx-2">/</span>
+                  <span class="font-semibold">{{ experience.name }}</span>
+                </nav>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                  <div class="lg:col-span-2">
+                    <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+                      {{ experience.name }}
+                    </h1>
+                    <p class="mt-2 text-sm md:text-base text-white/90 max-w-2xl">
+                      {{ experience.tagline || experience.shortDescription || '' }}
+                    </p>
+
+                    <div class="mt-4 flex flex-wrap gap-3 items-center">
+                      <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-white text-sm">
+                        ⏱️ {{ displayDuration }}
+                      </span>
+                      <span v-if="experience.difficulty" class="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1 text-white text-sm">
+                        🧭 {{ experience.difficulty }}
+                      </span>
+                      <span v-if="experience.region" class="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1 text-white text-sm">
+                        📍 {{ experience.region }}
+                      </span>
+                      <span v-if="experience.successRate" class="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1 text-white text-sm">
+                        ⭐ Success: {{ experience.successRate }}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <aside class="rounded-xl bg-white p-4 shadow-md w-full lg:w-auto border">
+                    <div class="flex items-baseline justify-between">
+                      <div>
+                        <p class="text-xs text-gray-500">Starting from</p>
+                        <div class="text-2xl font-extrabold text-amber-600">${{ priceFormatted }}</div>
+                      </div>
+                    </div>
+
+                    <ul class="mt-4 space-y-2 text-sm text-gray-700">
+                      <li><strong>Duration:</strong> {{ displayDuration }}</li>
+                      <li v-if="experience.difficulty"><strong>Difficulty:</strong> {{ experience.difficulty }}</li>
+                      <li v-if="experience.region"><strong>Region:</strong> {{ experience.region }}</li>
+                    </ul>
+
+                    <div class="mt-4 grid gap-2">
+                      <button class="w-full rounded-full bg-amber-600 text-white font-semibold py-2 hover:bg-amber-700">INQUIRE NOW</button>
+                      <NuxtLink to="/contact" class="w-full text-center rounded-full border border-gray-200 py-2 text-sm hover:bg-gray-50">Contact Sales</NuxtLink>
+                    </div>
+
+                    <div v-if="experience.isFeatured" class="mt-3 text-xs text-amber-600 font-semibold">Featured</div>
+                  </aside>
                 </div>
               </div>
-              <div v-if="step.image" class="mt-6 overflow-hidden rounded-xl">
-                <img 
-                  :src="step.image" 
-                  :alt="step.title"
-                  class="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </header>
 
-    <!-- 5) WHAT'S INCLUDED / NOT INCLUDED -->
-    <section class="py-16 bg-gray-50">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 class="mb-10 text-center text-3xl font-bold text-gray-900 lg:text-4xl">
-          What's Included
-        </h2>
-        
-        <div class="grid gap-8 md:grid-cols-2">
-          <!-- Included -->
-          <div class="rounded-2xl bg-white p-8 shadow-sm">
-            <div class="mb-6 flex items-center">
-              <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-                <span class="text-xl text-emerald-600">✓</span>
+      <!-- MAIN CONTENT AREA -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Left column: itinerary + overview -->
+          <div class="lg:col-span-2 space-y-8">
+            <!-- Overview / Description -->
+            <section class="rounded-2xl bg-white p-6 shadow-sm">
+              <h2 class="text-2xl font-bold text-gray-900 mb-3">Overview</h2>
+              <p class="text-gray-700 whitespace-pre-line leading-relaxed">{{ experience.description }}</p>
+
+              <div v-if="experience.highlights && experience.highlights.length" class="mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Highlights</h3>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <li v-for="(h, i) in experience.highlights" :key="i" class="text-sm text-gray-700 flex items-start gap-2">
+                    <span class="mt-1">•</span> <span>{{ h }}</span>
+                  </li>
+                </ul>
               </div>
-              <h3 class="text-2xl font-bold text-gray-900">Included</h3>
-            </div>
-            
-            <div class="space-y-4">
-              <div v-for="(item, index) in experience.included" :key="index" class="flex items-start">
-                <div class="mr-3 mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-50">
-                  <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
+            </section>
+
+            <!-- Itinerary -->
+            <section v-if="sortedItinerary.length" class="rounded-2xl bg-white p-6 shadow-sm">
+              <h2 class="text-2xl font-bold text-gray-900 mb-4">Itinerary (Day by Day)</h2>
+              <div class="space-y-6">
+                <article
+                  v-for="(day, idx) in sortedItinerary"
+                  :key="idx"
+                  class="group overflow-hidden rounded-2xl border border-gray-100 p-4 md:p-6"
+                >
+                  <div class="flex gap-4 items-start">
+                    <div class="flex-none">
+                      <div class="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 font-bold">
+                        Day {{ day.day || idx + 1 }}
+                      </div>
+                    </div>
+
+                    <div class="flex-1">
+                      <h4 class="text-lg font-semibold text-gray-900">{{ day.title || `Day ${day.day || idx + 1}` }}</h4>
+                      <p class="text-gray-700 mt-2 whitespace-pre-line">{{ day.description }}</p>
+                      <div v-if="day.altitude" class="mt-3 text-sm text-gray-500">Altitude: {{ day.altitude }}</div>
+                    </div>
+
+                    <div v-if="day.image" class="hidden md:block w-40 h-28 rounded-lg overflow-hidden cursor-zoom-in hover:opacity-90 transition-opacity"
+                         @click="openModal(day.image, day.title)">
+                      <img :src="day.image" :alt="day.title" class="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <!-- Group climbs -->
+            <section class="rounded-2xl bg-white p-6 shadow-sm" v-if="experience.groupClimbs && experience.groupClimbs.length">
+              <h2 class="text-2xl font-bold text-gray-900 mb-3">Upcoming Group Climbs</h2>
+              <div class="space-y-3">
+                <div v-for="(g, i) in experience.groupClimbs" :key="i" class="flex items-center justify-between gap-4 border rounded-lg p-3">
+                  <div>
+                    <div class="text-sm text-gray-600">{{ formatDate(g.date) }}</div>
+                    <div class="text-sm font-semibold text-gray-900">{{ g.days }} days • {{ g.groupSize }} pax</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm font-bold text-amber-600">${{ g.price }}</div>
+                    <div class="text-xs text-gray-500">{{ g.spotsLeft }} spots left</div>
+                  </div>
                 </div>
-                <span class="text-gray-700">{{ item }}</span>
               </div>
-            </div>
-          </div>
-          
-          <!-- Not Included -->
-          <div class="rounded-2xl bg-white p-8 shadow-sm">
-            <div class="mb-6 flex items-center">
-              <div class="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                <span class="text-xl text-red-600">✗</span>
-              </div>
-              <h3 class="text-2xl font-bold text-gray-900">Not Included</h3>
-            </div>
-            
-            <div class="space-y-4">
-              <div v-for="(item, index) in experience.excluded" :key="index" class="flex items-start">
-                <div class="mr-3 mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-50">
-                  <div class="h-2 w-2 rounded-full bg-red-400"></div>
+            </section>
+
+            <!-- FAQs -->
+            <section v-if="experience.faqs && experience.faqs.length" class="rounded-2xl bg-white p-6 shadow-sm">
+              <h2 class="text-2xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+              <div class="space-y-3">
+                <div v-for="(faq, i) in experience.faqs" :key="i" class="border rounded-lg overflow-hidden">
+                  <button
+                    @click="toggleFaq(i)"
+                    class="w-full flex items-center justify-between p-4 text-left"
+                    :aria-expanded="openFaqs[i] ? 'true' : 'false'"
+                  >
+                    <span class="font-semibold text-gray-900">{{ faq.question }}</span>
+                    <span class="text-2xl text-amber-600">{{ openFaqs[i] ? '−' : '+' }}</span>
+                  </button>
+                  <div v-if="openFaqs[i]" class="px-4 pb-4 text-gray-700 whitespace-pre-line">
+                    {{ faq.answer }}
+                  </div>
                 </div>
-                <span class="text-gray-700">{{ item }}</span>
               </div>
-            </div>
-            
-            <div class="mt-8 rounded-xl bg-amber-50 p-4">
-              <p class="text-sm text-amber-800">
-                <span class="font-semibold">Note:</span> Travel insurance is highly recommended for all our experiences.
-              </p>
-            </div>
+            </section>
           </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- 6) IMAGE GALLERY -->
-    <section class="py-16 bg-white">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 class="mb-10 text-center text-3xl font-bold text-gray-900 lg:text-4xl">
-          Gallery
-        </h2>
-        
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <div v-for="(image, index) in experience.gallery" :key="index"
-            class="group relative overflow-hidden rounded-2xl shadow-sm transition-all duration-300 hover:shadow-xl">
-            <img 
-              :src="image" 
-              :alt="`${experience.title} - Image ${index + 1}`"
-              class="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-            <div class="absolute inset-0 bg-linear-to-t from-black/50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
-          </div>
-        </div>
-      </div>
-    </section>
+          <!-- Right column: stats, gallery, included -->
+          <aside class="space-y-6">
+            <!-- Stats -->
+            <section class="rounded-2xl bg-white p-5 shadow-sm">
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">Quick Facts</h3>
 
-    <!-- 7) FAQ SECTION -->
-    <section class="py-16 bg-gray-50">
-      <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <h2 class="mb-10 text-center text-3xl font-bold text-gray-900 lg:text-4xl">
-          Frequently Asked Questions
-        </h2>
-        
-        <div class="space-y-4">
-          <div 
-            v-for="(faq, index) in experience.faqs" 
-            :key="index"
-            class="rounded-2xl border border-gray-200 bg-white"
-          >
-            <button 
-              @click="toggleFaq(index)"
-              class="flex w-full items-center justify-between p-6 text-left"
-              :aria-expanded="faq.open"
-              :aria-controls="`faq-${index}`"
-            >
-              <h3 class="text-lg font-semibold text-gray-900">{{ faq.question }}</h3>
-              <span class="ml-4 text-2xl text-amber-600">
-                {{ faq.open ? '−' : '+' }}
-              </span>
-            </button>
-            
-            <div 
-              v-if="faq.open"
-              :id="`faq-${index}`"
-              class="px-6 pb-6"
-            >
-              <p class="text-gray-600">{{ faq.answer }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+              <dl class="grid grid-cols-2 gap-4 text-sm text-gray-700">
+                <!-- Start Altitude -->
+                <div>
+                  <dt class="text-xs text-gray-500">Start Altitude</dt>
+                  <dd class="font-medium">
+                    {{ displayStatValue(experience.stats?.startingAltitude?.value) }}
+                    <div v-if="experience.stats?.startingAltitude?.detail" class="mt-1 text-xs text-gray-500">
+                      Detail: {{ experience.stats.startingAltitude.detail }}
+                    </div>
+                  </dd>
+                </div>
 
-    <!-- 8) FINAL CTA SECTION -->
-    <section class="relative overflow-hidden py-20">
-      <div class="absolute inset-0 bg-linear-to-br from-gray-900 via-gray-800 to-amber-900/70"></div>
-      
-      <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-          <h2 class="mb-6 text-4xl font-bold text-white lg:text-5xl">
-            Ready to book this Zanzibar experience?
-          </h2>
-          <p class="mx-auto mb-10 max-w-2xl text-xl text-gray-200">
-            Contact our Zanzibar specialists to customize this experience or get more details.
-          </p>
-          
-          <div class="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <button 
-              class="rounded-2xl bg-amber-500 px-10 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:bg-amber-600 hover:shadow-xl focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-gray-800"
-            >
-              INQUIRE NOW
-            </button>
-            <button 
-              class="rounded-2xl border-2 border-white bg-transparent px-10 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:bg-white/10 hover:shadow-xl focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-            >
-              Talk to an Expert
-            </button>
-          </div>
-          
-          <!-- Trust Strip -->
-          <div class="grid grid-cols-1 gap-8 rounded-2xl bg-white/10 p-8 backdrop-blur-sm sm:grid-cols-3">
-            <div class="text-center">
-              <div class="mb-2 text-3xl">🛡️</div>
-              <h4 class="mb-1 font-semibold text-white">Licensed Operator</h4>
-              <p class="text-sm text-gray-200">Fully licensed by Tanzanian Tourism Board</p>
-            </div>
-            
-            <div class="text-center">
-              <div class="mb-2 text-3xl">🔒</div>
-              <h4 class="mb-1 font-semibold text-white">No Hidden Fees</h4>
-              <p class="text-sm text-gray-200">Transparent pricing with all taxes included</p>
-            </div>
-            
-            <div class="text-center">
-              <div class="mb-2 text-3xl">☎️</div>
-              <h4 class="mb-1 font-semibold text-white">24/7 Support</h4>
-              <p class="text-sm text-gray-200">Dedicated support during your entire trip</p>
-            </div>
+                <!-- Max Altitude -->
+                <div>
+                  <dt class="text-xs text-gray-500">Max Altitude</dt>
+                  <dd class="font-medium">
+                    {{ displayStatValue(experience.stats?.maxAltitude?.value) }}
+                    <div v-if="experience.stats?.maxAltitude?.detail" class="mt-1 text-xs text-gray-500">
+                      Detail: {{ experience.stats.maxAltitude.detail }}
+                    </div>
+                  </dd>
+                </div>
+
+                <!-- Total Distance -->
+                <div>
+                  <dt class="text-xs text-gray-500">Total Distance</dt>
+                  <dd class="font-medium">
+                    {{ displayStatValue(experience.stats?.totalDistance?.value) }}
+                    <div v-if="experience.stats?.totalDistance?.detail" class="mt-1 text-xs text-gray-500">
+                      Detail: {{ experience.stats.totalDistance.detail }}
+                    </div>
+                  </dd>
+                </div>
+
+                <!-- Best Season -->
+                <div>
+                  <dt class="text-xs text-gray-500">Best Season</dt>
+                  <dd class="font-medium">
+                    {{ formatBestSeasonDisplay(experience.stats?.bestSeason) }}
+                    <div v-if="extractBestSeasonDetail(experience.stats?.bestSeason)" class="mt-1 text-xs text-gray-500">
+                      Note: {{ extractBestSeasonDetail(experience.stats?.bestSeason) }}
+                    </div>
+                  </dd>
+                </div>
+
+                <!-- Acclimatization -->
+                <div class="col-span-2">
+                  <dt class="text-xs text-gray-500">Acclimatization</dt>
+                  <dd class="font-medium">
+                    {{ displayStatValue(experience.stats?.acclimatization?.value) }}
+                    <div v-if="experience.stats?.acclimatization?.detail" class="mt-1 text-xs text-gray-500">
+                      Detail: {{ experience.stats.acclimatization.detail }}
+                    </div>
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <!-- What's Included -->
+            <section class="rounded-2xl bg-white p-5 shadow-sm">
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">What's Included</h3>
+              <div v-if="hasWhatsIncluded">
+                <ul class="text-sm text-gray-700 space-y-2">
+                  <li v-for="(inc, i) in experience.whatsIncluded.included" :key="'inc-' + i" class="flex items-start gap-3">
+                    <span class="text-amber-600 mt-1">✓</span><span>{{ inc }}</span>
+                  </li>
+                </ul>
+                <div v-if="experience.whatsIncluded.notIncluded && experience.whatsIncluded.notIncluded.length" class="mt-4">
+                  <h4 class="text-sm font-semibold text-gray-800 mb-2">Not Included</h4>
+                  <ul class="text-sm text-gray-700 space-y-1">
+                    <li v-for="(n, k) in experience.whatsIncluded.notIncluded" :key="'not-' + k">— {{ n }}</li>
+                  </ul>
+                </div>
+                <div v-if="experience.whatsIncluded.note" class="mt-3 text-xs text-gray-500">
+                  <strong>Note:</strong> {{ experience.whatsIncluded.note }}
+                </div>
+              </div>
+              <div v-else class="text-sm text-gray-600">Inclusions not specified.</div>
+            </section>
+
+            <!-- Gallery -->
+            <section v-if="experience.gallery && experience.gallery.length" class="rounded-2xl bg-white p-5 shadow-sm">
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">Gallery</h3>
+              <div class="grid grid-cols-3 gap-2">
+                <div v-for="(img, i) in experience.gallery.slice(0, 9)" :key="i" 
+                     class="h-20 overflow-hidden rounded-lg cursor-zoom-in hover:opacity-90 transition-opacity group relative"
+                     @click="openGalleryModal(img, i)">
+                  <img :src="img" :alt="experience.name + ' image ' + (i+1)" 
+                       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" />
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                </div>
+              </div>
+              <div v-if="experience.gallery.length > 9" class="mt-3 text-sm text-gray-600">+ {{ experience.gallery.length - 9 }} more images</div>
+            </section>
+          </aside>
+        </div>
+
+        <!-- Footer CTA -->
+        <div class="mt-12 mb-24 rounded-2xl bg-linear-to-r from-amber-600 to-amber-500 text-white p-8 text-center shadow-lg">
+          <h3 class="text-2xl font-bold">Like this route?</h3>
+          <p class="mt-2">Get a personalized quote or ask our experts for advice.</p>
+          <div class="mt-4 flex items-center justify-center gap-4">
+            <button class="rounded-full bg-white text-amber-600 px-6 py-2 font-semibold">Request Quote</button>
+            <NuxtLink to="/contact" class="rounded-full border border-white/30 px-6 py-2">Contact Us</NuxtLink>
           </div>
         </div>
       </div>
-    </section>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useHead, useSeoMeta } from '#imports' // Nuxt auto imports
+const route = useRoute()
+const slug = route.params.slug
 
-// Mock data for a single Zanzibar experience
-const experience = ref({
-  slug: 'safari-blue-adventure',
-  title: 'Safari Blue Adventure',
-  type: 'Excursion',
-  region: 'South Coast',
-  durationLabel: 'Full-day (8-9 hours)',
-  priceFrom: 85,
-  tagline: 'A full-day dhow sailing adventure exploring pristine sandbanks, snorkeling vibrant reefs, and indulging in fresh seafood.',
-  description: 'Safari Blue is Zanzibar\'s premier full-day sailing adventure, offering an unforgettable experience on the crystal-clear waters of the Indian Ocean. Board a traditional wooden dhow and sail to stunning locations including Menai Bay Conservation Area, known for its abundant marine life and picturesque sandbanks. This comprehensive excursion combines snorkeling on vibrant coral reefs, relaxing on pristine sandbars, and enjoying a freshly prepared seafood barbecue lunch with local flavors.',
-  highlights: [
-    'Snorkeling in crystal-clear waters',
-    'Traditional dhow sailing experience',
-    'Fresh seafood BBQ lunch',
-    'Dolphin watching opportunities',
-    'Pristine sandbank relaxation',
-    'Professional guides & equipment'
-  ],
-  itinerary: [
-    {
-      title: 'Morning Pickup & Dhow Boarding',
-      description: 'We\'ll pick you up from your hotel and transfer you to Fumba Peninsula. After a safety briefing, board your traditional dhow and begin your sailing adventure.',
-      image: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      title: 'Snorkeling at Coral Reefs',
-      description: 'Anchor at a protected coral reef and snorkel among colorful tropical fish. All equipment is provided, and guides will assist beginners.',
-      image: 'https://images.unsplash.com/photo-1536152471326-642d7463e666?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      title: 'Sandbank Relaxation',
-      description: 'Visit a stunning sandbank that appears only during low tide. Relax on the white sand, swim in the turquoise waters, or explore the surroundings.',
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      title: 'Seafood BBQ Lunch',
-      description: 'Enjoy a freshly prepared barbecue lunch on the beach or aboard the dhow. Feast on grilled fish, calamari, lobster (seasonal), tropical fruits, and local side dishes.',
-      image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      title: 'Dolphin Spotting & Return',
-      description: 'On the return sail, keep an eye out for dolphins that frequent these waters. We\'ll return to Fumba by late afternoon and transfer you back to your hotel.',
-      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-    }
-  ],
-  included: [
-    'Hotel pickup and drop-off',
-    'Traditional dhow sailing',
-    'Snorkeling equipment',
-    'Professional guide',
-    'Seafood BBQ lunch',
-    'Fruit and soft drinks',
-    'Conservation fees',
-    'Life jackets'
-  ],
-  excluded: [
-    'Alcoholic beverages',
-    'Tips for guides and crew',
-    'Personal expenses',
-    'Travel insurance',
-    'Swimming costumes & towels'
-  ],
-  faqs: [
-    {
-      question: 'What should I bring for the Safari Blue trip?',
-      answer: 'We recommend bringing sunscreen, hat, sunglasses, swimwear, towel, camera, and comfortable clothing. Water shoes are optional but useful for walking on coral areas.',
-      open: true
-    },
-    {
-      question: 'Is this suitable for non-swimmers?',
-      answer: 'Yes, non-swimmers can still enjoy the dhow sailing, sandbank visits, and lunch. The crew can provide extra flotation devices, and you can stay in shallow waters.',
-      open: false
-    },
-    {
-      question: 'What time does the tour start and end?',
-      answer: 'Pickup is typically around 8:00-8:30 AM from South Coast hotels, and you\'ll return by 5:00 PM. Exact times vary slightly based on your hotel location.',
-      open: false
-    },
-    {
-      question: 'Is vegetarian food available?',
-      answer: 'Yes, we can accommodate vegetarians and other dietary requirements if notified in advance. Please mention any dietary restrictions when booking.',
-      open: false
-    },
-    {
-      question: 'What happens in case of bad weather?',
-      answer: 'If weather conditions are unsafe, we may reschedule your trip or offer a full refund. We monitor weather closely and will inform you as early as possible.',
-      open: false
-    },
-    {
-      question: 'Are children allowed on this trip?',
-      answer: 'Yes, children of all ages are welcome. Children under 5 years usually join for free, while those 5-12 years receive a discounted rate. Please inform us if bringing children.',
-      open: false
-    }
-  ],
-  heroImage: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
-  gallery: [
-    'https://images.unsplash.com/photo-1536152471326-642d7463e666?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w-800&q=80',
-    'https://images.unsplash.com/photo-1467003909585-2f8a72700288?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1563482776068-4dac10f9373d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1569949381669-ecf31b5c55f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1516496636080-14fb876e029d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    'https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-  ]
+const experience = ref(null)
+const loading = ref(true)
+const error = ref(null)
+const openFaqs = ref({})
+
+// Modal state
+const modalOpen = ref(false)
+const modalImage = ref('')
+const modalAlt = ref('')
+const isGalleryModal = ref(false)
+const currentGalleryIndex = ref(0)
+
+const placeholderHero = '/images/placeholder-hero.jpg'
+
+// format price
+const priceFormatted = computed(() => {
+  if (!experience.value) return '—'
+  return experience.value.startingPrice || experience.value.priceFrom || (experience.value.startingPrice === 0 ? '0' : '—')
 })
 
-const toggleFaq = (index) => {
-  experience.value.faqs[index].open = !experience.value.faqs[index].open
+// display duration with robust fallback
+const displayDuration = computed(() => {
+  if (!experience.value) return ''
+  const min = experience.value.durationMin
+  const max = experience.value.durationMax
+  if (min && max) {
+    return min === max ? `${min} Day${min > 1 ? 's' : ''}` : `${min}–${max} Days`
+  }
+  if (min) return `${min} Day${min > 1 ? 's' : ''}`
+  if (experience.value.duration) return experience.value.duration
+  return 'Duration not specified'
+})
+
+const hasWhatsIncluded = computed(() => {
+  return !!(experience.value && experience.value.whatsIncluded && ( (experience.value.whatsIncluded.included && experience.value.whatsIncluded.included.length) || (experience.value.whatsIncluded.notIncluded && experience.value.whatsIncluded.notIncluded.length) ))
+})
+
+const sortedItinerary = computed(() => {
+  if (!experience.value?.itinerary) return []
+  // ensure we sort by .day if present, else fallback to array order
+  return [...experience.value.itinerary].sort((a, b) => ( (a.day || 0) - (b.day || 0) ))
+})
+
+function formatDate(d) {
+  if (!d) return ''
+  try {
+    const dt = new Date(d)
+    return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(dt)
+  } catch {
+    return String(d)
+  }
 }
 
+function toggleFaq(i) {
+  openFaqs.value[i] = !openFaqs.value[i]
+}
+
+// Modal functions
+function openModal(imageSrc, alt = '') {
+  modalImage.value = imageSrc
+  modalAlt.value = alt
+  isGalleryModal.value = false
+  modalOpen.value = true
+  document.body.style.overflow = 'hidden'
+  document.documentElement.style.overflow = 'hidden'
+}
+
+function openGalleryModal(imageSrc, index) {
+  modalImage.value = imageSrc
+  modalAlt.value = `${experience.value.name} - Image ${index + 1}`
+  isGalleryModal.value = true
+  currentGalleryIndex.value = index
+  modalOpen.value = true
+  document.body.style.overflow = 'hidden'
+  document.documentElement.style.overflow = 'hidden'
+}
+
+function closeModal() {
+  modalOpen.value = false
+  isGalleryModal.value = false
+  currentGalleryIndex.value = 0
+  document.body.style.overflow = 'auto'
+  document.documentElement.style.overflow = 'auto'
+}
+
+function nextImage() {
+  if (experience.value?.gallery && currentGalleryIndex.value < experience.value.gallery.length - 1) {
+    currentGalleryIndex.value++
+    modalImage.value = experience.value.gallery[currentGalleryIndex.value]
+    modalAlt.value = `${experience.value.name} - Image ${currentGalleryIndex.value + 1}`
+  }
+}
+
+function prevImage() {
+  if (currentGalleryIndex.value > 0) {
+    currentGalleryIndex.value--
+    modalImage.value = experience.value.gallery[currentGalleryIndex.value]
+    modalAlt.value = `${experience.value.name} - Image ${currentGalleryIndex.value + 1}`
+  }
+}
+
+// Keyboard navigation
+function handleKeydown(event) {
+  if (!modalOpen.value) return
+  
+  switch(event.key) {
+    case 'Escape':
+      closeModal()
+      break
+    case 'ArrowRight':
+      if (isGalleryModal.value) nextImage()
+      break
+    case 'ArrowLeft':
+      if (isGalleryModal.value) prevImage()
+      break
+  }
+}
+
+async function fetchExperience(slugParam) {
+  loading.value = true
+  error.value = null
+  try {
+    // use $fetch to call your API
+    const res = await $fetch(`/api/routes/${encodeURIComponent(slugParam)}`).catch(err => { throw err })
+    if (!res || !res.success) {
+      throw createError({ statusCode: 404, message: 'Route not found' })
+    }
+    experience.value = res.data
+
+    // init FAQs open state: open first by default
+    openFaqs.value = {}
+    if (Array.isArray(experience.value.faqs)) {
+      experience.value.faqs.forEach((f, idx) => (openFaqs.value[idx] = idx === 0))
+    }
+
+    // console debug helpful info
+    console.debug('[routes/slug] loaded', {
+      name: experience.value.name,
+      duration: experience.value.duration,
+      min: experience.value.durationMin,
+      max: experience.value.durationMax,
+      gallery: (experience.value.gallery || []).length
+    })
+
+    // set head meta — prefers SEO values from API where present
+    const title = experience.value.seo?.title || experience.value.name || 'Route'
+    const desc = experience.value.seo?.description || experience.value.shortDescription || (experience.value.description || '').slice(0, 160)
+    useHead({
+      title,
+      meta: [
+        { name: 'description', content: desc },
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: desc },
+        { property: 'og:image', content: experience.value.heroImage || experience.value.featuredImage || '' },
+        { property: 'og:type', content: 'article' }
+      ]
+    })
+    useSeoMeta({
+      ogTitle: title,
+      ogDescription: desc,
+      ogImage: experience.value.heroImage || experience.value.featuredImage || ''
+    })
+  } catch (err) {
+    console.error('Failed to load route', err)
+    error.value = err
+    experience.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+// Utility: display a stat value or a placeholder
+function displayStatValue(val) {
+  if (val === undefined || val === null || String(val).trim() === '') return '—'
+  return String(val)
+}
+
+/*
+  Best season formatting helper
+  Accepts:
+   - { from, to, detail } (new)
+   - { value: 'Jan–Mar', detail: '' } (legacy)
+   - 'Jan–Mar' string
+   - null/undefined
+*/
+function formatBestSeasonDisplay(bestSeason) {
+  if (!bestSeason) return 'Year-round'
+
+  // new style object
+  if (typeof bestSeason === 'object') {
+    if (bestSeason.from || bestSeason.to) {
+      const from = bestSeason.from || ''
+      const to = bestSeason.to || ''
+      if (from.toLowerCase().includes('year') || to.toLowerCase().includes('year')) return 'Year-round'
+      if (from && to) {
+        return `${from}${from === to ? '' : ' – ' + to}`
+      }
+      return (from || to) || 'Year-round'
+    }
+    // legacy object with value
+    if (bestSeason.value) {
+      return String(bestSeason.value)
+    }
+  }
+
+  if (typeof bestSeason === 'string') {
+    const s = bestSeason.trim()
+    if (!s) return 'Year-round'
+    return s
+  }
+
+  return 'Year-round'
+}
+
+// extract detail/note from bestSeason in all shapes
+function extractBestSeasonDetail(bestSeason) {
+  if (!bestSeason) return ''
+  if (typeof bestSeason === 'object') {
+    return bestSeason.detail || ''
+  }
+  return ''
+}
+
+// initial load
 onMounted(() => {
-  // In a real implementation, this would fetch data based on route params
-  // const { slug } = useRoute().params
-  // fetchExperience(slug)
+  const s = route.params.slug
+  if (s) fetchExperience(s)
+  
+  // Add keyboard event listener
+  window.addEventListener('keydown', handleKeydown)
+})
+
+// Cleanup event listener
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+  // Ensure overflow is reset if modal is open when component unmounts
+  if (modalOpen.value) {
+    document.body.style.overflow = 'auto'
+    document.documentElement.style.overflow = 'auto'
+  }
+})
+
+// refetch if slug changes
+watch(() => route.params.slug, (val) => {
+  if (val) fetchExperience(val)
 })
 </script>
 
 <style scoped>
-/* Smooth scrolling for the page */
-html {
-  scroll-behavior: smooth;
+/* small helpers */
+.animate-spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* basic page spacing */
+main { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+/* responsive tweaks */
+@media (min-width: 1024px) {
+  header .bg-white\/6 { padding: 2rem; }
 }
 
-/* Improve image loading appearance */
-img {
-  content-visibility: auto;
+/* Modal animations */
+.fixed {
+  animation: fadeIn 0.2s ease-out;
 }
 
-/* Accessibility improvements */
-button:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 </style>

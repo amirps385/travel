@@ -1,17 +1,17 @@
 import mongoose from 'mongoose'
 
 /* -----------------------------
-   Sub Schemas
+   Sub Schemas (Keep these the same)
 ----------------------------- */
 
 // Day-by-day itinerary
 const ItineraryDaySchema = new mongoose.Schema(
   {
-    day: { type: Number, required: true },          // Day 1, Day 2...
+    day: { type: Number, required: true },
     title: { type: String, required: true },
     description: { type: String, required: true },
-    altitude: { type: String },                     // "2,100m → 2,650m"
-    image: { type: String },                        // optional
+    altitude: { type: String },
+    image: { type: String },
   },
   { _id: false }
 )
@@ -37,13 +37,17 @@ const FaqSchema = new mongoose.Schema(
   { _id: false }
 )
 
-// Stats cards
+// Stats cards - UPDATED: bestSeason is an object { from, to, detail }
 const RouteStatsSchema = new mongoose.Schema(
   {
     startingAltitude: { value: String, detail: String },
     maxAltitude: { value: String, detail: String },
     totalDistance: { value: String, detail: String },
-    bestSeason: { value: String, detail: String },
+    bestSeason: {
+      from: { type: String }, // e.g. "January"
+      to: { type: String },   // e.g. "March"
+      detail: { type: String } // optional note
+    },
     acclimatization: { value: String, detail: String },
   },
   { _id: false }
@@ -59,27 +63,53 @@ const RouteSchema = new mongoose.Schema(
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     tagline: { type: String },
-    shortDescription: { type: String },  // Added this
+    shortDescription: { type: String },
     description: { type: String, required: true },
 
+    /* LOCATION */
+    region: {
+      type: String,
+      enum: [
+        'Kilimanjaro',
+        'Serengeti',
+        'Ngorongoro',
+        'Tarangire',
+        'Lake Manyara',
+        'Mount Meru',
+        'Zanzibar',
+        'Selous',
+        'Ruaha',
+        'Mafia Island',
+        'Other'
+      ],
+      default: 'Kilimanjaro'
+    },
+
     /* IMAGES */
-    featuredImage: { type: String },  // Added this
-    heroImage: { type: String },      // Changed from required to optional
+    featuredImage: { type: String },
+    heroImage: { type: String },
 
     /* KEY INFO */
-    duration: { type: String },                     // "7–8 Days"
-    durationMin: { type: Number },                  // Added this
-    durationMax: { type: Number },                  // Added this
-    startingPrice: { type: Number },                // Added this
+    duration: { type: String },
+    durationMin: { type: Number },
+    durationMax: { type: Number },
+    startingPrice: { type: Number },
     difficulty: {
       type: String,
       enum: ['Easy', 'Moderate', 'Challenging', 'Very Challenging'],
       required: true,
     },
-    successRate: { type: String },                   // "95%"
+    successRate: { type: String },
 
     /* HIGHLIGHTS */
     highlights: [{ type: String }],
+
+    /* WHAT'S INCLUDED */
+    whatsIncluded: {
+      included: [{ type: String }],
+      notIncluded: [{ type: String }],
+      note: { type: String }
+    },
 
     /* STATS */
     stats: RouteStatsSchema,
@@ -109,7 +139,7 @@ const RouteSchema = new mongoose.Schema(
 
   },
   {
-    timestamps: true, // createdAt, updatedAt
+    timestamps: true,
   }
 )
 

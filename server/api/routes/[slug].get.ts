@@ -1,95 +1,114 @@
-// server/api/routes/[slug].get.ts
+// server/api/routes/[slug].get.ts - FIXED VERSION
 import Route from '../../models/Route'
 import { connectDB } from '../../utils/mongoose'
-import { getQuery } from 'h3' // if not available, getQuery from Nitro/Nuxt helper
+import mongoose from 'mongoose'
+import { getQuery } from 'h3'
 
 export default defineEventHandler(async (event) => {
   await connectDB()
-
+  
   try {
-    // Primary: route params (expected)
-    let slug = event.context?.params?.slug
-
-    // Secondary: ?slug= in query (possible if someone called API like /api/routes?slug=foo)
-    if (!slug) {
-      const q = getQuery(event)
-      if (q && q.slug) {
-        slug = Array.isArray(q.slug) ? q.slug[0] : q.slug
-        console.warn('⚠️ [slug].get.ts - slug found in query:', slug)
+    // Get the parameter from the URL - FIXED: Check both slug and id
+    let param = event.context?.params?.slug || event.context?.params?.id
+    
+    console.log('🔍 Route handler called with params:', event.context.params)
+    console.log('🔍 Using param:', param)
+    
+    // Get query parameters
+    const query = getQuery(event)
+    
+    // If no param in URL path, check query
+    if (!param) {
+      if (query?.id) {
+        param = Array.isArray(query.id) ? query.id[0] : query.id
+      } else if (query?.slug) {
+        param = Array.isArray(query.slug) ? query.slug[0] : query.slug
       }
     }
-
-    // Tertiary fallback: try to extract last path segment from request URL (dev/internal calls sometimes lack params)
-    if (!slug) {
-      const rawUrl =
-        // H3 / Nitro
-        event.node?.req?.url ||
-        // older shapes
-        event.req?.url ||
-        ''
-      if (rawUrl) {
-        // strip query string and trailing slash
-        const pathOnly = rawUrl.split('?')[0].replace(/\/+$/, '')
-        const parts = pathOnly.split('/')
-        const last = parts[parts.length - 1] || ''
-        if (last) {
-          // decode in case the slug was encoded
-          try {
-            slug = decodeURIComponent(last)
-            console.warn('⚠️ [slug].get.ts - slug extracted from URL fallback:', slug, ' (rawUrl:', rawUrl, ')')
-          } catch (e) {
-            slug = last
-            console.warn('⚠️ [slug].get.ts - slug fallback (no decode):', slug)
-          }
-        }
-      }
-    }
-
-    // Final guard
-    if (!slug) {
+    
+    if (!param) {
       throw createError({
         statusCode: 400,
-        message: 'Slug parameter is required',
+        message: 'Route identifier is required',
       })
     }
-
-    // normalize
-    slug = String(slug).trim()
-
-    console.log('🔍 API called with slug:', slug)
-
-    // Try to find the route (only active routes for public)
-    const route = await Route.findOne({
-      slug: slug,
-      isActive: true,
-    })
-
-    if (!route) {
-      // Additional debug: check if route exists but is inactive
-      const anyRoute = await Route.findOne({ slug: slug })
-      if (anyRoute) {
-        console.log('⚠️ Route exists but isActive is:', anyRoute.isActive)
+    
+    param = String(param).trim()
+    
+    // Check if this is an admin request
+    const isAdminRequest = 
+      query?.admin === 'true' || 
+      query?.mode === 'edit' ||
+      event.node.req.headers.referer?.includes('/admin')
+    
+    let route
+    
+    // Check if param is a valid MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(param)) {
+      console.log('🔍 Parameter is ObjectId, fetching by ID')
+      // For admin, show all routes regardless of status
+      if (isAdminRequest) {
+        route = await Route.findById(param)
+      } else {
+        // For public, only show active routes
+        route = await Route.findOne({ 
+          _id: param,
+          isActive: true 
+        })
       }
-
+    } else {
+      console.log('🔍 Parameter is slug, fetching by slug')
+      // It's a slug
+      if (isAdminRequest) {
+        route = await Route.findOne({ slug: param })
+      } else {
+        route = await Route.findOne({ 
+          slug: param, 
+          isActive: true 
+        })
+      }
+    }
+    
+    if (!route) {
       throw createError({
         statusCode: 404,
-        message: `Route "${slug}" not found or is inactive`,
+        message: `Route "${param}" not found`,
       })
     }
-
+    
+    // Convert to plain object to include all virtuals and remove mongoose metadata
+    const routeData = route.toObject()
+    
+    // Log for debugging
+    console.log('✅ Returning route data:', {
+      id: routeData._id,
+      name: routeData.name,
+      highlights: routeData.highlights?.length,
+      itinerary: routeData.itinerary?.length,
+      gallery: routeData.gallery?.length,
+      faqs: routeData.faqs?.length
+    })
+    
+    // Return complete route data
     return {
       success: true,
-      data: route,
+      data: routeData,
     }
+    
   } catch (error: any) {
-    // preserve 4xx/5xx from thrown createError
-    console.error('❌ Error in [slug].get.ts:', error)
+    console.error('❌ Error fetching route:', {
+      error: error.message,
+      params: event.context.params,
+      query: getQuery(event)
+    })
+    
     if (error.statusCode === 404 || error.statusCode === 400) {
       throw error
     }
+    
     throw createError({
       statusCode: 500,
-      message: 'Server error: ' + (error?.message || 'unknown'),
+      message: 'Failed to fetch route: ' + (error?.message || 'Unknown error'),
     })
   }
 })

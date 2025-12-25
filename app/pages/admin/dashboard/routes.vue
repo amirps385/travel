@@ -51,6 +51,7 @@
               <tr class="text-left text-xs uppercase tracking-wide text-slate-500 border-b">
                 <th class="py-3 px-4">Route</th>
                 <th class="py-3 px-4">Slug</th>
+                <th class="py-3 px-4">Region</th>
                 <th class="py-3 px-4">Difficulty</th>
                 <th class="py-3 px-4">Duration</th>
                 <th class="py-3 px-4">Price</th>
@@ -82,6 +83,10 @@
                   /{{ r.slug }}
                 </td>
 
+                <td class="py-3 px-4 text-slate-700">
+                  {{ r.region || '—' }}
+                </td>
+
                 <td class="py-3 px-4">
                   <span class="px-2 py-1 text-xs rounded-full" :class="difficultyClass(r.difficulty)">
                     {{ r.difficulty || '—' }}
@@ -89,7 +94,13 @@
                 </td>
 
                 <td class="py-3 px-4 text-slate-700">
-                  {{ r.duration }}
+                  <span v-if="r.durationMin && r.durationMax">
+                    {{ r.durationMin === r.durationMax ? r.durationMin + ' Day' + (r.durationMin > 1 ? 's' : '') : r.durationMin + '–' + r.durationMax + ' Days' }}
+                  </span>
+                  <span v-else-if="r.duration" class="text-slate-400">
+                    {{ r.duration }}
+                  </span>
+                  <span v-else class="text-slate-400">—</span>
                 </td>
 
                 <td class="py-3 px-4">
@@ -128,13 +139,13 @@
               </tr>
 
               <tr v-if="!routes.length && !loadingList">
-                <td colspan="7" class="p-4 text-center text-xs text-slate-500">
+                <td colspan="8" class="p-4 text-center text-xs text-slate-500">
                   No routes found. Click "Add Route" to create one.
                 </td>
               </tr>
 
               <tr v-if="loadingList">
-                <td colspan="7" class="p-4 text-center text-xs text-slate-500">
+                <td colspan="8" class="p-4 text-center text-xs text-slate-500">
                   Loading routes...
                 </td>
               </tr>
@@ -211,20 +222,60 @@
                   <input v-model="form.shortDescription" class="w-full border rounded-lg px-3 py-2" />
                 </div>
 
+                <!-- REGION FIELD -->
                 <div>
-                  <label class="block text-xs font-semibold mb-1">Duration string</label>
-                  <input v-model="form.duration" class="w-full border rounded-lg px-3 py-2" />
+                  <label class="block text-xs font-semibold mb-1">Region *</label>
+                  <select v-model="form.region" class="w-full border rounded-lg px-3 py-2 bg-white">
+                    <option value="">Select a region</option>
+                    <option value="Kilimanjaro">Kilimanjaro</option>
+                    <option value="Serengeti">Serengeti</option>
+                    <option value="Ngorongoro">Ngorongoro</option>
+                    <option value="Tarangire">Tarangire</option>
+                    <option value="Lake Manyara">Lake Manyara</option>
+                    <option value="Mount Meru">Mount Meru</option>
+                    <option value="Zanzibar">Zanzibar</option>
+                    <option value="Selous">Selous</option>
+                    <option value="Ruaha">Ruaha</option>
+                    <option value="Mafia Island">Mafia Island</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <p v-if="!form.region" class="text-red-500 text-xs mt-1">Region is required</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-xs font-semibold mb-1">Duration min (days)</label>
-                    <input type="number" v-model.number="form.durationMin" class="w-full border rounded-lg px-3 py-2" />
+                    <label class="block text-xs font-semibold mb-1">Min Duration (days) *</label>
+                    <input 
+                      type="number" 
+                      v-model.number="form.durationMin" 
+                      min="1" 
+                      max="365" 
+                      class="w-full border rounded-lg px-3 py-2" 
+                    />
+                    <p v-if="!form.durationMin" class="text-red-500 text-xs mt-1">Min duration is required</p>
                   </div>
                   <div>
-                    <label class="block text-xs font-semibold mb-1">Duration max (days)</label>
-                    <input type="number" v-model.number="form.durationMax" class="w-full border rounded-lg px-3 py-2" />
+                    <label class="block text-xs font-semibold mb-1">Max Duration (days) *</label>
+                    <input 
+                      type="number" 
+                      v-model.number="form.durationMax" 
+                      min="1" 
+                      max="365" 
+                      class="w-full border rounded-lg px-3 py-2" 
+                    />
+                    <p v-if="!form.durationMax" class="text-red-500 text-xs mt-1">Max duration is required</p>
                   </div>
+                </div>
+
+                <!-- Duration validation message -->
+                <div v-if="form.durationMin && form.durationMax && form.durationMin > form.durationMax" 
+                     class="text-red-500 text-xs mt-1">
+                  Minimum duration cannot be greater than maximum duration
+                </div>
+
+                <!-- Duration display preview -->
+                <div v-if="form.durationMin && form.durationMax" class="text-xs text-slate-600 mt-1">
+                  Display: <span class="font-medium">{{ displayDuration }}</span>
                 </div>
 
                 <div>
@@ -249,46 +300,214 @@
                   <input v-model="form.successRate" class="w-full border rounded-lg px-3 py-2" />
                 </div>
 
-                <!-- STATS FIELDS -->
+                <!-- STATS FIELDS - IMPROVED FOR ADMINS -->
                 <div class="border-t pt-4 mt-4">
                   <h4 class="text-sm font-semibold mb-3 text-slate-700">Route Statistics</h4>
+
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Starting altitude (meters) -->
                     <div>
-                      <label class="block text-xs font-semibold mb-1">Starting Altitude (value)</label>
-                      <input v-model="form.stats.startingAltitude.value" class="w-full border rounded-lg px-3 py-2" />
-                      <label class="block text-xs font-semibold mb-1 mt-2">Starting Altitude (detail)</label>
-                      <input v-model="form.stats.startingAltitude.detail" class="w-full border rounded-lg px-3 py-2" />
+                      <label class="block text-xs font-semibold mb-1">Starting Altitude (m)</label>
+                      <input type="number" v-model.number="form.stats.startingAltitude.value" min="0" step="1" placeholder="e.g. 900" class="w-full border rounded-lg px-3 py-2" />
+                      <p class="text-xs text-slate-500 mt-1">Enter numeric altitude in meters (no suffix). Example: <em>900</em>.</p>
+
+                      <label class="block text-xs font-semibold mb-1 mt-2">Starting Altitude — detail</label>
+                      <input v-model="form.stats.startingAltitude.detail" class="w-full border rounded-lg px-3 py-2" placeholder="Optional context (e.g. 'base camp area')" />
                     </div>
+
+                    <!-- Max altitude (meters) -->
                     <div>
-                      <label class="block text-xs font-semibold mb-1">Max Altitude (value)</label>
-                      <input v-model="form.stats.maxAltitude.value" class="w-full border rounded-lg px-3 py-2" />
-                      <label class="block text-xs font-semibold mb-1 mt-2">Max Altitude (detail)</label>
-                      <input v-model="form.stats.maxAltitude.detail" class="w-full border rounded-lg px-3 py-2" />
+                      <label class="block text-xs font-semibold mb-1">Max Altitude (m)</label>
+                      <input type="number" v-model.number="form.stats.maxAltitude.value" min="0" step="1" placeholder="e.g. 5895" class="w-full border rounded-lg px-3 py-2" />
+                      <p class="text-xs text-slate-500 mt-1">Highest point of the route in meters (numeric only).</p>
+
+                      <label class="block text-xs font-semibold mb-1 mt-2">Max Altitude — detail</label>
+                      <input v-model="form.stats.maxAltitude.detail" class="w-full border rounded-lg px-3 py-2" placeholder="Optional context (e.g. 'summit')"/>
                     </div>
+
+                    <!-- Total distance (km) -->
                     <div>
-                      <label class="block text-xs font-semibold mb-1">Total Distance (value)</label>
-                      <input v-model="form.stats.totalDistance.value" class="w-full border rounded-lg px-3 py-2" />
-                      <label class="block text-xs font-semibold mb-1 mt-2">Total Distance (detail)</label>
-                      <input v-model="form.stats.totalDistance.detail" class="w-full border rounded-lg px-3 py-2" />
+                      <label class="block text-xs font-semibold mb-1">Total Distance (km)</label>
+                      <input type="number" v-model.number="form.stats.totalDistance.value" min="0" step="0.1" placeholder="e.g. 60.5" class="w-full border rounded-lg px-3 py-2" />
+                      <p class="text-xs text-slate-500 mt-1">Enter numeric total distance in kilometres (decimal allowed).</p>
+
+                      <label class="block text-xs font-semibold mb-1 mt-2">Total Distance — detail</label>
+                      <input v-model="form.stats.totalDistance.detail" class="w-full border rounded-lg px-3 py-2" placeholder="Optional detail (e.g. 'approx from trailhead')"/>
                     </div>
+
+                    <!-- Best season (FROM / TO dropdowns) -->
                     <div>
-                      <label class="block text-xs font-semibold mb-1">Best Season (value)</label>
-                      <input v-model="form.stats.bestSeason.value" class="w-full border rounded-lg px-3 py-2" />
-                      <label class="block text-xs font-semibold mb-1 mt-2">Best Season (detail)</label>
-                      <input v-model="form.stats.bestSeason.detail" class="w-full border rounded-lg px-3 py-2" />
+                      <label class="block text-xs font-semibold mb-1">Best Season — From</label>
+                      <select v-model="form.stats.bestSeason.from" class="w-full border rounded-lg px-3 py-2">
+                        <option value="">Select</option>
+                        <option v-for="m in months" :key="'from-'+m" :value="m">{{ m }}</option>
+                        <option value="Year-round">Year-round</option>
+                      </select>
+                      <label class="block text-xs font-semibold mb-1 mt-2">Best Season — To</label>
+                      <select v-model="form.stats.bestSeason.to" class="w-full border rounded-lg px-3 py-2">
+                        <option value="">Select</option>
+                        <option v-for="m in months" :key="'to-'+m" :value="m">{{ m }}</option>
+                        <option value="Year-round">Year-round</option>
+                      </select>
+                      <p class="text-xs text-slate-500 mt-1">Choose a <strong>From</strong> and <strong>To</strong> month. Use <em>Year-round</em> if applicable.</p>
+
+                      <label class="block text-xs font-semibold mb-1 mt-2">Best Season — detail</label>
+                      <input v-model="form.stats.bestSeason.detail" class="w-full border rounded-lg px-3 py-2" placeholder="Optional: e.g. 'Dry season is best (July-Sep)'" />
                     </div>
+
+                    <!-- Acclimatization -->
                     <div class="md:col-span-2">
-                      <label class="block text-xs font-semibold mb-1">Acclimatization (value)</label>
-                      <input v-model="form.stats.acclimatization.value" class="w-full border rounded-lg px-3 py-2" />
-                      <label class="block text-xs font-semibold mb-1 mt-2">Acclimatization (detail)</label>
-                      <input v-model="form.stats.acclimatization.detail" class="w-full border rounded-lg px-3 py-2" />
+                      <label class="block text-xs font-semibold mb-1">Acclimatization — recommended days</label>
+                      <input type="number" v-model.number="form.stats.acclimatization.value" min="0" step="1" placeholder="e.g. 1" class="w-full border rounded-lg px-3 py-2" />
+                      <p class="text-xs text-slate-500 mt-1">
+                        Number of recommended acclimatization days (numeric). For example, if the route requires a rest day at mid-altitude, enter <em>1</em>.
+                      </p>
+
+                      <label class="block text-xs font-semibold mb-1 mt-2">Acclimatization — detail</label>
+                      <input v-model="form.stats.acclimatization.detail" class="w-full border rounded-lg px-3 py-2" placeholder="Optional guidance (e.g. 'rest at 3500m before summit push')" />
                     </div>
                   </div>
                 </div>
 
+                <!-- HIGHLIGHTS SECTION - UPDATED -->
                 <div>
-                  <label class="block text-xs font-semibold mb-1">Tag / highlights (comma separated)</label>
-                  <input v-model="highlightsInput" @change="syncHighlights" placeholder="comma, separated, list" class="w-full border rounded-lg px-3 py-2" />
+                  <label class="block text-xs font-semibold mb-2">Highlights / Tags</label>
+                  
+                  <!-- Input with Add button -->
+                  <div class="flex gap-2 mb-2">
+                    <input
+                      v-model="highlightInput"
+                      @keyup.enter="addHighlight"
+                      placeholder="Enter a highlight and press Enter or click Add"
+                      class="flex-1 border rounded-lg px-3 py-2"
+                    />
+                    <button
+                      @click="addHighlight"
+                      class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  
+                  <!-- Highlights Display -->
+                  <div class="flex flex-wrap gap-2 mt-2">
+                    <div
+                      v-for="(highlight, index) in form.highlights"
+                      :key="index"
+                      class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                    >
+                      <span>#{{ highlight }}</span>
+                      <button
+                        @click="removeHighlight(index)"
+                        class="ml-1 text-blue-600 hover:text-blue-800"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Quick add common highlights (optional) -->
+                  <div class="mt-3">
+                    <p class="text-xs text-slate-500 mb-1">Quick add common highlights:</p>
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        v-for="common in commonHighlights"
+                        :key="common"
+                        @click="addCommonHighlight(common)"
+                        class="px-2 py-1 text-xs border rounded-lg hover:bg-blue-50"
+                      >
+                        {{ common }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- WHAT'S INCLUDED/NOT INCLUDED SECTION - NEW -->
+                <div class="border-t pt-4 mt-4">
+                  <h4 class="text-sm font-semibold mb-3 text-slate-700">What's Included / Not Included</h4>
+                  
+                  <!-- Included Items -->
+                  <div class="mb-4">
+                    <label class="block text-xs font-semibold mb-2">Included Items</label>
+                    <div class="flex gap-2 mb-2">
+                      <input
+                        v-model="includedInput"
+                        @keyup.enter="addIncludedItem"
+                        placeholder="Add included item"
+                        class="flex-1 border rounded-lg px-3 py-2"
+                      />
+                      <button
+                        @click="addIncludedItem"
+                        class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    
+                    <!-- Included Items List -->
+                    <div class="flex flex-wrap gap-2">
+                      <div
+                        v-for="(item, index) in form.whatsIncluded.included"
+                        :key="`included-${index}`"
+                        class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        <span>✓ {{ item }}</span>
+                        <button
+                          @click="removeIncludedItem(index)"
+                          class="ml-1 text-emerald-600 hover:text-emerald-800"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Not Included Items -->
+                  <div>
+                    <label class="block text-xs font-semibold mb-2">Not Included Items</label>
+                    <div class="flex gap-2 mb-2">
+                      <input
+                        v-model="notIncludedInput"
+                        @keyup.enter="addNotIncludedItem"
+                        placeholder="Add not included item"
+                        class="flex-1 border rounded-lg px-3 py-2"
+                      />
+                      <button
+                        @click="addNotIncludedItem"
+                        class="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    
+                    <!-- Not Included Items List -->
+                    <div class="flex flex-wrap gap-2">
+                      <div
+                        v-for="(item, index) in form.whatsIncluded.notIncluded"
+                        :key="`notincluded-${index}`"
+                        class="inline-flex items-center gap-1 bg-rose-100 text-rose-800 px-3 py-1 rounded-full text-sm"
+                      >
+                        <span>✗ {{ item }}</span>
+                        <button
+                          @click="removeNotIncludedItem(index)"
+                          class="ml-1 text-rose-600 hover:text-rose-800"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <!-- Note Field -->
+                    <div class="mt-4">
+                      <label class="block text-xs font-semibold mb-2">Additional Note</label>
+                      <textarea
+                        v-model="form.whatsIncluded.note"
+                        rows="2"
+                        placeholder="e.g., Travel insurance is highly recommended for all our experiences"
+                        class="w-full border rounded-lg px-3 py-2"
+                      ></textarea>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -547,7 +766,7 @@
     </transition>
 
     <!-- Gallery Management Modal -->
-    <div v-if="showGalleryModal" class="fixed inset-0 bg-black/30 z-[60] flex items-center justify-center px-4">
+    <div v-if="showGalleryModal" class="fixed inset-0 bg-black/30 z-60 flex items-center justify-center px-4">
       <div class="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">Manage Gallery Images</h3>
@@ -589,8 +808,15 @@
 <script setup>
 definePageMeta({ layout: 'dashboard', title: 'Dashboard - Routes' })
 import { ref, reactive, computed, onMounted } from 'vue'
+import { getCurrentInstance } from 'vue'
 
 const placeholder = '/images/placeholder.png'
+
+// months for dropdowns
+const months = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December'
+]
 
 // list state
 const routes = ref([])
@@ -608,9 +834,23 @@ const messageType = ref('success') // 'success' or 'error'
 const showModal = ref(false)
 const showGalleryModal = ref(false)
 
-// Form validation
+// Form validation - UPDATED
 const isFormValid = computed(() => {
-  return form.name && form.slug && form.description && form.difficulty
+  return form.name && form.slug && form.description && form.difficulty &&
+         form.durationMin && form.durationMax &&
+         form.durationMin <= form.durationMax &&
+         form.region // Region required
+})
+
+// Duration display helper
+const displayDuration = computed(() => {
+  if (form.durationMin && form.durationMax) {
+    if (form.durationMin === form.durationMax) {
+      return `${form.durationMin} Day${form.durationMin > 1 ? 's' : ''}`
+    }
+    return `${form.durationMin}–${form.durationMax} Days`
+  }
+  return ''
 })
 
 const defaultForm = () => ({
@@ -618,23 +858,31 @@ const defaultForm = () => ({
   slug: '',
   tagline: '',
   shortDescription: '',
-  duration: '',
+  region: '',
+  duration: '', // Keep for backward compatibility (auto-generated)
   durationMin: null,
   durationMax: null,
   startingPrice: null,
   difficulty: '',
   successRate: '',
   highlights: [],
+  whatsIncluded: {
+    included: [],
+    notIncluded: [],
+    note: ''
+  },
   featuredImage: '',
   heroImage: '',
   gallery: [],
   description: '',
+  // stats: numeric-friendly defaults (use numbers for numeric fields)
   stats: {
-    startingAltitude: { value: '', detail: '' },
-    maxAltitude: { value: '', detail: '' },
-    totalDistance: { value: '', detail: '' },
-    bestSeason: { value: '', detail: '' },
-    acclimatization: { value: '', detail: '' }
+    startingAltitude: { value: null, detail: '' },
+    maxAltitude: { value: null, detail: '' },
+    totalDistance: { value: null, detail: '' },
+    // NEW shape for bestSeason: { from, to, detail }
+    bestSeason: { from: '', to: '', detail: '' },
+    acclimatization: { value: null, detail: '' }
   },
   itinerary: [],
   groupClimbs: [],
@@ -647,8 +895,15 @@ const defaultForm = () => ({
 const form = reactive(defaultForm())
 
 // helper inputs for comma / textarea controls
-const highlightsInput = ref('')
+const highlightInput = ref('')
+const includedInput = ref('')
+const notIncludedInput = ref('')
 const seoKeywordsInput = ref('')
+const commonHighlights = ref([
+  'Scenic Views', 'Wildlife', 'Photography', 'Adventure',
+  'Cultural Experience', 'Family Friendly', 'Beginner Friendly',
+  'Expert Guide', 'Small Group', 'Luxury Accommodation'
+])
 
 // Difficulty color helper
 const difficultyClass = (difficulty) => {
@@ -710,7 +965,9 @@ function nextPage(){
 
 function newRoute() {
   Object.assign(form, defaultForm())
-  highlightsInput.value = ''
+  highlightInput.value = ''
+  includedInput.value = ''
+  notIncludedInput.value = ''
   seoKeywordsInput.value = ''
   isEditing.value = false
   editId.value = null
@@ -719,24 +976,215 @@ function newRoute() {
   showModal.value = true
 }
 
-function editRoute(r) {
-  Object.assign(form, JSON.parse(JSON.stringify(r)))
-  // ensure nested objects exist
-  form.stats = form.stats || defaultForm().stats
-  form.itinerary = form.itinerary || []
-  form.groupClimbs = form.groupClimbs || []
-  form.faqs = form.faqs || []
-  form.gallery = form.gallery || []
-  form.seo = form.seo || { title: '', description: '', keywords: [] }
+async function editRoute(r) {
+  console.log('🚀 Edit clicked for route:', r.name, 'ID:', r._id)
+  
+  try {
+    // Show loading
+    message.value = 'Loading complete route data...'
+    messageType.value = 'info'
+    
+    // Use the SAME endpoint but with ?id= parameter
+    const response = await $fetch(`/api/routes?id=${r._id}`)
+    
+    console.log('📦 API Response:', response)
+    
+    if (!response.success || !response.data) {
+      throw new Error('Failed to load route data')
+    }
+    
+    const completeRoute = response.data
+    console.log('✅ Complete route data loaded:', {
+      name: completeRoute.name,
+      hasHighlights: !!completeRoute.highlights,
+      hasItinerary: !!completeRoute.itinerary,
+      hasGallery: !!completeRoute.gallery,
+      hasFAQs: !!completeRoute.faqs,
+      hasWhatsIncluded: !!completeRoute.whatsIncluded
+    })
+    
+    // Clear loading message
+    message.value = ''
+    
+    // RESET FORM to defaults first
+    Object.assign(form, defaultForm())
+    
+    // ========== POPULATE ALL FIELDS ==========
 
-  highlightsInput.value = (form.highlights || []).join(', ')
-  seoKeywordsInput.value = (form.seo.keywords || []).join(', ')
+    // Basic fields
+    form.name = completeRoute.name || ''
+    form.slug = completeRoute.slug || ''
+    form.tagline = completeRoute.tagline || ''
+    form.shortDescription = completeRoute.shortDescription || ''
+    form.description = completeRoute.description || ''
+    form.featuredImage = completeRoute.featuredImage || ''
+    form.heroImage = completeRoute.heroImage || ''
+    form.duration = completeRoute.duration || ''
+    form.durationMin = completeRoute.durationMin ?? null
+    form.durationMax = completeRoute.durationMax ?? null
+    form.startingPrice = completeRoute.startingPrice ?? null
+    form.difficulty = completeRoute.difficulty || ''
+    form.successRate = completeRoute.successRate || ''
+    form.region = completeRoute.region || ''
+    form.isActive = completeRoute.isActive !== undefined ? completeRoute.isActive : true
+    form.isFeatured = completeRoute.isFeatured || false
+    
+    // Arrays
+    form.highlights = Array.isArray(completeRoute.highlights) ? [...completeRoute.highlights] : []
+    form.itinerary = Array.isArray(completeRoute.itinerary) ? [...completeRoute.itinerary] : []
+    form.gallery = Array.isArray(completeRoute.gallery) ? [...completeRoute.gallery] : []
+    form.faqs = Array.isArray(completeRoute.faqs) ? [...completeRoute.faqs] : []
+    form.groupClimbs = Array.isArray(completeRoute.groupClimbs) ? [...completeRoute.groupClimbs] : []
+    
+    // Nested objects - STAT parsing
+    const statsFromApi = completeRoute.stats || {}
 
-  isEditing.value = true
-  editId.value = r._id
-  message.value = ''
-  showGalleryModal.value = false
-  showModal.value = true
+    // Handle multiple legacy shapes:
+    // - New: stats.bestSeason = { from, to, detail }
+    // - Legacy: stats.bestSeason = { value: 'Jan–Mar', detail: '' } or stats.bestSeason.value = 'Year-round'
+    const parsedBestSeason = normalizeBestSeasonFromApi(statsFromApi.bestSeason)
+
+    form.stats = {
+      startingAltitude: {
+        value: parseNumberIfPossible(statsFromApi.startingAltitude?.value),
+        detail: statsFromApi.startingAltitude?.detail || ''
+      },
+      maxAltitude: {
+        value: parseNumberIfPossible(statsFromApi.maxAltitude?.value),
+        detail: statsFromApi.maxAltitude?.detail || ''
+      },
+      totalDistance: {
+        value: parseNumberIfPossible(statsFromApi.totalDistance?.value),
+        detail: statsFromApi.totalDistance?.detail || ''
+      },
+      bestSeason: parsedBestSeason,
+      acclimatization: {
+        value: parseNumberIfPossible(statsFromApi.acclimatization?.value),
+        detail: statsFromApi.acclimatization?.detail || ''
+      }
+    }
+
+    form.whatsIncluded = completeRoute.whatsIncluded || defaultForm().whatsIncluded
+    form.seo = completeRoute.seo || defaultForm().seo
+    
+    // Update SEO keywords input
+    if (form.seo.keywords && Array.isArray(form.seo.keywords)) {
+      seoKeywordsInput.value = form.seo.keywords.join(', ')
+    } else {
+      seoKeywordsInput.value = ''
+    }
+    
+    // Clear helper inputs
+    highlightInput.value = ''
+    includedInput.value = ''
+    notIncludedInput.value = ''
+    
+    // Log final form state
+    console.log('📝 Form after loading:', {
+      name: form.name,
+      region: form.region,
+      highlights: form.highlights,
+      itinerary: form.itinerary,
+      gallery: form.gallery,
+      faqs: form.faqs,
+      whatsIncluded: form.whatsIncluded,
+      stats: form.stats
+    })
+    
+    // Set editing mode
+    isEditing.value = true
+    editId.value = r._id
+    showModal.value = true
+    
+    console.log('✅ Edit modal opened successfully')
+    
+  } catch (error) {
+    console.error('❌ Error loading route for editing:', error)
+    
+    // Fallback: Use table data
+    console.log('⚠️ Using fallback - table row data')
+    
+    // Reset form
+    Object.assign(form, defaultForm())
+    
+    // Copy table data (limited but better than nothing)
+    Object.keys(r).forEach(key => {
+      if (key !== '_id' && key !== '__v') {
+        form[key] = r[key]
+      }
+    })
+    
+    // Ensure all arrays/objects exist
+    const defaults = defaultForm()
+    form.highlights = form.highlights || defaults.highlights
+    form.itinerary = form.itinerary || defaults.itinerary
+    form.gallery = form.gallery || defaults.gallery
+    form.faqs = form.faqs || defaults.faqs
+    form.groupClimbs = form.groupClimbs || defaults.groupClimbs
+    form.stats = form.stats || defaults.stats
+    form.whatsIncluded = form.whatsIncluded || defaults.whatsIncluded
+    form.seo = form.seo || defaults.seo
+    form.region = form.region || defaults.region
+    
+    // Set editing mode
+    isEditing.value = true
+    editId.value = r._id
+    showModal.value = true
+    
+    showMessage('Loaded basic data. Some fields may be incomplete.', 'warning')
+  }
+}
+
+function parseNumberIfPossible(val) {
+  if (val === undefined || val === null || val === '') return null
+  const n = Number(String(val).replace(/,/g,'').trim())
+  return Number.isFinite(n) ? n : null
+}
+
+/*
+ Normalizes incoming bestSeason from API (supports legacy shapes)
+ - If API has { from, to, detail } -> return as-is
+ - If API has { value: 'Jan–Mar', detail } -> try to split into from/to
+ - If API has string like 'Jan–Mar' -> split
+ - If 'Year-round' -> from/to = 'Year-round'
+*/
+function normalizeBestSeasonFromApi(apiBestSeason) {
+  if (!apiBestSeason) return { from: '', to: '', detail: '' }
+
+  // If already object with from/to
+  if (typeof apiBestSeason === 'object' && apiBestSeason.from !== undefined) {
+    return {
+      from: apiBestSeason.from || '',
+      to: apiBestSeason.to || '',
+      detail: apiBestSeason.detail || ''
+    }
+  }
+
+  // Legacy: { value: 'Jan–Mar', detail: '' }
+  const val = (apiBestSeason.value ?? apiBestSeason) || ''
+  if (typeof val === 'string') {
+    const s = val.trim()
+    if (!s) return { from: '', to: '', detail: apiBestSeason.detail || '' }
+
+    // Year-round handling
+    if (/year[-\s]*round/i.test(s)) {
+      return { from: 'Year-round', to: 'Year-round', detail: apiBestSeason.detail || '' }
+    }
+
+    // split by dash or en dash
+    const parts = s.split(/–|—|-/)
+      .map(p => p.trim())
+      .filter(Boolean)
+
+    if (parts.length === 2) {
+      return { from: parts[0], to: parts[1], detail: apiBestSeason.detail || '' }
+    }
+
+    // single token (e.g. 'July') treat as both from/to
+    return { from: s, to: s, detail: apiBestSeason.detail || '' }
+  }
+
+  return { from: '', to: '', detail: '' }
 }
 
 function generateSlug() {
@@ -750,10 +1198,6 @@ function generateSlug() {
     .substring(0, 100) // Limit length
 }
 
-function syncHighlights(){ 
-  form.highlights = highlightsInput.value.split(',').map(s=>s.trim()).filter(Boolean) 
-}
-
 function syncSeoKeywords(){ 
   form.seo.keywords = seoKeywordsInput.value.split(',').map(s=>s.trim()).filter(Boolean) 
 }
@@ -765,6 +1209,71 @@ function showMessage(text, type = 'success') {
   setTimeout(() => {
     message.value = ''
   }, 3000)
+}
+
+// HIGHLIGHTS FUNCTIONS
+function addHighlight() {
+  const highlight = highlightInput.value.trim()
+  if (highlight) {
+    if (!form.highlights) {
+      form.highlights = []
+    }
+    // Check for duplicates
+    if (!form.highlights.includes(highlight)) {
+      form.highlights.push(highlight)
+    }
+    highlightInput.value = ''
+  }
+}
+
+function removeHighlight(index) {
+  form.highlights.splice(index, 1)
+}
+
+function addCommonHighlight(highlight) {
+  if (!form.highlights) {
+    form.highlights = []
+  }
+  if (!form.highlights.includes(highlight)) {
+    form.highlights.push(highlight)
+  }
+}
+
+// WHAT'S INCLUDED FUNCTIONS
+function addIncludedItem() {
+  const item = includedInput.value.trim()
+  if (item) {
+    if (!form.whatsIncluded.included) {
+      form.whatsIncluded.included = []
+    }
+    // Check for duplicates
+    if (!form.whatsIncluded.included.includes(item)) {
+      form.whatsIncluded.included.push(item)
+    }
+    includedInput.value = ''
+  }
+}
+
+function removeIncludedItem(index) {
+  form.whatsIncluded.included.splice(index, 1)
+}
+
+function addNotIncludedItem() {
+  const item = notIncludedInput.value.trim()
+  if (item) {
+    if (!form.whatsIncluded.notIncluded) {
+      form.whatsIncluded.notIncluded = []
+    }
+    // Check for duplicates
+    if (!form.whatsIncluded.notIncluded.includes(item)) {
+      form.whatsIncluded.notIncluded.push(item)
+    }
+    notIncludedInput.value = ''
+  }
+}
+
+function removeNotIncludedItem(index) {
+  form.whatsIncluded.notIncluded.splice(index, 1)
 }
 
 // itinerary helpers
@@ -907,14 +1416,64 @@ async function save() {
     return
   }
   
+  // Additional validation for duration - UPDATED
+  if (form.durationMin > form.durationMax) {
+    showMessage('Minimum duration cannot be greater than maximum duration', 'error')
+    return
+  }
+  
+  if (form.durationMin < 1 || form.durationMax < 1) {
+    showMessage('Duration must be at least 1 day', 'error')
+    return
+  }
+  
   saving.value = true
   try {
     // ensure arrays/structure
-    syncHighlights()
     syncSeoKeywords()
     
+    // Deep clone form into payload
     const payload = JSON.parse(JSON.stringify(form))
-    
+
+    // Ensure stats structure exists
+    payload.stats = payload.stats || {}
+    payload.stats.startingAltitude = payload.stats.startingAltitude || { value: '', detail: '' }
+    payload.stats.maxAltitude = payload.stats.maxAltitude || { value: '', detail: '' }
+    payload.stats.totalDistance = payload.stats.totalDistance || { value: '', detail: '' }
+    payload.stats.bestSeason = payload.stats.bestSeason || { from: '', to: '', detail: '' }
+    payload.stats.acclimatization = payload.stats.acclimatization || { value: '', detail: '' }
+
+    // Convert numeric stat fields to strings to keep backward compatibility with DB schema
+    if (payload.stats.startingAltitude.value !== null && payload.stats.startingAltitude.value !== undefined) {
+      payload.stats.startingAltitude.value = String(payload.stats.startingAltitude.value)
+    } else {
+      payload.stats.startingAltitude.value = ''
+    }
+    if (payload.stats.maxAltitude.value !== null && payload.stats.maxAltitude.value !== undefined) {
+      payload.stats.maxAltitude.value = String(payload.stats.maxAltitude.value)
+    } else {
+      payload.stats.maxAltitude.value = ''
+    }
+    if (payload.stats.totalDistance.value !== null && payload.stats.totalDistance.value !== undefined) {
+      payload.stats.totalDistance.value = String(payload.stats.totalDistance.value)
+    } else {
+      payload.stats.totalDistance.value = ''
+    }
+    if (payload.stats.acclimatization.value !== null && payload.stats.acclimatization.value !== undefined) {
+      payload.stats.acclimatization.value = String(payload.stats.acclimatization.value)
+    } else {
+      payload.stats.acclimatization.value = ''
+    }
+
+    // Auto-generate duration string for display - UPDATED
+    if (payload.durationMin && payload.durationMax) {
+      if (payload.durationMin === payload.durationMax) {
+        payload.duration = `${payload.durationMin} Day${payload.durationMin > 1 ? 's' : ''}`
+      } else {
+        payload.duration = `${payload.durationMin}–${payload.durationMax} Days`
+      }
+    }
+
     // Format group climb dates
     payload.groupClimbs = (payload.groupClimbs || []).map(g => ({
       ...g,
@@ -956,7 +1515,9 @@ async function saveAndPublish() {
 
 function resetForm() {
   Object.assign(form, defaultForm())
-  highlightsInput.value = ''
+  highlightInput.value = ''
+  includedInput.value = ''
+  notIncludedInput.value = ''
   seoKeywordsInput.value = ''
   isEditing.value = false
   editId.value = null

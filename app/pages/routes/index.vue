@@ -32,11 +32,11 @@
             Compare Routes
           </button>
 
-          <!-- quick selector to demo ItinerarySelector usage on hero -->
+          <!-- ItinerarySelector: support both v-model and update:selected -->
           <ItinerarySelector
             :options="[5,6,7,8,9]"
-            :selected="selectedDays"
-            @update:selected="val => (selectedDays = val)"
+            v-model:selected="selectedDays"
+            @update:selected="setSelectedDays"
             class="w-full sm:w-auto"
           />
         </div>
@@ -45,25 +45,151 @@
 
     <!-- ROUTES GRID -->
     <section id="routes-grid" class="py-16 px-4 max-w-7xl mx-auto">
-      <div class="flex items-center justify-between mb-8 gap-4">
-        <div>
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-1">Choose Your Adventure</h2>
-          <p class="text-gray-600 text-sm md:text-lg max-w-2xl">
-            Filter by itinerary length or browse all routes below.
+      <!-- Improved Header and Controls -->
+      <div class="mb-10">
+        <div class="text-center mb-10">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Choose Your Adventure</h2>
+          <p class="text-gray-600 text-lg max-w-3xl mx-auto">
+            Filter by duration or search to find your ideal climb.
           </p>
         </div>
 
-        <!-- small controls -->
-        <div class="flex items-center gap-3">
-          <div class="text-sm text-slate-600">Show routes with</div>
-          <ItinerarySelector
-            :options="[5,6,7,8,9]"
-            :selected="selectedDays"
-            @update:selected="val => (selectedDays = val)"
-          />
-          <button v-if="selectedDays !== null" @click="selectedDays = null" class="ml-2 px-3 py-2 bg-slate-50 border rounded-md text-sm">
-            Clear
-          </button>
+        <!-- Search and Filter Container -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <!-- Search Section -->
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Search Routes
+              </label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  v-model="searchQuery"
+                  @keydown.enter.prevent="performSearch"
+                  ref="searchInput"
+                  class="w-full pl-10 pr-36 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200"
+                  placeholder="Search by route name, keyword, or description..."
+                  aria-label="Search routes"
+                />
+                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2">
+                  <button
+                    @click="performSearch"
+                    class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center gap-2"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Search
+                  </button>
+                  <button
+                    v-if="searchQuery"
+                    @click="clearSearch"
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="flex-1">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                  <label class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    Filter by Duration:
+                  </label>
+                  <div class="flex-1">
+                    <ItinerarySelector
+                      :options="[5,6,7,8,9]"
+                      v-model:selected="selectedDays"
+                      @update:selected="setSelectedDays"
+                      class="w-full"
+                    />
+                  </div>
+                </div>
+                <button
+                  v-if="selectedDays !== null"
+                  @click="clearDays"
+                  class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-lg transition-colors duration-200 flex items-center gap-2 whitespace-nowrap"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear Filter
+                </button>
+              </div>
+              <p class="text-sm text-gray-500 mt-2">
+                Select number of days to see matching routes
+              </p>
+            </div>
+          </div>
+
+          <!-- Active Filters Display -->
+          <div v-if="searchQuery || selectedDays !== null" class="mt-6 pt-6 border-t border-gray-100">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="text-sm font-medium text-gray-700">Active filters:</span>
+              
+              <!-- Search Filter Badge -->
+              <div v-if="searchQuery" class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                <span>Search: "{{ searchQuery }}"</span>
+                <button @click="clearSearch" class="text-blue-500 hover:text-blue-700">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Days Filter Badge -->
+              <div v-if="selectedDays !== null" class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                <span>{{ selectedDays }} Days</span>
+                <button @click="clearDays" class="text-amber-500 hover:text-amber-700">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Clear All Button -->
+              <button
+                v-if="searchQuery && selectedDays !== null"
+                @click="clearAllFilters"
+                class="ml-2 text-sm font-medium text-gray-600 hover:text-gray-900 underline"
+              >
+                Clear all
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Count -->
+        <div v-if="!loading && filteredRoutes.length > 0" class="mb-8">
+          <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="text-gray-700">
+                <span class="font-semibold text-gray-900">{{ filteredRoutes.length }}</span>
+                <span class="ml-1">route{{ filteredRoutes.length !== 1 ? 's' : '' }} found</span>
+                <span v-if="searchQuery" class="ml-2 text-gray-600">
+                  matching "<span class="font-medium">{{ searchQuery }}</span>"
+                </span>
+                <span v-if="selectedDays !== null" class="ml-2 text-gray-600">
+                  • {{ selectedDays }}-day itineraries
+                </span>
+              </div>
+              
+              <div v-if="filteredRoutes.length > 0" class="flex items-center gap-2 text-sm text-gray-600">
+                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Click on any route for detailed itinerary</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -78,10 +204,17 @@
       <!-- No Routes Found -->
       <div v-else-if="filteredRoutes.length === 0" class="text-center py-16">
         <div class="inline-block p-10 bg-linear-to-br from-white to-slate-50 rounded-3xl shadow-xl border border-slate-100 max-w-md">
-          <div class="text-8xl mb-6">🏕️</div>
-          <h3 class="text-2xl font-bold text-slate-900 mb-3">No routes found</h3>
-          <p class="text-slate-600 mb-8">Try selecting a different number of days or clear filters.</p>
-          <button @click="selectedDays = null" class="px-6 py-2 bg-slate-50 border rounded-lg">Reset filters</button>
+          <div class="text-8xl mb-6">🏔️</div>
+          <h3 class="text-2xl font-bold text-slate-900 mb-3">No routes match your search</h3>
+          <p class="text-slate-600 mb-6">Try adjusting your search terms or duration filter.</p>
+          <div class="flex flex-col sm:flex-row justify-center gap-3">
+            <button @click="clearSearch" class="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors">
+              Clear Search
+            </button>
+            <button @click="clearDays" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors">
+              Reset Filter
+            </button>
+          </div>
         </div>
       </div>
 
@@ -95,8 +228,8 @@
             name: r.name,
             slug: r.slug,
             image: r.featuredImage || r.heroImage || r.gallery?.[0] || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=60',
-            durationMin: r.durationMin || extractDurationNumbers(r.duration)[0] || 5,
-            durationMax: r.durationMax || extractDurationNumbers(r.duration)[1] || r.durationMin || 8,
+            durationMin: r.durationMin || r._minDays || extractDurationNumbers(r.duration)[0] || 0,
+            durationMax: r.durationMax || r._maxDays || extractDurationNumbers(r.duration)[1] || (r._minDays || 0),
             difficulty: r.difficulty,
             startingPrice: r.startingPrice,
             shortDescription: r.shortDescription || r.tagline || 'Experience this amazing trekking route.',
@@ -145,82 +278,260 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import RouteCard from '~/components/routes/RouteCard.vue'
 import ItinerarySelector from '~/components/routes/ItinerarySelector.vue'
 
+const route = useRoute()
 const routes = ref([])
 const loading = ref(true)
 const selectedDays = ref(null)
+const searchQuery = ref('')
+const searchInput = ref(null)
 
-// Helper function to extract numbers from duration string
-const extractDurationNumbers = (duration = '') => {
-  if (!duration) return [0, 0]
-  const matches = duration.match(/\d+/g)
-  if (!matches) return [0, 0]
-  return matches.map(Number).slice(0, 2)
+// Add a clear all filters function
+async function clearAllFilters() {
+  searchQuery.value = ''
+  selectedDays.value = null
+  await navigateTo({ path: '/routes' }, { replace: true })
+  await nextTick()
+  try { searchInput.value && searchInput.value.focus() } catch {}
 }
 
-// Fetch routes from API
+/**
+ * Improved parse for duration strings.
+ * Handles:
+ *  - "5–7 Days", "5-7 days", "5 to 7 days"
+ *  - "7 Days / 6 Nights" (prefers day number)
+ *  - "7 Days", "6 Nights" (converts nights -> days as nights+1)
+ *  - fallback: picks first two numeric tokens and returns [min,max] with min <= max
+ */
+function extractDurationNumbers(duration = '') {
+  const text = (duration || '').toString().trim()
+  if (!text) return [0, 0]
+
+  // 1) explicit day range like "5-7 days" or "5 to 7 days"
+  const rangeMatch = text.match(/(\d+)\s*(?:[-–to]{1,3})\s*(\d+)\s*(?:days?|day)\b/i)
+  if (rangeMatch) {
+    const a = Number(rangeMatch[1])
+    const b = Number(rangeMatch[2])
+    if (!Number.isNaN(a) && !Number.isNaN(b)) {
+      return [Math.min(a, b), Math.max(a, b)]
+    }
+  }
+
+  // 2) explicit "x days" occurrence
+  const dayMatch = text.match(/(\d+)\s*(?:days?|day)\b/i)
+  if (dayMatch) {
+    const n = Number(dayMatch[1])
+    if (!Number.isNaN(n)) return [n, n]
+  }
+
+  // 3) explicit nights mention e.g. "6 nights" -> assume days = nights + 1
+  const nightMatch = text.match(/(\d+)\s*(?:nights?|night)\b/i)
+  if (nightMatch) {
+    const nights = Number(nightMatch[1])
+    if (!Number.isNaN(nights)) {
+      const days = nights + 1
+      return [days, days]
+    }
+  }
+
+  // 4) fallback: pull first two numbers found and return sorted pair
+  const nums = (text.match(/\d+/g) || []).map(x => Number(x)).filter(n => !Number.isNaN(n))
+  if (nums.length === 0) return [0, 0]
+  if (nums.length === 1) return [nums[0], nums[0]]
+  const a = Math.min(nums[0], nums[1])
+  const b = Math.max(nums[0], nums[1])
+  return [a, b]
+}
+
+/**
+ * For a route record return normalized [min,max] days.
+ * Priority:
+ * 1. durationMin/durationMax numeric fields
+ * 2. parsed duration string via extractDurationNumbers
+ * 3. itinerary length (days = itinerary.length)
+ * 4. [0,0] unknown
+ */
+function routeDurationRange(r) {
+  const toNum = v => {
+    if (v === undefined || v === null) return null
+    const n = Number(v)
+    return Number.isNaN(n) ? null : n
+  }
+
+  const dMin = toNum(r.durationMin)
+  const dMax = toNum(r.durationMax)
+  if (dMin && dMax) return [dMin, dMax]
+  if (dMin) return [dMin, dMin]
+  if (dMax) return [dMax, dMax]
+
+  // parse textual duration
+  const [pMin, pMax] = extractDurationNumbers(r.duration)
+  if (pMin && pMax) return [pMin, pMax]
+  if (pMin) return [pMin, pMin]
+
+  // itinerary fallback (count days in itinerary)
+  if (Array.isArray(r.itinerary) && r.itinerary.length > 0) {
+    const n = r.itinerary.length
+    return [n, n]
+  }
+
+  return [0, 0]
+}
+
 async function fetchRoutes() {
   try {
     loading.value = true
-    const response = await $fetch('/api/routes')
-    
-    if (response.success) {
-      // Filter only active routes for public display
-      routes.value = response.data.filter(route => route.isActive === true)
+    // request many so client-side filtering can work - adjust limit as needed
+    const response = await $fetch('/api/routes?limit=1000').catch(async () => {
+      return await $fetch('/api/routes').catch(() => ({ success: true, data: [] }))
+    })
+
+    let data = []
+    if (response && response.success && Array.isArray(response.data)) {
+      data = response.data
+    } else if (Array.isArray(response)) {
+      data = response
     } else {
-      routes.value = []
-      console.error('Failed to fetch routes:', response)
+      data = []
     }
-  } catch (error) {
-    console.error('Error fetching routes:', error)
+
+    routes.value = data.filter(Boolean)
+
+    // normalize min/max once per route
+    routes.value.forEach(r => {
+      const [min, max] = routeDurationRange(r)
+      r._minDays = Number(min) || 0
+      r._maxDays = Number(max) || (r._minDays || 0)
+    })
+  } catch (err) {
+    console.error('Failed to fetch routes', err)
     routes.value = []
   } finally {
     loading.value = false
   }
 }
 
-// Filter routes based on selected days
+// Combined filters: q + days
 const filteredRoutes = computed(() => {
-  if (!selectedDays.value) return routes.value
-  
-  return routes.value.filter(r => {
-    const min = Number(r.durationMin || extractDurationNumbers(r.duration)[0] || 0)
-    const max = Number(r.durationMax || extractDurationNumbers(r.duration)[1] || min || 0)
-    
-    // If we have both min and max, check if selectedDays falls within range
-    if (min && max) {
-      return selectedDays.value >= min && selectedDays.value <= max
+  let list = Array.isArray(routes.value) ? routes.value.slice() : []
+
+  const q = (searchQuery.value || '').toString().trim().toLowerCase()
+  if (q) {
+    list = list.filter(r => {
+      const name = (r.name || '').toString().toLowerCase()
+      const slug = (r.slug || '').toString().toLowerCase()
+      const tagline = (r.tagline || r.shortDescription || '').toString().toLowerCase()
+      const keywords = ((r.tags || r.seo?.keywords || []) .join(' ') || '').toString().toLowerCase()
+      return name.includes(q) || slug.includes(q) || tagline.includes(q) || keywords.includes(q)
+    })
+  }
+
+  if (selectedDays.value !== null && selectedDays.value !== undefined) {
+    const daysNum = Number(selectedDays.value)
+    if (!Number.isNaN(daysNum)) {
+      list = list.filter(r => {
+        const min = Number(r._minDays || 0)
+        const max = Number(r._maxDays || 0)
+        if (!min && !max) return false
+        const a = min || max || 0
+        const b = max || min || a
+        return daysNum >= a && daysNum <= b
+      })
     }
-    
-    // If only min is available, check if selectedDays is >= min
-    if (min) {
-      return selectedDays.value >= min
-    }
-    
-    return false
-  })
+  }
+
+  return list
 })
 
-// Helper to scroll to routes section
 const scrollToRoutes = () => {
   const el = document.getElementById('routes-grid')
   if (el) el.scrollIntoView({ behavior: 'smooth' })
 }
 
-// Fetch routes when component mounts
-onMounted(() => {
-  fetchRoutes()
+async function performSearch() {
+  const q = (searchQuery.value || '').toString().trim()
+  const query = {}
+  if (q) query.q = q
+  if (selectedDays.value !== null && selectedDays.value !== undefined) query.days = String(selectedDays.value)
+  await navigateTo({ path: '/routes', query }, { replace: true })
+  nextTick(() => scrollToRoutes())
+}
+
+async function clearSearch() {
+  searchQuery.value = ''
+  const query = {}
+  if (selectedDays.value !== null && selectedDays.value !== undefined) query.days = String(selectedDays.value)
+  await navigateTo({ path: '/routes', query }, { replace: true })
+  await nextTick()
+  try { searchInput.value && searchInput.value.focus() } catch {}
+}
+
+async function setSelectedDays(val) {
+  const n = val === null || val === undefined ? null : Number(val)
+  selectedDays.value = (n === null || Number.isNaN(n)) ? null : n
+  const query = {}
+  if (searchQuery.value) query.q = String(searchQuery.value)
+  if (selectedDays.value !== null && selectedDays.value !== undefined) query.days = String(selectedDays.value)
+  await navigateTo({ path: '/routes', query }, { replace: true })
+  nextTick(() => scrollToRoutes())
+}
+
+async function clearDays() {
+  selectedDays.value = null
+  const query = {}
+  if (searchQuery.value) query.q = String(searchQuery.value)
+  await navigateTo({ path: '/routes', query }, { replace: true })
+}
+
+// init from URL
+onMounted(async () => {
+  if (process.client) {
+    const q = route?.query?.q
+    if (q && !Array.isArray(q)) searchQuery.value = String(q)
+
+    const days = route?.query?.days
+    if (days && !Array.isArray(days)) {
+      const n = Number(days)
+      selectedDays.value = Number.isNaN(n) ? null : n
+    }
+  }
+
+  await fetchRoutes()
+
+  await nextTick()
+  if (searchQuery.value || selectedDays.value !== null) {
+    try { searchInput.value && searchInput.value.focus() } catch {}
+    scrollToRoutes()
+  }
 })
 
-// Optionally refetch when page becomes visible again
+// keep URL -> UI sync
+watch(() => route.query.q, (val) => {
+  if (val && !Array.isArray(val)) {
+    searchQuery.value = String(val)
+    nextTick(() => scrollToRoutes())
+  } else {
+    searchQuery.value = ''
+  }
+})
+watch(() => route.query.days, (val) => {
+  if (val && !Array.isArray(val)) {
+    const n = Number(val)
+    selectedDays.value = Number.isNaN(n) ? null : n
+    nextTick(() => scrollToRoutes())
+  } else {
+    selectedDays.value = null
+  }
+})
+
+// optionally refresh when tab focus returns
 if (process.client) {
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      fetchRoutes()
-    }
+    if (!document.hidden) fetchRoutes()
   })
 }
 </script>

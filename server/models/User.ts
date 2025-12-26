@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     role: { type: String, default: 'admin' }, // e.g. superadmin, admin, lead-manager
     passwordHash: { type: String }, // optional for now
+    isActive: { type: Boolean, default: true }, // <- new default
     meta: { type: mongoose.Schema.Types.Mixed }
   },
   { timestamps: true }

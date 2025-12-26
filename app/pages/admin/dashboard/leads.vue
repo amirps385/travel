@@ -993,11 +993,18 @@ const followUpInput = ref('')
 // Data
 const leads = ref([])
 
-// Admins (placeholder) — replace with API if you have user admin list
-const admins = ref([
-  { id: 'admin-1', name: 'Juma Hassan' },
-  { id: 'admin-2', name: 'Sarah Mwamba' }
-])
+const admins = ref([])
+
+async function loadAdmins () {
+  try {
+    const data = await $fetch('/api/admins')
+    // expected: [{ id, name, email, role }, ...]
+    admins.value = (data || []).map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role }))
+  } catch (err) {
+    console.error('Failed to load admins', err)
+    admins.value = []
+  }
+}
 
 // Priority options
 const priorityOptions = [
@@ -1987,7 +1994,10 @@ async function confirmChangeStatus () {
 
   // find last status_change event to get previous reason (if any)
   const lastStatusEv = (selectedLead.value.events || []).slice().reverse().find(e => e.type === 'status_change')
-  const prevReason = lastStatusEv?.reason ?? lastStatusEv?.note ?? (selectedLead.value.reason ?? '') || ''
+
+  // safer fallback chain — avoid mixing ?? with || (caused your compile error)
+  // prefer lastStatusEv.reason, then lastStatusEv.note, then selectedLead.value.reason, else empty string
+  const prevReason = lastStatusEv?.reason ?? lastStatusEv?.note ?? selectedLead.value?.reason ?? ''
 
   // new values from modal
   const newStatus = statusChange.value
@@ -2002,8 +2012,8 @@ async function confirmChangeStatus () {
     type: 'status_change',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    note: newReason || '',       // short note retained for compatibility
-    reason: newReason || '',     // explicit reason field
+    note: newReason || '',      // short note retained for compatibility
+    reason: newReason || '',    // explicit reason field
     metadata: {
       short: `Status ${prevStatus || '—'} → ${newStatus}`,
       from: prevStatus,
@@ -2020,7 +2030,7 @@ async function confirmChangeStatus () {
   selectedLead.value.events = selectedLead.value.events || []
   selectedLead.value.events.push(ev)
 
-  // close UI
+  // close UI modal
   closeStatusModal()
 
   // PATCH to server — include events so server persists the audit trail
@@ -2280,6 +2290,7 @@ function formatDateTime (value) {
 // helper for last event summary used above
 onMounted(() => {
   loadLeads()
+  loadAdmins()
 })
 </script>
 

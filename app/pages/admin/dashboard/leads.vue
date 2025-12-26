@@ -624,80 +624,16 @@
             </div>
 
             <!-- RIGHT: Timeline + quick logs -->
-            <div class="space-y-4">
-              <div class="border rounded-xl p-4 bg-white">
-                <div class="flex items-center justify-between mb-3">
-                  <h3 class="text-xs font-semibold text-slate-500">Activity / Timeline</h3>
-                  <div class="text-xs text-slate-400">{{ (selectedLead.events || []).length }} events</div>
-                </div>
-
-                <div v-if="(selectedLead.events || []).length" class="space-y-3">
-                  <div v-for="ev in timelineSorted" :key="ev.at + ev.type" class="flex items-start gap-3">
-                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-sm bg-slate-50 border">
-                      {{ eventIcon(ev.type) }}
-                    </div>
-                    <div class="flex-1">
-                      <div class="flex items-start justify-between gap-2">
-                        <div>
-                          <div class="font-medium text-slate-900">{{ eventTitle(ev) }}</div>
-                          <div class="text-xs text-slate-500">{{ ev.by?.name || ev.by || currentUser.name }} • {{ formatDateTime(ev.at) }}</div>
-                        </div>
-                       <div class="text-xs text-slate-400">
-  <!-- Status change: show from -> to -->
-  <div v-if="ev.type === 'status_change'">
-    <div>{{ ev.metadata?.short || (ev.metadata?.from + ' → ' + ev.metadata?.to) }}</div>
-    <div v-if="ev.reason" class="text-xs text-rose-600 italic">Reason: {{ ev.reason }}</div>
-  </div>
-
-  <!-- Priority or assign: same pattern -->
-  <div v-else-if="['priority_change','assign'].includes(ev.type)">
-    <div>{{ ev.metadata?.short || '' }}</div>
-    <div v-if="ev.metadata?.from !== undefined">
-      <small>From: {{ ev.metadata.from ?? '—' }} → To: {{ ev.metadata.to ?? '—' }}</small>
-    </div>
-  </div>
-
-  <!-- Contact edits: list fields and their previous values -->
-  <div v-else-if="ev.type === 'contact_edited'">
-    <div>{{ ev.metadata?.short || 'Contact updated' }}</div>
-    <div v-if="ev.metadata?.changes" class="mt-1">
-      <div v-for="(chg, key) in ev.metadata.changes" :key="key" class="text-xs text-slate-500">
-        {{ key }}: <strong>{{ chg.from ?? '—' }}</strong> → <strong>{{ chg.to ?? '—' }}</strong>
-      </div>
-    </div>
-  </div>
-
-  <!-- fallback -->
-  <div v-else>
-    {{ ev.metadata?.short || '' }}
-  </div>
+            <!-- RIGHT: Activity (component) -->
+<div class="space-y-4">
+  <ActivityTimeline
+    :events="timelineSorted"
+    :logs="logsForSelectedLead"
+    :current-user="currentUser"
+    :preview-count="5"
+  />
 </div>
 
-                      </div>
-                      <div v-if="ev.note" class="mt-2 text-sm text-slate-700">{{ ev.note }}</div>
-                      <div v-if="ev.reason" class="mt-1 text-xs text-rose-600 italic">Reason: {{ ev.reason }}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <p v-else class="text-xs text-slate-400">No activity yet. Use "Add note" or "Log call" to start the timeline.</p>
-              </div>
-
-              <div class="border rounded-xl p-3 bg-slate-50 text-xs text-slate-500">
-                <div class="font-medium text-slate-700 mb-2">Recent logs</div>
-                <div v-if="logsForSelectedLead.length" class="space-y-2">
-                  <div v-for="l in logsForSelectedLead" :key="l.at + l.type" class="flex items-start justify-between gap-2">
-                    <div>
-                      <div class="font-medium text-slate-900">{{ eventTitle(l) }}</div>
-                      <div class="text-xs text-slate-500">{{ l.by?.name || l.by || currentUser.name }} • {{ formatDateTime(l.at) }}</div>
-                      <div v-if="l.metadata?.short" class="text-xs text-slate-400 mt-1">{{ l.metadata.short }}</div>
-                    </div>
-                    <div class="text-xs text-slate-400">{{ l.type }}</div>
-                  </div>
-                </div>
-                <p v-else class="text-xs text-slate-400">No logs yet.</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -943,6 +879,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+// add near other imports in <script setup>
+import ActivityTimeline from '~/components/admins/ActivityTimeline.vue'
+
 
 definePageMeta({
   layout: 'dashboard',
@@ -995,16 +934,25 @@ const leads = ref([])
 
 const admins = ref([])
 
+// replace your existing loadAdmins() with this
 async function loadAdmins () {
   try {
     const data = await $fetch('/api/admins')
-    // expected: [{ id, name, email, role }, ...]
-    admins.value = (data || []).map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role }))
+    // normalize shape to { id, name, email, role } and ensure id is string
+    admins.value = (data || []).map(u => ({
+      id: String(u.id ?? u._id ?? ''),
+      name: u.name,
+      email: u.email,
+      role: u.role
+    }))
+    // helpful debug (remove in production)
+    console.log('admins loaded', admins.value)
   } catch (err) {
     console.error('Failed to load admins', err)
     admins.value = []
   }
 }
+
 
 // Priority options
 const priorityOptions = [
@@ -1134,20 +1082,29 @@ function validatePhoneNumber() {
 // Normalize/augment lead for UI
 function normalizeLead (l) {
   const copy = { ...l }
-  // ensure consistent ids and arrays
   copy._id = copy._id || copy.id
   copy.events = copy.events || []
   copy.attachments = copy.attachments || []
   copy.documents = copy.documents || copy.attachments || []
   copy.tasks = copy.tasks || []
-  copy.assignedTo = copy.assignedTo || copy.assignedToId ? admins.value.find(a => a.id === copy.assignedToId) : copy.assignedTo || null
   copy.status = copy.status || 'new'
   copy.statusLabel = statusLabelFrom(copy.status)
   copy.priority = copy.priority || 'medium'
   copy.priorityLabel = priorityLabelFrom(copy.priority)
   copy.prettyDate = prettyDateFrom(copy.date || copy.travelDate)
   copy.nextFollowUpAt = copy.nextFollowUpAt || null
-  
+
+  // Resolve assignedTo:
+  if (copy.assignedTo && typeof copy.assignedTo === 'object') {
+    // server returned a populated assignedTo object — keep it
+    copy.assignedTo = copy.assignedTo
+  } else if (copy.assignedToId) {
+    // try to map from loaded admins list
+    copy.assignedTo = admins.value.find(a => String(a.id) === String(copy.assignedToId)) || null
+  } else {
+    copy.assignedTo = null
+  }
+
   // Normalize tasks
   if (copy.tasks) {
     copy.tasks = copy.tasks.map(task => ({
@@ -1157,8 +1114,8 @@ function normalizeLead (l) {
       createdAt: task.createdAt || new Date().toISOString()
     }))
   }
-  
-  // contact fields
+
+  // contact fields and others
   copy.age = copy.age ?? null
   copy.originCity = copy.originCity || ''
   copy.country = copy.country || ''
@@ -1168,6 +1125,8 @@ function normalizeLead (l) {
   copy.countryCode = copy.countryCode || ''
   return copy
 }
+
+
 
 // load leads from API
 async function loadLeads () {
@@ -2287,11 +2246,16 @@ function formatDateTime (value) {
   }
 }
 
+
+
 // helper for last event summary used above
-onMounted(() => {
-  loadLeads()
-  loadAdmins()
+onMounted(async () => {
+  // load admins first so normalizeLead() can resolve assignedTo from assignedToId
+  await loadAdmins()
+  // then load leads (which calls normalizeLead for each lead)
+  await loadLeads()
 })
+
 </script>
 
 

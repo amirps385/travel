@@ -93,13 +93,13 @@
                       <div class="space-y-2">
                         <a 
                           href="tel:+255767277306"
-                          class="block text-gray-800 hover:text-emerald-600 font-medium transition-colors text-lg group-hover:translate-x-2 transition-transform"
+                          class="block text-gray-800 hover:text-emerald-600 font-medium text-lg group-hover:translate-x-2 transition-all"
                         >
                           +255 767 277 306
                         </a>
                         <a 
                           href="tel:+255624023455"
-                          class="block text-gray-700 hover:text-emerald-600 font-medium transition-colors"
+                          class="block text-gray-700 hover:text-emerald-600 font-medium transition-all"
                         >
                           +255 624 023 455
                         </a>
@@ -124,7 +124,7 @@
                       <h3 class="font-bold text-gray-900 mb-3 group-hover:text-amber-700">Email</h3>
                       <a 
                         href="mailto:info@zafstours.com"
-                        class="block text-gray-800 hover:text-amber-600 font-medium transition-colors text-lg group-hover:translate-x-2 transition-transform"
+                        class="block text-gray-800 hover:text-amber-600 font-medium text-lg group-hover:translate-x-2 transition-all"
                       >
                         info@zafstours.com
                       </a>
@@ -166,19 +166,19 @@
                     Why Choose ZAFS Tours
                   </h4>
                   <ul class="space-y-3">
-                    <li class="flex items-center text-gray-700 group-hover:text-gray-900">
+                    <li class="flex items-center text-gray-700 group-hover:text-gray-900 transition-all">
                       <svg class="w-4 h-4 text-emerald-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                       </svg>
                       <span>100% Tanzanian guides & staff</span>
                     </li>
-                    <li class="flex items-center text-gray-700 group-hover:text-gray-900">
+                    <li class="flex items-center text-gray-700 group-hover:text-gray-900 transition-all">
                       <svg class="w-4 h-4 text-emerald-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                       </svg>
                       <span>Licensed by Tanzania Tourist Board</span>
                     </li>
-                    <li class="flex items-center text-gray-700 group-hover:text-gray-900">
+                    <li class="flex items-center text-gray-700 group-hover:text-gray-900 transition-all">
                       <svg class="w-4 h-4 text-emerald-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                       </svg>
@@ -564,7 +564,7 @@
               <span class="mr-2 text-emerald-600">❓</span>
               How soon will you respond?
             </h3>
-            <p class="text-gray-600 group-hover:text-gray-700">
+            <p class="text-gray-600 group-hover:text-gray-700 transition-all">
               We respond to WhatsApp messages within minutes, emails within 12 hours, and provide personalized itineraries within 24 hours.
             </p>
           </div>
@@ -574,7 +574,7 @@
               <span class="mr-2 text-amber-600">❓</span>
               Do you offer payment plans?
             </h3>
-            <p class="text-gray-600 group-hover:text-gray-700">
+            <p class="text-gray-600 group-hover:text-gray-700 transition-all">
               Yes! We offer flexible payment plans with deposits as low as 30%. The balance can be paid closer to your travel dates.
             </p>
           </div>
@@ -584,7 +584,7 @@
               <span class="mr-2 text-emerald-600">❓</span>
               What's included in the price?
             </h3>
-            <p class="text-gray-600 group-hover:text-gray-700">
+            <p class="text-gray-600 group-hover:text-gray-700 transition-all">
               All our packages include accommodation, meals, transportation, park fees, and guide services. We provide a detailed breakdown for each itinerary.
             </p>
           </div>
@@ -594,7 +594,7 @@
               <span class="mr-2 text-amber-600">❓</span>
               Is travel insurance included?
             </h3>
-            <p class="text-gray-600 group-hover:text-gray-700">
+            <p class="text-gray-600 group-hover:text-gray-700 transition-all">
               Travel insurance is not included but highly recommended. We can help you arrange comprehensive coverage for your trip.
             </p>
           </div>

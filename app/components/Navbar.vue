@@ -122,7 +122,7 @@
               </div>
             </div>
             <NuxtLink :to="resolveTo({ to: '/inquire' })" class="cta">INQUIRE NOW</NuxtLink>
-            <button class="hamburger" @click="mobileOpen = !mobileOpen" :aria-expanded="mobileOpen" aria-label="Open menu">
+            <button class="hamburger" @click="toggleMobileMenu" :aria-expanded="mobileOpen" aria-label="Open menu">
               <svg v-if="!mobileOpen" class="icon" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -135,12 +135,12 @@
       </div>
       <!-- Mobile Navigation Panel -->
       <transition name="slide">
-        <div v-if="mobileOpen" class="mobile-panel">
+        <div v-if="mobileOpen && isMobileView" class="mobile-panel">
           <div class="mobile-inner">
             <ul class="mobile-list">
               <li v-for="item in navItems" :key="item.key" class="mobile-item">
                 <div v-if="!item.mega">
-                  <NuxtLink :to="resolveTo(item)" class="mobile-link" @click="() => { mobileOpen = false; closeMega(); }">{{ item.label }}</NuxtLink>
+                  <NuxtLink :to="resolveTo(item)" class="mobile-link" @click="closeMobileMenu">{{ item.label }}</NuxtLink>
                 </div>
                 <div v-else>
                   <button class="mobile-link-toggle" @click="toggleMobile(item.key)">
@@ -174,7 +174,7 @@
                   <option v-for="c in currencies" :key="c" :value="c">{{ c }}</option>
                 </select>
               </div>
-              <NuxtLink :to="resolveTo({ to: '/inquire' })" class="mobile-cta" @click="mobileOpen = false">INQUIRE NOW</NuxtLink>
+              <NuxtLink :to="resolveTo({ to: '/inquire' })" class="mobile-cta" @click="closeMobileMenu">INQUIRE NOW</NuxtLink>
             </div>
           </div>
         </div>
@@ -196,7 +196,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 const route = useRoute()
 
@@ -223,6 +223,10 @@ const panelRefs = ref({})
 const panelPositions = ref({})
 const EDGE = 14
 
+// Screen size tracking
+const windowWidth = ref(process.client ? window.innerWidth : 0)
+const isMobileView = computed(() => windowWidth.value <= 1024)
+
 // NAV items — park links marked with type:'park', route links marked type:'route'
 // ONLY include a short list of famous parks and 6 famous trekking routes
 const navItems = [
@@ -247,13 +251,14 @@ const navItems = [
         links: [
           { label: 'All Safari Tours', to: { path: '/tours', query: { category: 'wildlife-safari' } } },
           { label: 'Family Safaris', to: { path: '/tours', query: { category: 'wildlife-safari', family: '1' } } },
+          { label: 'All Tours', to: '/tours'}
         ]
       },
       {
         title: 'Resources',
         links: [
           { label: 'Packing List', to: '/tanzania-safari/packing-list' },
-          { label: 'Articles', to: '/articles' },
+          { label: 'Articles', to: '/blog' },
         ]
       }
     ]
@@ -323,7 +328,15 @@ function isActive(item) {
     return false
   }
 }
-function toggleMobile(key) { mobileActive.value = mobileActive.value === key ? null : key }
+function toggleMobileMenu() {
+  mobileOpen.value = !mobileOpen.value
+  if (!mobileOpen.value) {
+    mobileActive.value = null
+  }
+}
+function toggleMobile(key) { 
+  mobileActive.value = mobileActive.value === key ? null : key 
+}
 function toggleMegaMenu(key) {
   if (openMega.value === key) {
     openMega.value = null
@@ -362,6 +375,10 @@ function handleBlur() {
 function closeMega() {
   openMega.value = null
   menuOpenedByClick.value = false
+}
+function closeMobileMenu() {
+  mobileOpen.value = false
+  mobileActive.value = null
 }
 async function handleLinkClick(link) {
   // debug log to console to help diagnose steps
@@ -516,7 +533,18 @@ function panelStyle(key) {
   return { left: pos.left + 'px', width: pos.width + 'px', transform: 'none', pointerEvents: 'auto' }
 }
 function onResize() {
-  if (window.innerWidth > 1024 && openMega.value) positionPanel(openMega.value)
+  windowWidth.value = window.innerWidth
+  
+  // Auto-close mobile menu when switching to desktop view
+  if (windowWidth.value > 1024 && mobileOpen.value) {
+    mobileOpen.value = false
+    mobileActive.value = null
+  }
+  
+  // Reposition mega panel if open
+  if (windowWidth.value > 1024 && openMega.value) {
+    positionPanel(openMega.value)
+  }
 }
 /* Lifecycle */
 let unwatchRoute = null
@@ -525,6 +553,12 @@ onMounted(() => {
     const saved = localStorage.getItem('zafs_currency')
     if (saved) selectedCurrency.value = saved
   } catch(e){}
+  
+  // Initialize window width
+  if (process.client) {
+    windowWidth.value = window.innerWidth
+  }
+  
   unwatchRoute = watch(() => route.path, () => {
     mobileOpen.value = false
     openMega.value = null
@@ -1173,6 +1207,11 @@ onBeforeUnmount(() => {
   .mobile-panel {
     top: 68px;
     max-height: calc(100vh - 68px);
+  }
+}
+@media (min-width: 1025px) {
+  .mobile-panel {
+    display: none !important;
   }
 }
 @media (max-width: 768px) {

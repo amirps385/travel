@@ -2,6 +2,7 @@
 import Lead from '../../models/Lead'
 import User from '../../models/User'
 import { connectDB } from '../../utils/mongoose'
+import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
   await connectDB()
@@ -14,12 +15,47 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // findById().lean() returns a plain object (or null).
-    // Cast to any so TypeScript won't complain when we check assignedToId.
-    const lead = (await Lead.findById(id).lean()) as any
+    // Get current user from JWT
+    const token = getCookie(event, 'auth_token')
+    let currentUser = null
+    
+    if (token) {
+      try {
+        const secret = process.env.JWT_SECRET || 'dev-secret'
+        const payload = jwt.verify(token, secret) as any
+        currentUser = payload
+      } catch (err) {
+        console.error('Token verification failed:', err)
+        throw createError({ statusCode: 401, statusMessage: 'Invalid or expired token' })
+      }
+    }
+    
+    if (!currentUser) {
+      throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    }
+    
+    // Build query based on user role
+    let query: any = { _id: id }
+    
+    // If user is not admin/superadmin, check if they have access
+    if (!['admin', 'superadmin'].includes(currentUser.role)) {
+      // For lead-manager and other roles, only allow access if lead is assigned to them or unassigned
+      query.$or = [
+        { assignedToId: currentUser._id || currentUser.id },
+        { assignedToId: null },
+        { assignedToId: { $exists: false } }
+      ]
+    }
+    
+    const lead = (await Lead.findOne(query)
+      .populate('assignedToId', 'name email role')
+      .lean()) as any
 
     if (!lead) {
-      throw createError({ statusCode: 404, statusMessage: 'Lead not found' })
+      throw createError({ 
+        statusCode: 404, 
+        statusMessage: 'Lead not found or you do not have permission to access it' 
+      })
     }
 
     let assignedTo = null
@@ -33,6 +69,8 @@ export default defineEventHandler(async (event) => {
 
     return {
       ...lead,
+      _id: String(lead._id),
+      id: String(lead._id),
       assignedTo: assignedTo || null
     }
   } catch (err: any) {

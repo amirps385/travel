@@ -2,6 +2,16 @@
   <div class="min-h-[calc(100vh-5rem)] bg-slate-50">
     <div class="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
+      <!-- RESTRICTION BANNER FOR NON-ADMINS -->
+      <div v-if="!canAssignLeads" class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+        <div class="flex items-start gap-2">
+          <span class="text-amber-600">⚠️</span>
+          <div class="text-sm text-amber-800">
+            <strong>Restricted Access:</strong> As a {{ userRoleFormatted }}, you can view leads but cannot assign them to other users.
+          </div>
+        </div>
+      </div>
+
       <!-- HEADER -->
       <div class="flex items-start justify-between">
         <div>
@@ -9,6 +19,9 @@
           <p class="text-sm text-slate-500 mt-1">
             Track lead source, status, timeline and next actions. Click a row to open the CRM drawer.
           </p>
+          <div class="mt-2 text-xs text-slate-400">
+            Role: <span class="font-medium">{{ userRoleFormatted }}</span>
+          </div>
         </div>
 
         <div class="text-sm text-slate-400">
@@ -48,10 +61,20 @@
             🔄 Refresh
           </button>
 
+          <!-- CONDITIONAL BULK ASSIGN BUTTON -->
           <button
+            v-if="canAssignLeads"
             class="px-3 py-2 rounded-lg text-xs bg-emerald-600 text-white disabled:opacity-40"
             :disabled="!selectedIds.length"
             @click="openBulkAssignModal"
+          >
+            Assign selected
+          </button>
+          <button
+            v-else
+            class="px-3 py-2 rounded-lg text-xs bg-slate-300 text-slate-600 cursor-not-allowed"
+            disabled
+            title="Only admins can assign leads"
           >
             Assign selected
           </button>
@@ -240,10 +263,24 @@
               <div v-if="!isEditingLead" class="flex items-center gap-2">
                 <button class="px-4 py-2 rounded-lg bg-white border" @click="openStatusModal(selectedLead)">Change status</button>
 
-                <select v-model="assignSelect" @change="assignLeadToSelected(assignSelect)" class="rounded-lg px-3 py-2 text-sm border bg-white">
+                <!-- CONDITIONAL ASSIGN DROPDOWN -->
+                <select 
+                  v-if="canAssignLeads"
+                  v-model="assignSelect" 
+                  @change="assignLeadToSelected(assignSelect)" 
+                  class="rounded-lg px-3 py-2 text-sm border bg-white"
+                >
                   <option :value="null">Unassigned</option>
-                  <option v-for="u in admins" :key="u.id" :value="u.id">{{ u.name }}</option>
+                  <option v-for="u in leadManagers" :key="u.id" :value="u.id">{{ u.name }} ({{ u.roleFormatted }})</option>
                 </select>
+                <button 
+                  v-else
+                  class="px-3 py-2 rounded-lg text-sm border bg-slate-100 text-slate-500 cursor-not-allowed"
+                  disabled
+                  title="Only admins can assign leads"
+                >
+                  {{ selectedLead.assignedTo?.name || 'Unassigned' }}
+                </button>
 
                 <button class="px-4 py-2 rounded-lg bg-emerald-600 text-white" @click="handleConvert(selectedLead)">Convert / Build</button>
 
@@ -318,8 +355,13 @@
                     <div class="text-sm font-medium">{{ selectedLead.country || '—' }}</div>
                     <div class="text-xs text-slate-500">Country</div>
                   </div>
+                  
                   <div>
-                    <div class="text-sm font-medium">{{ selectedLead.leadSourceDetail || selectedLead.source || 'form' }}</div>
+                    <div class="text-sm font-medium">{{ selectedLead.source || 'Website Form' }}</div>
+                    <div class="text-xs text-slate-500">Lead source</div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium">{{ selectedLead.leadSourceDetail || '—' }}</div>
                     <div class="text-xs text-slate-500">Source detail</div>
                   </div>
                 </div>
@@ -434,13 +476,40 @@
                   </div>
                 </div>
 
-                <!-- Next follow-up quick input -->
-                <div class="mt-4">
-                  <label class="block text-xs text-slate-500 mb-1">Next follow-up</label>
+                <!-- Next follow-up quick input - IMPROVED DESIGN -->
+                <div class="mt-4 pt-3 border-t">
+                  <div class="flex items-center justify-between mb-1">
+                    <h4 class="text-xs font-semibold text-slate-500">Next follow-up</h4>
+                    <div v-if="selectedLead.nextFollowUpAt" class="text-xs text-slate-400">
+                      {{ formatDateTime(selectedLead.nextFollowUpAt) }}
+                    </div>
+                  </div>
                   <div class="flex items-center gap-2">
-                    <input type="datetime-local" v-model="followUpInput" class="border rounded px-2 py-1 text-sm" />
-                    <button class="px-3 py-1 rounded bg-amber-600 text-white text-sm" @click="setNextFollowUp">Set follow-up</button>
-                    <button v-if="selectedLead.nextFollowUpAt" class="px-3 py-1 rounded border text-sm" @click="clearFollowUp">Clear</button>
+                    <div class="flex-1">
+                      <input
+                        type="datetime-local"
+                        v-model="followUpInput"
+                        class="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        :min="getCurrentDateTime()"
+                      />
+                    </div>
+                    <button
+                      class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm hover:bg-sky-700 transition-colors"
+                      @click="setNextFollowUp"
+                      :disabled="!followUpInput"
+                    >
+                      Set follow-up
+                    </button>
+                    <button
+                      v-if="selectedLead.nextFollowUpAt"
+                      class="px-3 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm hover:bg-slate-50 transition-colors"
+                      @click="clearFollowUp"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div v-if="showFollowUpError" class="mt-1 text-xs text-rose-600">
+                    Please select a future date and time
                   </div>
                 </div>
               </div>
@@ -453,10 +522,90 @@
                 <button class="px-4 py-2 rounded-lg border bg-white text-sm" @click="copyPublicLink">Copy public link</button>
               </div>
 
+              <!-- Follow-ups -->
+              <div class="border rounded-xl p-4 bg-slate-50/60">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-xs font-semibold text-slate-500">Follow-ups</h3>
+                  <span class="text-xs text-slate-400">{{ followUpsForSelectedLead.length }} follow-ups</span>
+                </div>
+                
+                <!-- Current follow-up status -->
+                <div v-if="selectedLead.nextFollowUpAt" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-sm font-semibold text-amber-800">Next follow-up scheduled</div>
+                      <div class="text-sm text-amber-700 mt-1">{{ formatDateTime(selectedLead.nextFollowUpAt) }}</div>
+                    </div>
+                    <button
+                      class="px-3 py-1 text-sm rounded border border-amber-300 text-amber-700 hover:bg-amber-100"
+                      @click="clearFollowUp"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                
+                <div v-if="followUpsForSelectedLead.length" class="space-y-2">
+                  <div 
+                    v-for="followup in followUpsForSelectedLead" 
+                    :key="followup.id" 
+                    class="flex items-start justify-between gap-3 bg-white p-3 rounded-lg border"
+                  >
+                    <div class="flex-1">
+                      <div class="font-medium text-slate-900">{{ followup.title || 'Follow-up' }}</div>
+                      <div class="text-sm text-slate-700 mt-1">{{ followup.content }}</div>
+                      <div class="flex items-center gap-3 mt-2">
+                        <span class="text-xs text-slate-400">
+                          {{ followup.by?.name || currentUser.name }} • {{ formatDateShort(followup.createdAt) }}
+                        </span>
+                        <span v-if="followup.status === 'completed'" class="text-xs text-emerald-600">✓ Completed</span>
+                        <span v-else-if="followup.status === 'missed'" class="text-xs text-rose-600">✗ Missed</span>
+                        <span v-else class="text-xs text-amber-600">⏰ Scheduled</span>
+                      </div>
+                    </div>
+                    <div class="text-right flex items-start gap-2">
+                      <select 
+                        v-model="followup.status" 
+                        @change="updateFollowUpStatus(followup)"
+                        class="text-xs border rounded px-2 py-1"
+                      >
+                        <option value="scheduled">Scheduled</option>
+                        <option value="completed">Completed</option>
+                        <option value="missed">Missed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                      <button 
+    class="text-xs text-sky-600 hover:text-sky-800"
+    @click="openEditFollowUpModal(followup)"
+  >
+    Edit
+  </button> 
+                      <button 
+                        class="text-xs text-rose-600 hover:text-rose-800"
+                        @click="deleteFollowUp(followup)"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <p v-else class="text-xs text-slate-400">No follow-ups logged yet for this lead.</p>
+              </div>
+
               <!-- Tasks -->
               <div class="border rounded-xl p-4 bg-slate-50/60">
                 <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-xs font-semibold text-slate-500">Tasks</h3>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-semibold text-slate-500">Tasks</h3>
+                    <button 
+                      @click.stop="refreshSelectedLead"
+                      class="text-xs text-slate-400 hover:text-slate-600"
+                      title="Refresh tasks"
+                    >
+                      ↻
+                    </button>
+                  </div>
                   <span class="text-xs text-slate-400">{{ tasksForSelectedLead.length }} tasks</span>
                 </div>
                 <div v-if="tasksForSelectedLead.length" class="space-y-2">
@@ -624,15 +773,14 @@
             </div>
 
             <!-- RIGHT: Timeline + quick logs -->
-            <!-- RIGHT: Activity (component) -->
-<div class="space-y-4">
-  <ActivityTimeline
-    :events="timelineSorted"
-    :logs="logsForSelectedLead"
-    :current-user="currentUser"
-    :preview-count="5"
-  />
-</div>
+            <div class="space-y-4">
+              <ActivityTimeline
+                :events="timelineSorted"
+                :logs="logsForSelectedLead"
+                :current-user="currentUser"
+                :preview-count="5"
+              />
+            </div>
 
           </div>
         </div>
@@ -739,6 +887,32 @@
       </div>
     </transition>
 
+    <!-- MODALS: Edit Follow-up -->
+<transition name="fade">
+  <div v-if="showEditFollowUp" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-md bg-white rounded-2xl p-6">
+      <h3 class="text-lg font-semibold mb-3">Edit follow-up</h3>
+
+      <label class="block text-xs text-slate-500 mb-1">Date & time</label>
+      <input
+        type="datetime-local"
+        v-model="editFollowUpDate"
+        :min="getCurrentDateTime()"
+        class="w-full border rounded px-2 py-2 mb-3"
+      />
+
+      <label class="block text-xs text-slate-500 mb-1">Note (optional)</label>
+      <input v-model="editFollowUpNote" class="w-full border rounded px-2 py-2 mb-3" />
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button class="px-4 py-2 rounded border" @click="closeEditFollowUp">Cancel</button>
+        <button class="px-4 py-2 rounded bg-emerald-600 text-white" @click="saveEditedFollowUp">Save</button>
+      </div>
+    </div>
+  </div>
+</transition>
+
+
     <!-- MODALS: Create Task -->
     <transition name="fade">
       <div v-if="showCreateTask" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
@@ -751,7 +925,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
               <label class="block text-xs text-slate-500 mb-1">Due date</label>
-              <input type="datetime-local" v-model="taskDue" class="w-full border rounded px-2 py-2" />
+              <input type="datetime-local" v-model="taskDue" :min="getCurrentDateTime()" class="w-full border rounded px-2 py-2" />
             </div>
             <div>
               <label class="block text-xs text-slate-500 mb-1">Status</label>
@@ -809,16 +983,16 @@
       </div>
     </transition>
 
-    <!-- MODAL: Bulk assign -->
+    <!-- MODAL: Bulk assign (ADMIN ONLY) -->
     <transition name="fade">
-      <div v-if="showBulkAssign" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
+      <div v-if="showBulkAssign && canAssignLeads" class="fixed inset-0 z-60 flex items-center justify-center bg-black/40 p-4">
         <div class="w-full max-w-md bg-white rounded-2xl p-6">
           <h3 class="text-lg font-semibold mb-3">Assign selected leads</h3>
 
           <label class="block text-xs text-slate-500 mb-1">Assign to</label>
           <select v-model="bulkAssignTo" class="w-full border rounded px-2 py-2 mb-4">
             <option :value="null">Unassigned</option>
-            <option v-for="u in admins" :key="u.id" :value="u.id">{{ u.name }}</option>
+            <option v-for="u in leadManagers" :key="u.id" :value="u.id">{{ u.name }} ({{ u.roleFormatted }})</option>
           </select>
 
           <div class="flex justify-end gap-2">
@@ -875,13 +1049,10 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-// add near other imports in <script setup>
 import ActivityTimeline from '~/components/admins/ActivityTimeline.vue'
-
 
 definePageMeta({
   layout: 'dashboard',
@@ -890,11 +1061,26 @@ definePageMeta({
 
 const router = useRouter()
 
-// ---- Current User (you can replace this with actual auth) ----
-const currentUser = ref({
-  id: 'admin-1',
-  name: 'Juma Hassan',
-  email: 'juma@example.com'
+
+
+// ---- Current User from Auth ----
+const { data: authData } = await useAsyncData('auth-me', () => $fetch('/api/auth/me'))
+const currentUser = computed(() => authData.value?.user || { id: '', name: 'Unknown', email: '', role: '' })
+const userRole = computed(() => currentUser.value.role || '')
+const userRoleFormatted = computed(() => {
+  const roleMap = {
+    'superadmin': 'Super Admin',
+    'admin': 'Admin',
+    'content-manager': 'Content Manager',
+    'lead-manager': 'Lead Manager',
+    'itinerary-planner': 'Itinerary Planner'
+  }
+  return roleMap[userRole.value] || userRole.value.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+})
+
+// Permission checks
+const canAssignLeads = computed(() => {
+  return userRole.value === 'superadmin' || userRole.value === 'admin'
 })
 
 // ---- Task Status Options ----
@@ -928,31 +1114,31 @@ const isDetailOpen = ref(false)
 const selectedLead = ref(null)
 const assignSelect = ref(null)
 const followUpInput = ref('')
+const showFollowUpError = ref(false)
+
+
+// --- Edit follow-up state ---
+const showEditFollowUp = ref(false)
+const editingFollowUp = ref(null)
+const editFollowUpDate = ref('')
+const editFollowUpNote = ref('')
 
 // Data
 const leads = ref([])
-
 const admins = ref([])
 
-// replace your existing loadAdmins() with this
-async function loadAdmins () {
-  try {
-    const data = await $fetch('/api/admins')
-    // normalize shape to { id, name, email, role } and ensure id is string
-    admins.value = (data || []).map(u => ({
-      id: String(u.id ?? u._id ?? ''),
-      name: u.name,
-      email: u.email,
-      role: u.role
-    }))
-    // helpful debug (remove in production)
-    console.log('admins loaded', admins.value)
-  } catch (err) {
-    console.error('Failed to load admins', err)
-    admins.value = []
-  }
-}
-
+// Filter admins to only show lead managers in assign dropdown
+const leadManagers = computed(() => {
+  return admins.value.filter(admin => {
+    // Only show users with lead management roles
+    return ['lead-manager', 'admin', 'superadmin'].includes(admin.role)
+  }).map(admin => ({
+    ...admin,
+    roleFormatted: admin.role === 'lead-manager' ? 'Lead Manager' : 
+                  admin.role === 'admin' ? 'Admin' : 
+                  admin.role === 'superadmin' ? 'Super Admin' : admin.role
+  }))
+})
 
 // Priority options
 const priorityOptions = [
@@ -1026,7 +1212,166 @@ const statusOptions = [
   { key: 'converted', label: 'Closed — Converted' }
 ]
 
+
+
+// Open edit modal
+function openEditFollowUpModal(followup) {
+  editingFollowUp.value = followup
+  // followup.scheduledDate is from your mapping: metadata.followUpDate
+  editFollowUpDate.value = followup.scheduledDate ? dateTimeLocalValue(followup.scheduledDate) : getCurrentDateTime()
+  editFollowUpNote.value = followup.content || followup.note || ''
+  showEditFollowUp.value = true
+}
+
+function closeEditFollowUp() {
+  showEditFollowUp.value = false
+  editingFollowUp.value = null
+  editFollowUpDate.value = ''
+  editFollowUpNote.value = ''
+}
+
+async function saveEditedFollowUp() {
+  if (!selectedLead.value || !editingFollowUp.value) return
+
+  if (!editFollowUpDate.value) {
+    alert('Please select a date and time for the follow-up')
+    return
+  }
+
+  // Convert new date to ISO
+  const newIso = new Date(editFollowUpDate.value).toISOString()
+
+  // Prepare local events array
+  const events = selectedLead.value.events ? [...selectedLead.value.events] : []
+
+  // Try to locate original followup_set event by matching the event.at stamp (createdAt)
+  const followupId = editingFollowUp.value.createdAt || editingFollowUp.value.id || editingFollowUp.value.at
+  const idx = events.findIndex(e => e.type === 'followup_set' && (String(e.at) === String(followupId) || new Date(e.at).toISOString() === new Date(followupId).toISOString()))
+
+  let oldDateIso = null
+  if (idx !== -1) {
+    // store previous date for audit
+    oldDateIso = events[idx].metadata?.followUpDate ? new Date(events[idx].metadata.followUpDate).toISOString() : null
+
+    // update the followup_set event
+    events[idx] = {
+      ...events[idx],
+      note: editFollowUpNote.value ? editFollowUpNote.value : events[idx].note || `Follow-up set for ${formatDateTime(newIso)}`,
+      metadata: {
+        ...(events[idx].metadata || {}),
+        followUpDate: newIso
+      },
+      updatedBy: currentUser.value.name,
+      updatedAt: new Date().toISOString()
+    }
+  } else {
+    // Fallback: if original not found, create a new followup_set event (safe fallback)
+    events.push({
+      type: 'followup_set',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      note: editFollowUpNote.value ? editFollowUpNote.value : `Follow-up set for ${formatDateTime(newIso)}`,
+      status: 'scheduled',
+      metadata: {
+        short: `Follow-up set: ${formatDateTime(newIso)}`,
+        followUpDate: newIso
+      },
+      updatedBy: currentUser.value.name,
+      updatedAt: new Date().toISOString()
+    })
+  }
+
+  // Append audit event: followup_updated
+  events.push({
+    type: 'followup_updated',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: `Follow-up updated to ${formatDateTime(newIso)}`,
+    status: 'active',
+    metadata: {
+      short: `Follow-up updated: ${formatDateTime(newIso)}`,
+      followupId: idx !== -1 ? events[idx].at : null,
+      changes: {
+        followUpDate: { from: oldDateIso, to: newIso }
+      }
+    },
+    updatedBy: currentUser.value.name,
+    updatedAt: new Date().toISOString()
+  })
+
+  // Optimistically update local state
+  selectedLead.value.events = events
+  // If this edited follow-up corresponds to currently scheduled one, update nextFollowUpAt
+  const currentNextIso = selectedLead.value.nextFollowUpAt ? new Date(selectedLead.value.nextFollowUpAt).toISOString() : null
+  const editedMatchesCurrent = oldDateIso && currentNextIso && oldDateIso === currentNextIso
+  if (editedMatchesCurrent || !currentNextIso) {
+    // set nextFollowUpAt to edited date (safe)
+    selectedLead.value.nextFollowUpAt = newIso
+  }
+
+  closeEditFollowUp()
+
+  // Push to server
+  try {
+    await patchLead(selectedLead.value._id, {
+      events: events,
+      nextFollowUpAt: selectedLead.value.nextFollowUpAt,
+      updatedBy: currentUser.value.name
+    })
+
+    // Refresh to be safe / consistent
+    await loadLeads()
+  } catch (err) {
+    console.error('Failed to save edited follow-up', err)
+    alert('Failed to save follow-up. Reverting and reloading.')
+    // reload to restore from server
+    await loadLeads()
+  }
+}
+
+
+
 // helper functions reused in UI
+
+// Helper: get follow-ups from events array
+function getFollowUpsFromEvents(events = []) {
+  return events
+    .filter(e => e.type === 'followup_set' && e.status !== 'deleted')
+    .map(e => {
+      // server stores ISO in metadata.followUpDate
+      const iso = e.metadata?.followUpDate || e.metadata?.followupDate || null;
+      const note = e.note || e.metadata?.short || '';
+      return {
+        id: e.at || e.metadata?.followupId || iso,
+        dateIso: iso,    // canonical ISO string or null
+        rawNote: note,
+        status: e.status || 'scheduled',
+        by: e.by,
+        eventAt: e.at,
+        originalEvent: e
+      };
+    })
+    .sort((a, b) => {
+      if (!a.dateIso) return 1;
+      if (!b.dateIso) return -1;
+      return new Date(a.dateIso) - new Date(b.dateIso);
+    });
+}
+
+// Helper: format an ISO to readable string in Asia/Kolkata timezone
+function formatFollowUpLabel(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('en-US', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
 
 function lastStatusChangeReason (lead) {
   if (!lead || !Array.isArray(lead.events) || !lead.events.length) return ''
@@ -1039,8 +1384,6 @@ function lastStatusChangeReason (lead) {
          (ev.metadata && String(ev.metadata.short || '').trim()) ||
          ''
 }
-
-
 
 function statusLabelFrom (s) {
   const found = statusOptions.find(x => x.key === s)
@@ -1079,6 +1422,17 @@ function validatePhoneNumber() {
   }
 }
 
+// Get current date-time in format for datetime-local input
+function getCurrentDateTime() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 // Normalize/augment lead for UI
 function normalizeLead (l) {
   const copy = { ...l }
@@ -1105,6 +1459,9 @@ function normalizeLead (l) {
     copy.assignedTo = null
   }
 
+  // Add permission flags for UI
+  copy.canBeAssignedByCurrentUser = canAssignLeads.value
+  
   // Normalize tasks
   if (copy.tasks) {
     copy.tasks = copy.tasks.map(task => ({
@@ -1126,19 +1483,59 @@ function normalizeLead (l) {
   return copy
 }
 
-
+// load admins with role
+async function loadAdmins () {
+  try {
+    const data = await $fetch('/api/admins')
+    // normalize shape to { id, name, email, role } and ensure id is string
+    admins.value = (data || []).map(u => ({
+      id: String(u.id ?? u._id ?? ''),
+      name: u.name,
+      email: u.email,
+      role: u.role || 'lead-manager' // Default to lead-manager if not specified
+    }))
+  } catch (err) {
+    console.error('Failed to load admins', err)
+    admins.value = []
+  }
+}
 
 // load leads from API
 async function loadLeads () {
+  console.log('Loading leads...')
   isLoading.value = true
+  
   try {
-    const data = await $fetch('/api/leads')
+    const data = await $fetch('/api/leads').catch(err => {
+      console.error('Failed to fetch leads:', err)
+      throw err
+    })
+    
+    console.log('Leads loaded from server:', data)
     leads.value = (data || []).map(normalizeLead)
+    
+    // If we have a selected lead open, refresh it
+    if (selectedLead.value) {
+      const refreshedLead = leads.value.find(l => (l._id || l.id) === (selectedLead.value._id || selectedLead.value.id))
+      if (refreshedLead) {
+        console.log('Refreshing selected lead:', refreshedLead)
+        selectedLead.value = refreshedLead
+        // Update follow-up input with current value
+        followUpInput.value = refreshedLead.nextFollowUpAt ? dateTimeLocalValue(refreshedLead.nextFollowUpAt) : ''
+      }
+    }
+    
   } catch (err) {
-    console.error('Failed to load leads', err)
+    console.error('Failed to load leads:', err)
     leads.value = []
+    
+    // Show error to user
+    if (err.message && !err.message.includes('401') && !err.message.includes('403')) {
+      alert('Failed to load leads. Please check your connection.')
+    }
   } finally {
     isLoading.value = false
+    console.log('Leads loading complete')
   }
 }
 
@@ -1198,7 +1595,6 @@ const notesForSelectedLead = computed(() => {
     }))
 })
 
-
 const callsForSelectedLead = computed(() => {
   if (!selectedLead.value) return []
   return (selectedLead.value.events || [])
@@ -1216,6 +1612,24 @@ const callsForSelectedLead = computed(() => {
       updatedAt: call.updatedAt,
       ...call
     }))
+})
+
+const followUpsForSelectedLead = computed(() => {
+  if (!selectedLead.value) return []
+  return (selectedLead.value.events || [])
+    .filter(e => e.type === 'followup_set')
+    .map((followup, index) => ({
+      id: `followup-${index}-${followup.at}`,
+      title: 'Follow-up',
+      content: followup.note || `Follow-up scheduled`,
+      status: 'scheduled',
+      by: followup.by || { name: currentUser.value.name },
+      createdAt: followup.at,
+      scheduledDate: followup.metadata?.followUpDate,
+      metadata: followup.metadata,
+      ...followup
+    }))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Show newest first
 })
 
 // select all toggle
@@ -1239,6 +1653,7 @@ function openLeadDetails (lead) {
   isDetailOpen.value = true
   assignSelect.value = selectedLead.value.assignedTo?.id || null
   followUpInput.value = selectedLead.value.nextFollowUpAt ? dateTimeLocalValue(selectedLead.value.nextFollowUpAt) : ''
+  showFollowUpError.value = false
   // ensure edit mode off
   isEditingLead.value = false
 }
@@ -1266,6 +1681,7 @@ function closeLeadDetails () {
   showEditTask.value = false
   showLogCall.value = false
   showEditCall.value = false
+  showFollowUpError.value = false
 }
 
 // start edit
@@ -1384,7 +1800,6 @@ async function saveContactEdits () {
   }
 }
 
-
 // COPY PUBLIC LINK
 async function copyPublicLink () {
   if (!selectedLead.value || !selectedLead.value._id) return
@@ -1406,8 +1821,13 @@ function goToBuild (lead) {
   router.push(`/admin/leads/${id}/build`)
 }
 
-// assign single lead (select dropdown)
+// assign single lead (select dropdown) - WITH PERMISSION CHECK
 async function assignLeadToSelected (adminId) {
+  if (!canAssignLeads.value) {
+    alert('Only admins can assign leads to other users.')
+    return
+  }
+  
   if (!selectedLead.value || !selectedLead.value._id) return
   const admin = admins.value.find(a => a.id === adminId) || null
 
@@ -1437,9 +1857,12 @@ async function assignLeadToSelected (adminId) {
   try {
     await patchLead(selectedLead.value._id, { 
       assignedToId: adminId,
-      assignedTo: selectedLead.value.assignedTo, // optional, server may ignore
+      assignedTo: selectedLead.value.assignedTo,
       events: selectedLead.value.events,
-      updatedBy: currentUser.value.name
+      updatedBy: currentUser.value.name,
+      // Log who performed the assignment
+      assignmentBy: currentUser.value.name,
+      assignmentAt: new Date().toISOString()
     })
   } catch (err) {
     console.error('assign failed', err)
@@ -1448,9 +1871,12 @@ async function assignLeadToSelected (adminId) {
   }
 }
 
-
-// bulk assign
+// bulk assign - WITH PERMISSION CHECK
 function openBulkAssignModal () {
+  if (!canAssignLeads.value) {
+    alert('Only admins can assign leads to other users.')
+    return
+  }
   showBulkAssign.value = true
 }
 function closeBulkAssignModal () {
@@ -1458,6 +1884,11 @@ function closeBulkAssignModal () {
   bulkAssignTo.value = null
 }
 async function performBulkAssign () {
+  if (!canAssignLeads.value) {
+    alert('You do not have permission to assign leads.')
+    return
+  }
+  
   if (!bulkAssignTo.value || !selectedIds.value.length) return
   isLoadingBulk.value = true
   try {
@@ -1466,9 +1897,26 @@ async function performBulkAssign () {
       if (!lead) continue
       lead.assignedToId = bulkAssignTo.value
       lead.assignedTo = admins.value.find(a => a.id === bulkAssignTo.value) || null
+      
+      // Add assignment event
+      const events = lead.events || []
+      events.push({
+        type: 'assign',
+        at: new Date().toISOString(),
+        by: { name: currentUser.value.name },
+        metadata: {
+          short: `Bulk assigned to ${lead.assignedTo?.name || 'Unassigned'}`,
+          bulk: true
+        }
+      })
+      
       await patchLead(lead._id, { 
         assignedToId: bulkAssignTo.value,
-        updatedBy: currentUser.value.name
+        events: events,
+        updatedBy: currentUser.value.name,
+        assignmentBy: currentUser.value.name,
+        assignmentAt: new Date().toISOString(),
+        bulkAssignment: true
       }).catch(e => {
         console.error('bulk patch failed for', id, e)
       })
@@ -1481,17 +1929,14 @@ async function performBulkAssign () {
   }
 }
 
-// NEXT FOLLOW-UP
+// NEXT FOLLOW-UP - FIXED VERSION
 function dateTimeLocalValue (iso) {
   try {
     const d = new Date(iso)
-    const pad = (n) => String(n).padStart(2, '0')
-    const y = d.getFullYear()
-    const m = pad(d.getMonth() + 1)
-    const day = pad(d.getDate())
-    const hh = pad(d.getHours())
-    const mm = pad(d.getMinutes())
-    return `${y}-${m}-${day}T${hh}:${mm}`
+    // Adjust for timezone offset to get correct local time display
+    const offset = d.getTimezoneOffset() * 60000
+    const adjustedDate = new Date(d.getTime() - offset)
+    return adjustedDate.toISOString().slice(0, 16)
   } catch {
     return ''
   }
@@ -1499,36 +1944,922 @@ function dateTimeLocalValue (iso) {
 
 async function setNextFollowUp () {
   if (!selectedLead.value) return
+  
   if (!followUpInput.value) {
-    alert('Pick date & time')
+    showFollowUpError.value = true
+    alert('Please select a date and time for the follow-up')
     return
   }
-  const iso = new Date(followUpInput.value).toISOString()
+  
+  // Validate that the selected date is in the future
+  const selectedDate = new Date(followUpInput.value)
+  const now = new Date()
+  
+  if (selectedDate <= now) {
+    showFollowUpError.value = true
+    alert('Please select a future date and time for the follow-up')
+    return
+  }
+  
+  showFollowUpError.value = false
+  
+  // Convert to ISO string
+  const iso = selectedDate.toISOString()
+  
+  // Store previous follow-up for event tracking
+  const prevFollowUp = selectedLead.value.nextFollowUpAt || null
+  
+  // Update local state
   selectedLead.value.nextFollowUpAt = iso
+  
+  // Create follow-up event for timeline
+  const ev = {
+    type: 'followup_set',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: `Follow-up set for ${formatDateTime(iso)}`,
+    metadata: {
+      short: `Follow-up set: ${formatDateTime(iso)}`,
+      followUpDate: iso,
+      changes: { nextFollowUpAt: { from: prevFollowUp, to: iso } }
+    }
+  }
+  
+  // Add to events array
+  selectedLead.value.events = selectedLead.value.events || []
+  selectedLead.value.events.push(ev)
+  
   try {
+    // Send update to server
     await patchLead(selectedLead.value._id, { 
       nextFollowUpAt: iso,
+      events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
+    
+    // Show success message
+    alert(`Follow-up set for ${formatDateTime(iso)}`)
+    
+    // Refresh data to ensure consistency
+    await loadLeads()
+    
   } catch (err) {
-    console.error('patch followup failed', err)
+    console.error('Failed to set follow-up', err)
+    alert('Failed to set follow-up. Please try again.')
+    
+    // Revert local changes
+    selectedLead.value.nextFollowUpAt = prevFollowUp
+    if (ev && selectedLead.value.events) {
+      selectedLead.value.events = selectedLead.value.events.filter(e => e !== ev)
+    }
+    
+    // Reload from server
+    await loadLeads()
   }
 }
 
 async function clearFollowUp () {
   if (!selectedLead.value) return
+  
+  if (!confirm('Clear the scheduled follow-up?')) return
+  
+  // Store previous follow-up for event tracking
+  const prevFollowUp = selectedLead.value.nextFollowUpAt
+  
+  // Update local state
   selectedLead.value.nextFollowUpAt = null
+  
+  // Create follow-up cleared event for timeline
+  const ev = {
+    type: 'followup_cleared',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: 'Follow-up cleared',
+    metadata: {
+      short: 'Follow-up cleared',
+      previousFollowUp: prevFollowUp,
+      changes: { nextFollowUpAt: { from: prevFollowUp, to: null } }
+    }
+  }
+  
+  // Add to events array
+  selectedLead.value.events = selectedLead.value.events || []
+  selectedLead.value.events.push(ev)
+  
+  // Clear input
+  followUpInput.value = ''
+  
   try {
+    // Send update to server
     await patchLead(selectedLead.value._id, { 
       nextFollowUpAt: null,
+      events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
+    
+    // Show success message
+    alert('Follow-up cleared')
+    
+    // Refresh data
+    await loadLeads()
+    
   } catch (err) {
-    console.error('clear followup failed', err)
+    console.error('Failed to clear follow-up', err)
+    alert('Failed to clear follow-up. Please try again.')
+    
+    // Revert local changes
+    selectedLead.value.nextFollowUpAt = prevFollowUp
+    if (ev && selectedLead.value.events) {
+      selectedLead.value.events = selectedLead.value.events.filter(e => e !== ev)
+    }
+    
+    // Reload from server
+    await loadLeads()
   }
 }
 
-// NOTES
+// ========== NOTE FUNCTIONS - FIXED ==========
+async function addNote () {
+  if (!selectedLead.value || !noteText.value.trim()) return
+  
+  console.log('Adding note...')
+  
+  const ev = {
+    type: 'note',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: noteText.value.trim(),
+    status: 'active',
+    metadata: { short: noteText.value.trim().slice(0, 80) }
+  }
+  
+  // Add to local state
+  if (!selectedLead.value.events) {
+    selectedLead.value.events = []
+  }
+  selectedLead.value.events.push(ev)
+  
+  closeAddNote()
+  
+  try {
+    console.log('Saving note to server...')
+    
+    const result = await patchLead(selectedLead.value._id, { 
+      events: selectedLead.value.events, // Send ALL events
+      updatedBy: currentUser.value.name
+    })
+    
+    console.log('Note saved successfully:', result)
+    
+    // Refresh data
+    await loadLeads()
+    
+  } catch (err) {
+    console.error('failed to persist note', err)
+    alert(`Failed to save note: ${err.message || 'Unknown error'}`)
+    
+    // Reload from server to restore original state
+    await loadLeads()
+  }
+}
+
+async function saveEditedNote () {
+  if (!selectedLead.value || !editingNote.value || !editNoteText.value.trim()) return
+  
+  console.log('Saving edited note:', editingNote.value)
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => 
+    e.type === 'note' && e.at === editingNote.value.at
+  )
+  
+  if (index !== -1) {
+    // Store old note for event
+    const oldNote = events[index].note
+    
+    // Update note
+    events[index].note = editNoteText.value.trim()
+    events[index].updatedBy = currentUser.value.name
+    events[index].updatedAt = new Date().toISOString()
+    
+    // Create note updated event
+    const updateEv = {
+      type: 'note_updated',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: {
+        short: `Note updated: ${editNoteText.value.trim().slice(0, 50)}`,
+        noteId: editingNote.value.at,
+        changes: { content: { from: oldNote, to: editNoteText.value.trim() } }
+      }
+    }
+    
+    events.push(updateEv)
+    
+    console.log('Updated note at index:', index)
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        events: events, // Send ALL events
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Note update successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to update note', err)
+      alert(`Failed to update note: ${err.message || 'Unknown error'}`)
+      await loadLeads()
+    }
+  }
+  
+  closeEditNote()
+}
+
+// ========== CALL FUNCTIONS - FIXED ==========
+async function saveLogCall () {
+  if (!selectedLead.value) return
+  
+  console.log('Logging call...')
+  
+  const ev = {
+    type: 'call',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: callNote.value || '',
+    status: 'completed',
+    metadata: { 
+      short: (callOutcome.value || '') + (callDuration.value ? ` • ${callDuration.value}m` : '')
+    },
+    durationMinutes: callDuration.value || 0,
+    outcome: callOutcome.value || ''
+  }
+  
+  // Add to local state
+  if (!selectedLead.value.events) {
+    selectedLead.value.events = []
+  }
+  selectedLead.value.events.push(ev)
+  
+  closeLogCall()
+  
+  try {
+    console.log('Saving call to server...')
+    
+    const result = await patchLead(selectedLead.value._id, { 
+      events: selectedLead.value.events, // Send ALL events
+      updatedBy: currentUser.value.name
+    })
+    
+    console.log('Call saved successfully:', result)
+    
+    // Refresh data
+    await loadLeads()
+    
+  } catch (err) {
+    console.error('failed to persist call', err)
+    alert(`Failed to save call: ${err.message || 'Unknown error'}`)
+    
+    // Reload from server to restore original state
+    await loadLeads()
+  }
+}
+
+async function saveEditedCall () {
+  if (!selectedLead.value || !editingCall.value) return
+  
+  console.log('Saving edited call:', editingCall.value)
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => 
+    e.type === 'call' && e.at === editingCall.value.at
+  )
+  
+  if (index !== -1) {
+    // Store old values for event
+    const oldCall = { ...events[index] }
+    
+    // Update call
+    events[index].note = editCallNote.value.trim()
+    events[index].durationMinutes = editCallDuration.value
+    events[index].outcome = editCallOutcome.value
+    events[index].updatedBy = currentUser.value.name
+    events[index].updatedAt = new Date().toISOString()
+    
+    // Create call updated event
+    const updateEv = {
+      type: 'call_updated',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: {
+        short: `Call updated: ${editCallOutcome.value || 'No outcome'}`,
+        callId: editingCall.value.at,
+        changes: {
+          summary: { from: oldCall.note, to: editCallNote.value.trim() },
+          duration: { from: oldCall.durationMinutes, to: editCallDuration.value },
+          outcome: { from: oldCall.outcome, to: editCallOutcome.value }
+        }
+      }
+    }
+    
+    events.push(updateEv)
+    
+    console.log('Updated call at index:', index)
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        events: events, // Send ALL events
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Call update successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to update call', err)
+      alert(`Failed to update call: ${err.message || 'Unknown error'}`)
+      await loadLeads()
+    }
+  }
+  
+  closeEditCall()
+}
+
+// ========== TASK FUNCTIONS - FIXED ==========
+async function createTask () {
+  if (!selectedLead.value || !taskTitle.value.trim()) return
+  
+  console.log('Creating task...')
+  
+  const t = {
+    id: 'task-' + Math.random().toString(36).slice(2, 9),
+    title: taskTitle.value.trim(),
+    due: taskDue.value ? new Date(taskDue.value).toISOString() : null,
+    note: taskNote.value,
+    status: taskStatus.value,
+    createdAt: new Date().toISOString(),
+    createdBy: currentUser.value.name
+  }
+  
+  console.log('New task object:', t)
+  
+  // Ensure tasks array exists
+  if (!selectedLead.value.tasks) {
+    selectedLead.value.tasks = []
+  }
+  selectedLead.value.tasks.push(t)
+  
+  // Create task creation event for timeline
+  const ev = {
+    type: 'task_created',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: `Task created: ${t.title}`,
+    metadata: {
+      short: `Task created: ${t.title}`,
+      taskId: t.id
+    }
+  }
+  
+  // Ensure events array exists
+  if (!selectedLead.value.events) {
+    selectedLead.value.events = []
+  }
+  selectedLead.value.events.push(ev)
+  
+  console.log('Updated tasks:', selectedLead.value.tasks)
+  console.log('Updated events:', selectedLead.value.events)
+  
+  closeCreateTask()
+  
+  try {
+    // Send BOTH tasks and events to server
+    const patchData = {
+      tasks: selectedLead.value.tasks,
+      events: selectedLead.value.events,
+      updatedBy: currentUser.value.name
+    }
+    
+    console.log('Sending PATCH data:', patchData)
+    
+    const result = await patchLead(selectedLead.value._id, patchData)
+    
+    console.log('Task creation successful:', result)
+    
+    // Force refresh the leads to get updated data from server
+    await loadLeads()
+    
+  } catch (err) {
+    console.error('Failed to create task:', err)
+    alert(`Failed to create task: ${err.message || 'Unknown error'}`)
+    
+    // Reload from server to restore original state
+    await loadLeads()
+  }
+}
+
+async function saveEditedTask () {
+  if (!selectedLead.value || !editingTask.value || !editTaskTitle.value.trim()) return
+  
+  console.log('Editing task:', editingTask.value)
+  
+  const taskIndex = selectedLead.value.tasks.findIndex(t => t.id === editingTask.value.id)
+  if (taskIndex !== -1) {
+    // Store old values for event
+    const oldTask = { ...selectedLead.value.tasks[taskIndex] }
+    
+    // Update task
+    selectedLead.value.tasks[taskIndex].title = editTaskTitle.value.trim()
+    selectedLead.value.tasks[taskIndex].due = editTaskDue.value ? new Date(editTaskDue.value).toISOString() : null
+    selectedLead.value.tasks[taskIndex].note = editTaskNote.value
+    selectedLead.value.tasks[taskIndex].status = editTaskStatus.value
+    selectedLead.value.tasks[taskIndex].updatedBy = currentUser.value.name
+    selectedLead.value.tasks[taskIndex].updatedAt = new Date().toISOString()
+    
+    // Create update event
+    const ev = {
+      type: 'task_updated',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      note: `Task updated: ${editTaskTitle.value.trim()}`,
+      metadata: {
+        short: `Task updated: ${editTaskTitle.value.trim()}`,
+        taskId: editingTask.value.id,
+        changes: {
+          title: { from: oldTask.title, to: editTaskTitle.value.trim() },
+          status: { from: oldTask.status, to: editTaskStatus.value }
+        }
+      }
+    }
+    
+    if (!selectedLead.value.events) {
+      selectedLead.value.events = []
+    }
+    selectedLead.value.events.push(ev)
+    
+    console.log('Updated task:', selectedLead.value.tasks[taskIndex])
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        tasks: selectedLead.value.tasks,
+        events: selectedLead.value.events,
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Task update successful:', result)
+      await loadLeads() // Refresh data
+      
+    } catch (err) {
+      console.error('Failed to update task:', err)
+      alert(`Failed to update task: ${err.message || 'Unknown error'}`)
+      await loadLeads() // Restore from server
+    }
+  }
+  
+  closeEditTask()
+}
+
+// ========== UPDATE STATUS FUNCTIONS - FIXED ==========
+async function updateTaskStatus(task) {
+  console.log('Updating task status for:', task)
+  
+  const idx = selectedLead.value.tasks.findIndex(t => t.id === task.id)
+  if (idx !== -1) {
+    const before = selectedLead.value.tasks[idx].status || 'open'
+    const after = task.status
+    
+    // Update task
+    selectedLead.value.tasks[idx].status = after
+    selectedLead.value.tasks[idx].updatedBy = currentUser.value.name
+    selectedLead.value.tasks[idx].updatedAt = new Date().toISOString()
+    
+    // Create status change event
+    const ev = {
+      type: 'task_status_changed',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      note: `Task status changed: ${before} → ${after}`,
+      metadata: {
+        short: `Task "${task.title}" ${before} → ${after}`,
+        taskId: task.id,
+        changes: { status: { from: before, to: after } }
+      }
+    }
+    
+    if (!selectedLead.value.events) {
+      selectedLead.value.events = []
+    }
+    selectedLead.value.events.push(ev)
+    
+    console.log('Sending task status update...')
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        tasks: selectedLead.value.tasks,
+        events: selectedLead.value.events,
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Task status update successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to update task status:', err)
+      alert(`Failed to update task status: ${err.message || 'Unknown error'}`)
+      await loadLeads() // Restore from server
+    }
+  }
+}
+
+async function updateNoteStatus(note) {
+  console.log('Updating note status for:', note)
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => 
+    e.type === 'note' && e.at === note.at
+  )
+  
+  if (index !== -1) {
+    const before = events[index].status || 'active'
+    const after = note.status
+    
+    // Update note status
+    events[index].status = after
+    events[index].updatedBy = currentUser.value.name
+    events[index].updatedAt = new Date().toISOString()
+    
+    // Create note status changed event
+    const statusEv = {
+      type: 'note_status_changed',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: {
+        short: `Note status ${before} → ${after}`,
+        noteId: note.at,
+        changes: { status: { from: before, to: after } }
+      }
+    }
+    
+    events.push(statusEv)
+    
+    console.log('Updated note status at index:', index)
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        events: events, // Send ALL events
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Note status update successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to update note status', err)
+      alert(`Failed to update note status: ${err.message || 'Unknown error'}`)
+      await loadLeads()
+    }
+  }
+}
+
+async function updateCallStatus(call) {
+  console.log('Updating call status for:', call)
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => 
+    e.type === 'call' && e.at === call.at
+  )
+  
+  if (index !== -1) {
+    const before = events[index].status || 'completed'
+    const after = call.status
+    
+    // Update call status
+    events[index].status = after
+    events[index].updatedBy = currentUser.value.name
+    events[index].updatedAt = new Date().toISOString()
+    
+    // Create call status changed event
+    const statusEv = {
+      type: 'call_status_changed',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: {
+        short: `Call status ${before} → ${after}`,
+        callId: call.at,
+        changes: { status: { from: before, to: after } }
+      }
+    }
+    
+    events.push(statusEv)
+    
+    console.log('Updated call status at index:', index)
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        events: events, // Send ALL events
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Call status update successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to update call status', err)
+      alert(`Failed to update call status: ${err.message || 'Unknown error'}`)
+      await loadLeads()
+    }
+  }
+}
+
+// ========== FOLLOW-UP STATUS FUNCTIONS ==========
+async function updateFollowUpStatus(followup) {
+  console.log('Updating follow-up status for:', followup)
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => 
+    e.type === 'followup_set' && e.at === followup.createdAt
+  )
+  
+  if (index !== -1) {
+    const before = events[index].status || 'scheduled'
+    const after = followup.status
+    
+    // Update follow-up status
+    events[index] = {
+      ...events[index],
+      status: after,
+      updatedBy: currentUser.value.name,
+      updatedAt: new Date().toISOString()
+    }
+    
+    // Create follow-up status changed event
+    const statusEv = {
+      type: 'followup_status_changed',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: {
+        short: `Follow-up status ${before} → ${after}`,
+        followupId: followup.createdAt,
+        changes: { status: { from: before, to: after } }
+      }
+    }
+    
+    events.push(statusEv)
+    
+    console.log('Updated follow-up status at index:', index)
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        events: events, // Send ALL events
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Follow-up status update successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to update follow-up status', err)
+      alert(`Failed to update follow-up status: ${err.message || 'Unknown error'}`)
+      await loadLeads()
+    }
+  }
+}
+
+async function deleteFollowUp(followup) {
+  if (!confirm('Delete this follow-up record?')) return
+  
+  console.log('Deleting follow-up:', followup)
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => 
+    e.type === 'followup_set' && e.at === followup.createdAt
+  )
+  
+  if (index !== -1) {
+    // Store for event
+    const deletedFollowup = { ...events[index] }
+    
+    // Create deletion event BEFORE removing
+    const delEv = {
+      type: 'followup_deleted',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: { 
+        short: 'Follow-up deleted',
+        followupId: followup.createdAt,
+        originalDate: deletedFollowup.metadata?.followUpDate || ''
+      }
+    }
+    
+    // Remove follow-up from events
+    const filteredEvents = events.filter((e, i) => i !== index)
+    
+    // Add deletion event
+    filteredEvents.push(delEv)
+    selectedLead.value.events = filteredEvents
+    
+    console.log('Follow-up deleted, new events:', filteredEvents)
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        events: filteredEvents, // Send filtered events
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Follow-up deletion successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to delete follow-up', err)
+      alert(`Failed to delete follow-up: ${err.message || 'Unknown error'}`)
+      await loadLeads()
+    }
+  }
+}
+
+// ========== DELETE FUNCTIONS - FIXED ==========
+async function deleteTask(task) {
+  if (!confirm(`Delete task "${task.title}"?`)) return
+  
+  console.log('Deleting task:', task)
+  
+  if (!selectedLead.value.tasks) {
+    selectedLead.value.tasks = []
+  }
+  
+  // Store for event
+  const deletedTask = { ...task }
+  
+  // Remove task
+  selectedLead.value.tasks = selectedLead.value.tasks.filter(t => t.id !== task.id)
+  
+  // Create deletion event
+  const ev = {
+    type: 'task_deleted',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: `Task deleted: ${deletedTask.title}`,
+    metadata: {
+      short: `Task deleted: ${deletedTask.title}`,
+      taskId: deletedTask.id,
+      taskTitle: deletedTask.title
+    }
+  }
+  
+  if (!selectedLead.value.events) {
+    selectedLead.value.events = []
+  }
+  selectedLead.value.events.push(ev)
+  
+  console.log('Tasks after deletion:', selectedLead.value.tasks)
+  
+  try {
+    const result = await patchLead(selectedLead.value._id, { 
+      tasks: selectedLead.value.tasks,
+      events: selectedLead.value.events,
+      updatedBy: currentUser.value.name
+    })
+    
+    console.log('Task deletion successful:', result)
+    
+    // Refresh data
+    await loadLeads()
+    
+  } catch (err) {
+    console.error('Failed to delete task:', err)
+    alert(`Failed to delete task: ${err.message || 'Unknown error'}`)
+    await loadLeads() // Restore from server
+  }
+}
+
+async function deleteNote(note) {
+  if (!confirm('Delete this note?')) return
+  
+  console.log('Deleting note:', note)
+  
+  if (!selectedLead.value) return
+
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => e.type === 'note' && e.at === note.at)
+  
+  if (index !== -1) {
+    // Store for event
+    const deletedNote = { ...events[index] }
+    
+    // Mark the note as deleted
+    events[index] = {
+      ...events[index],
+      status: 'deleted',
+      updatedBy: currentUser.value.name,
+      updatedAt: new Date().toISOString()
+    }
+    
+    // Create deletion event
+    const delEv = {
+      type: 'note_deleted',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: { 
+        short: 'Note deleted',
+        noteId: note.at,
+        originalContent: deletedNote.note ? deletedNote.note.slice(0, 100) : ''
+      }
+    }
+    
+    // Add deletion event
+    events.push(delEv)
+    
+    console.log('Note marked as deleted at index:', index)
+
+    try {
+      const result = await patchLead(selectedLead.value._id, {
+        events: events,
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Note deletion successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to delete note:', err)
+      alert(`Failed to delete note: ${err.message || 'Unknown error'}`)
+      // reload to revert local changes
+      await loadLeads()
+    }
+  }
+}
+
+async function deleteCall(call) {
+  if (!confirm('Delete this call?')) return
+  
+  console.log('Deleting call:', call)
+  
+  const events = selectedLead.value.events || []
+  const index = events.findIndex(e => e.type === 'call' && e.at === call.at)
+  
+  if (index !== -1) {
+    // Store for event
+    const deletedCall = { ...events[index] }
+    
+    // Create deletion event BEFORE removing
+    const delEv = {
+      type: 'call_deleted',
+      at: new Date().toISOString(),
+      by: { name: currentUser.value.name },
+      metadata: { 
+        short: 'Call deleted',
+        callId: call.at,
+        originalOutcome: deletedCall.outcome || '',
+        originalDuration: deletedCall.durationMinutes || 0
+      }
+    }
+    
+    // Remove call from events
+    const filteredEvents = events.filter((e, i) => i !== index)
+    
+    // Add deletion event
+    filteredEvents.push(delEv)
+    selectedLead.value.events = filteredEvents
+    
+    console.log('Call deleted, new events:', filteredEvents)
+    
+    try {
+      const result = await patchLead(selectedLead.value._id, { 
+        events: filteredEvents, // Send filtered events
+        updatedBy: currentUser.value.name
+      })
+      
+      console.log('Call deletion successful:', result)
+      
+      // Refresh data
+      await loadLeads()
+      
+    } catch (err) {
+      console.error('Failed to delete call:', err)
+      alert(`Failed to delete call: ${err.message || 'Unknown error'}`)
+      await loadLeads()
+    }
+  }
+}
+
+// ========== MODAL OPEN/CLOSE FUNCTIONS ==========
 function openAddNoteModal () {
   noteText.value = ''
   showAddNote.value = true
@@ -1549,60 +2880,6 @@ function closeEditNote () {
   editNoteText.value = ''
 }
 
-async function addNote () {
-  if (!selectedLead.value || !noteText.value.trim()) return
-  const note = noteText.value.trim()
-  const ev = {
-    type: 'note',
-    at: new Date().toISOString(),
-    by: { name: currentUser.value.name },
-    note,
-    status: 'active',
-    metadata: { short: note.slice(0, 80) }
-  }
-  // Add to local state
-  selectedLead.value.events = selectedLead.value.events || []
-  selectedLead.value.events.push(ev)
-  closeAddNote()
-  try {
-    // Send the updated events array
-    await patchLead(selectedLead.value._id, { 
-      events: selectedLead.value.events, // Send ALL events
-      updatedBy: currentUser.value.name
-    })
-  } catch (err) {
-    console.error('failed to persist note', err)
-  }
-}
-
-async function saveEditedNote () {
-  if (!selectedLead.value || !editingNote.value || !editNoteText.value.trim()) return
-  
-  const events = selectedLead.value.events || []
-  const index = events.findIndex(e => 
-    e.type === 'note' && e.at === editingNote.value.at
-  )
-  
-  if (index !== -1) {
-    events[index].note = editNoteText.value.trim()
-    events[index].updatedBy = currentUser.value.name
-    events[index].updatedAt = new Date().toISOString()
-    
-    // Send the updated events array
-    try {
-      await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
-        updatedBy: currentUser.value.name
-      })
-    } catch (err) {
-      console.error('Failed to update note', err)
-    }
-  }
-  
-  closeEditNote()
-}
-
-// LOG CALL
 function openLogCallModal () {
   callNote.value = ''
   callDuration.value = 0
@@ -1628,68 +2905,9 @@ function closeEditCall () {
   editCallOutcome.value = ''
 }
 
-async function saveLogCall () {
-  if (!selectedLead.value) return
-  const ev = {
-    type: 'call',
-    at: new Date().toISOString(),
-    by: { name: currentUser.value.name },
-    note: callNote.value || '',
-    status: 'completed',
-    metadata: { 
-      short: (callOutcome.value || '') + (callDuration.value ? ` • ${callDuration.value}m` : '')
-    },
-    durationMinutes: callDuration.value || 0,
-    outcome: callOutcome.value || ''
-  }
-  // Add to local state
-  selectedLead.value.events = selectedLead.value.events || []
-  selectedLead.value.events.push(ev)
-  closeLogCall()
-  try {
-    // Send the updated events array
-    await patchLead(selectedLead.value._id, { 
-      events: selectedLead.value.events, // Send ALL events
-      updatedBy: currentUser.value.name
-    })
-  } catch (err) {
-    console.error('failed to persist call', err)
-  }
-}
-
-async function saveEditedCall () {
-  if (!selectedLead.value || !editingCall.value) return
-  
-  const events = selectedLead.value.events || []
-  const index = events.findIndex(e => 
-    e.type === 'call' && e.at === editingCall.value.at
-  )
-  
-  if (index !== -1) {
-    events[index].note = editCallNote.value.trim()
-    events[index].durationMinutes = editCallDuration.value
-    events[index].outcome = editCallOutcome.value
-    events[index].updatedBy = currentUser.value.name
-    events[index].updatedAt = new Date().toISOString()
-    
-    // Send the updated events array
-    try {
-      await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
-        updatedBy: currentUser.value.name
-      })
-    } catch (err) {
-      console.error('Failed to update call', err)
-    }
-  }
-  
-  closeEditCall()
-}
-
-// TASKS
 function openCreateTaskModal () {
   taskTitle.value = ''
-  taskDue.value = ''
+  taskDue.value = getCurrentDateTime()
   taskNote.value = ''
   taskStatus.value = 'open'
   showCreateTask.value = true
@@ -1715,222 +2933,6 @@ function closeEditTask () {
   editTaskStatus.value = 'open'
 }
 
-async function createTask () {
-  if (!selectedLead.value || !taskTitle.value.trim()) return
-  const t = {
-    id: 'task-' + Math.random().toString(36).slice(2, 9),
-    title: taskTitle.value.trim(),
-    due: taskDue.value ? new Date(taskDue.value).toISOString() : null,
-    note: taskNote.value,
-    status: taskStatus.value,
-    createdAt: new Date().toISOString(),
-    createdBy: currentUser.value.name
-  }
-  selectedLead.value.tasks = selectedLead.value.tasks || []
-  selectedLead.value.tasks.push(t)
-  closeCreateTask()
-  try {
-    // Send the updated tasks array
-    await patchLead(selectedLead.value._id, { 
-      tasks: selectedLead.value.tasks, // Send ALL tasks
-      updatedBy: currentUser.value.name
-    })
-  } catch (err) {
-    console.error('failed to persist task', err)
-  }
-}
-
-async function saveEditedTask () {
-  if (!selectedLead.value || !editingTask.value || !editTaskTitle.value.trim()) return
-  
-  const taskIndex = selectedLead.value.tasks.findIndex(t => t.id === editingTask.value.id)
-  if (taskIndex !== -1) {
-    selectedLead.value.tasks[taskIndex].title = editTaskTitle.value.trim()
-    selectedLead.value.tasks[taskIndex].due = editTaskDue.value ? new Date(editTaskDue.value).toISOString() : null
-    selectedLead.value.tasks[taskIndex].note = editTaskNote.value
-    selectedLead.value.tasks[taskIndex].status = editTaskStatus.value
-    selectedLead.value.tasks[taskIndex].updatedBy = currentUser.value.name
-    selectedLead.value.tasks[taskIndex].updatedAt = new Date().toISOString()
-    
-    try {
-      // Send the updated tasks array
-      await patchLead(selectedLead.value._id, { 
-        tasks: selectedLead.value.tasks, // Send ALL tasks
-        updatedBy: currentUser.value.name
-      })
-    } catch (err) {
-      console.error('Failed to update task', err)
-    }
-  }
-  
-  closeEditTask()
-}
-
-// Update functions for tasks, notes, and calls
-async function updateTaskStatus(task) {
-  const prev = task.prevStatus || null // if you stored prev status earlier; else we'll compute
-  const idx = selectedLead.value.tasks.findIndex(t => t.id === task.id)
-  const newStatus = task.status
-  if (idx !== -1) {
-    const before = selectedLead.value.tasks[idx].status || null
-    selectedLead.value.tasks[idx].updatedBy = currentUser.value.name
-    selectedLead.value.tasks[idx].updatedAt = new Date().toISOString()
-    // Build event describing the change
-    const ev = {
-      type: 'task_status_changed',
-      at: new Date().toISOString(),
-      by: { name: currentUser.value.name },
-      metadata: {
-        short: `Task "${task.title}" ${before} → ${newStatus}`,
-        taskId: task.id,
-        changes: { status: { from: before, to: newStatus } }
-      }
-    }
-    selectedLead.value.events = selectedLead.value.events || []
-    selectedLead.value.events.push(ev)
-    try {
-      await patchLead(selectedLead.value._id, { 
-        tasks: selectedLead.value.tasks,
-        events: selectedLead.value.events,
-        updatedBy: currentUser.value.name
-      })
-    } catch (err) {
-      console.error('Failed to update task', err)
-      await loadLeads()
-    }
-  }
-}
-
-
-async function updateNoteStatus(note) {
-  // Find and update the note in events
-  const events = selectedLead.value.events || []
-  const index = events.findIndex(e => 
-    e.type === 'note' && e.at === note.at
-  )
-  if (index !== -1) {
-    events[index].status = note.status
-    events[index].updatedBy = currentUser.value.name
-    events[index].updatedAt = new Date().toISOString()
-    try {
-      // Send the updated events array
-      await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
-        updatedBy: currentUser.value.name
-      })
-    } catch (err) {
-      console.error('Failed to update note', err)
-    }
-  }
-}
-
-async function updateCallStatus(call) {
-  // Find and update the call in events
-  const events = selectedLead.value.events || []
-  const index = events.findIndex(e => 
-    e.type === 'call' && e.at === call.at
-  )
-  if (index !== -1) {
-    events[index].status = call.status
-    events[index].updatedBy = currentUser.value.name
-    events[index].updatedAt = new Date().toISOString()
-    try {
-      // Send the updated events array
-      await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
-        updatedBy: currentUser.value.name
-      })
-    } catch (err) {
-      console.error('Failed to update call', err)
-    }
-  }
-}
-
-async function deleteTask(task) {
-  if (!confirm('Delete this task?')) return
-  
-  selectedLead.value.tasks = selectedLead.value.tasks.filter(t => t.id !== task.id)
-  
-  try {
-    // Send the updated tasks array
-    await patchLead(selectedLead.value._id, { 
-      tasks: selectedLead.value.tasks, // Send ALL tasks
-      updatedBy: currentUser.value.name
-    })
-  } catch (err) {
-    console.error('Failed to delete task', err)
-  }
-}
-
-async function deleteNote(note) {
-  if (!confirm('Delete this note?')) return
-  if (!selectedLead.value) return
-
-  // defensive copy of events
-  const events = Array.isArray(selectedLead.value.events) ? [...selectedLead.value.events] : []
-
-  // mark the original note as deleted (if found)
-  const index = events.findIndex(e => e.type === 'note' && e.at === note.at)
-  if (index !== -1) {
-    events[index] = {
-      ...events[index],
-      status: 'deleted',
-      updatedBy: currentUser.value.name,
-      updatedAt: new Date().toISOString()
-    }
-  }
-
-  // Add a deletion marker event so timeline keeps record
-  const delEv = {
-    type: 'note_deleted',
-    at: new Date().toISOString(),
-    by: { name: currentUser.value.name },
-    metadata: { short: 'Note deleted' },
-    originalAt: note.at // helpful reference to link back to original note
-  }
-
-  // Append the deletion event
-  const newEvents = events.concat([delEv])
-  selectedLead.value.events = newEvents
-
-  try {
-    // send the whole events array so server persists both the deleted flag and the deletion marker
-    await patchLead(selectedLead.value._id, {
-      events: newEvents,
-      updatedBy: currentUser.value.name
-    })
-  } catch (err) {
-    console.error('Failed to delete note', err)
-    alert('Failed to delete note. Please try again.')
-    // reload to revert local changes
-    await loadLeads()
-    const found = leads.value.find(l => (l._id || l.id) === (selectedLead.value?._id || selectedLead.value?.id))
-    if (found) selectedLead.value = found
-  }
-}
-
-
-
-async function deleteCall(call) {
-  if (!confirm('Delete this call?')) return
-  
-  const events = selectedLead.value.events || []
-  const filteredEvents = events.filter(e => 
-    !(e.type === 'call' && e.at === call.at)
-  )
-  selectedLead.value.events = filteredEvents
-  
-  try {
-    // Send the filtered events array
-    await patchLead(selectedLead.value._id, { 
-      events: filteredEvents, // Send filtered events
-      updatedBy: currentUser.value.name
-    })
-  } catch (err) {
-    console.error('Failed to delete call', err)
-  }
-}
-
 // STATUS change
 function openStatusModal (lead = null) {
   if (lead) openLeadDetails(lead)
@@ -1940,7 +2942,6 @@ function openStatusModal (lead = null) {
   statusReason.value = lastStatusChangeReason(selectedLead.value) || ''
   showStatusModal.value = true
 }
-
 
 function closeStatusModal () {
   showStatusModal.value = false
@@ -2009,9 +3010,6 @@ async function confirmChangeStatus () {
   }
 }
 
-
-
-
 // PRIORITY change
 function openPriorityModal () {
   priorityChange.value = selectedLead.value?.priority || 'medium'
@@ -2063,7 +3061,6 @@ async function confirmChangePriority () {
   }
 }
 
-
 // UTILS for events / timeline
 const timelineSorted = computed(() => {
   if (!selectedLead.value) return []
@@ -2089,6 +3086,8 @@ function lastEventSummary (lead) {
   if (e.type === 'task_created') return 'Task created'
   if (e.type === 'status_change') return 'Status changed'
   if (e.type === 'priority_change') return 'Priority changed'
+  if (e.type === 'followup_set') return 'Follow-up set'
+  if (e.type === 'followup_cleared') return 'Follow-up cleared'
   return e.type
 }
 
@@ -2098,27 +3097,27 @@ const logsForSelectedLead = computed(() => {
   const events = selectedLead.value.events || []
   return events
     .filter(e => [
-      'note', 'note_updated', 'note_deleted',
-      'call', 'call_updated', 'call_deleted',
-      'status_change', 'followup_set', 'followup_cleared',
-      'contact_edited', 'task_created', 'task_updated', 'task_deleted',
+      'note', 'note_updated', 'note_deleted', 'note_status_changed',
+      'call', 'call_updated', 'call_deleted', 'call_status_changed',
+      'status_change', 'followup_set', 'followup_cleared', 'followup_status_changed', 'followup_deleted',
+      'contact_edited', 'task_created', 'task_updated', 'task_deleted', 'task_status_changed',
       'priority_change', 'assign'
     ].includes(e.type))
     .slice()
     .sort((a, b) => new Date(b.at) - new Date(a.at))
 })
 
-
 function eventIcon (type) {
   if (type === 'note' || type === 'note_updated') return '✍️'
-  if (type === 'note_deleted') return '🗑️'
+  if (type === 'note_deleted' || type === 'note_status_changed') return '🗑️'
   if (type === 'call' || type === 'call_updated') return '📞'
-  if (type === 'call_deleted') return '🗑️'
+  if (type === 'call_deleted' || type === 'call_status_changed') return '🗑️'
   if (type === 'task_created' || type === 'task_updated' || type === 'task_status_changed') return '🗒️'
   if (type === 'task_deleted') return '🗑️'
   if (type === 'status_change') return '🔁'
   if (type === 'followup_set') return '⏰'
   if (type === 'followup_cleared') return '⌛'
+  if (type === 'followup_status_changed' || type === 'followup_deleted') return '🗑️'
   if (type === 'contact_edited') return '✏️'
   if (type === 'priority_change') return '🎯'
   if (type === 'assign') return '👤'
@@ -2128,9 +3127,11 @@ function eventTitle (ev) {
   if (ev.type === 'note') return 'Note added'
   if (ev.type === 'note_updated') return 'Note updated'
   if (ev.type === 'note_deleted') return 'Note deleted'
+  if (ev.type === 'note_status_changed') return 'Note status changed'
   if (ev.type === 'call') return 'Call logged'
   if (ev.type === 'call_updated') return 'Call updated'
   if (ev.type === 'call_deleted') return 'Call deleted'
+  if (ev.type === 'call_status_changed') return 'Call status changed'
   if (ev.type === 'task_created') return 'Task created'
   if (ev.type === 'task_updated') return 'Task updated'
   if (ev.type === 'task_deleted') return 'Task deleted'
@@ -2138,12 +3139,13 @@ function eventTitle (ev) {
   if (ev.type === 'status_change') return 'Status changed'
   if (ev.type === 'followup_set') return 'Follow-up set'
   if (ev.type === 'followup_cleared') return 'Follow-up cleared'
+  if (ev.type === 'followup_status_changed') return 'Follow-up status changed'
+  if (ev.type === 'followup_deleted') return 'Follow-up deleted'
   if (ev.type === 'assign') return 'Assigned'
   if (ev.type === 'contact_edited') return 'Contact edited'
   if (ev.type === 'priority_change') return 'Priority changed'
   return ev.type
 }
-
 
 function statusPillClass (status) {
   if (status === 'new') return 'bg-sky-50 text-sky-700'
@@ -2188,24 +3190,57 @@ function formatDateShort(value) {
   }
 }
 
-// PATCH helper to update single lead on server
+// PATCH helper to update single lead on server - FIXED VERSION
 async function patchLead (id, patchBody) {
-  if (!id) throw new Error('missing id')
+  if (!id) {
+    console.error('Missing lead ID for PATCH')
+    throw new Error('missing id')
+  }
+  
   try {
+    console.log('Sending PATCH to /api/leads/' + id, patchBody)
+    
     const updated = await $fetch(`/api/leads/${id}`, {
       method: 'PATCH',
-      body: patchBody
+      body: patchBody,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).catch(err => {
+      console.error('Fetch error:', err)
+      throw err
     })
+    
+    console.log('PATCH response received:', updated)
+    
+    // Update local state
     const idx = leads.value.findIndex(l => (l._id || l.id) === (updated._id || updated.id))
     if (idx !== -1) {
       leads.value[idx] = normalizeLead(updated)
+      
+      // Update selectedLead if it's the same lead
       if (selectedLead.value && (selectedLead.value._id || selectedLead.value.id) === (updated._id || updated.id)) {
+        console.log('Updating selectedLead with server response')
         selectedLead.value = leads.value[idx]
       }
     }
+    
     return updated
+    
   } catch (err) {
-    throw err
+    console.error('PATCH request failed:', err)
+    
+    // Try to get more specific error message
+    let errorMessage = 'Failed to save changes'
+    if (err.data?.statusMessage) {
+      errorMessage = err.data.statusMessage
+    } else if (err.message) {
+      errorMessage = err.message
+    } else if (err.statusText) {
+      errorMessage = err.statusText
+    }
+    
+    throw new Error(errorMessage)
   }
 }
 
@@ -2240,28 +3275,83 @@ function handleConvert (lead) {
 function formatDateTime (value) {
   if (!value) return '—'
   try {
-    return new Date(value).toLocaleString()
+    return new Date(value).toLocaleString(undefined, {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   } catch {
     return value
   }
 }
 
+// Refresh selected lead function
+async function refreshSelectedLead() {
+  if (!selectedLead.value) return
+  
+  console.log('Refreshing selected lead...')
+  try {
+    const freshLead = await $fetch(`/api/leads/${selectedLead.value._id}`)
+    selectedLead.value = normalizeLead(freshLead)
+    // Update follow-up input
+    followUpInput.value = freshLead.nextFollowUpAt ? dateTimeLocalValue(freshLead.nextFollowUpAt) : ''
+    console.log('Lead refreshed:', selectedLead.value)
+  } catch (err) {
+    console.error('Failed to refresh lead:', err)
+  }
+}
 
+// Watch for selected lead changes to update follow-up input
+watch(selectedLead, (newVal) => {
+  if (newVal) {
+    followUpInput.value = newVal.nextFollowUpAt ? dateTimeLocalValue(newVal.nextFollowUpAt) : ''
+    showFollowUpError.value = false
+  }
+}, { deep: true })
 
 // helper for last event summary used above
 onMounted(async () => {
+  console.log('Leads component mounted, current user:', currentUser.value)
+  
   // load admins first so normalizeLead() can resolve assignedTo from assignedToId
   await loadAdmins()
+  
   // then load leads (which calls normalizeLead for each lead)
   await loadLeads()
+  
+  console.log('Initial load complete, leads count:', leads.value.length)
 })
-
 </script>
-
 
 <style scoped>
 .fade-enter-active,.fade-leave-active{transition:all .15s ease}
 .fade-enter-from,.fade-leave-to{opacity:0;transform:translateY(-4px)}
+
+/* Improved datetime-local input styling */
+input[type="datetime-local"] {
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #334155;
+  background-color: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s;
+}
+
+input[type="datetime-local"]:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  /* Removed the 'ring' property that was causing the warning */
+}
+
+input[type="datetime-local"]:hover {
+  border-color: #94a3b8;
+}
 
 /* Simple button styles (keeps visual consistency without relying on @apply) */
 .btn-primary {
@@ -2270,8 +3360,9 @@ onMounted(async () => {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
+  transition: background-color 0.2s;
 }
-.btn-primary:hover { opacity: 0.95; }
+.btn-primary:hover { background-color: #047857; }
 
 .btn-secondary {
   background-color: #ffffff;
@@ -2279,5 +3370,38 @@ onMounted(async () => {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+.btn-secondary:hover { background-color: #f8fafc; }
+
+/* Follow-up section styling */
+.follow-up-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.follow-up-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.follow-up-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.follow-up-input {
+  flex: 1;
+}
+
+.follow-up-error {
+  margin-top: 0.25rem;
+  color: #dc2626;
+  font-size: 0.75rem;
 }
 </style>

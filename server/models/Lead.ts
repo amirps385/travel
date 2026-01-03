@@ -71,6 +71,7 @@ const LeadSchema = new mongoose.Schema(
     priority: { type: String, default: 'medium' }, // low|medium|high|very-high
     priorityUpdatedAt: { type: Date },
     priorityUpdatedBy: { type: String },
+    
 
     // source details
     source: { type: String },

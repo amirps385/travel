@@ -260,16 +260,29 @@
     </strong>
   </div>
 
-  <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg" :class="priorityBadgeClass(selectedLead.priority)">
+  <div class="inline-flex flex-col items-center gap-2 px-3 py-1.5 rounded-lg" :class="priorityBadgeClass(selectedLead.priority)">
+  <div class="flex items-center gap-1">
     <strong class="text-sm">{{ priorityLabelFrom(selectedLead.priority) }}</strong>
-    <span class="text-xs text-slate-700">Priority</span>
     <button 
-      class="ml-2 text-xs text-slate-500 hover:text-slate-700"
+      class="ml-1 text-xs text-slate-500 hover:text-slate-700"
       @click="openPriorityModal"
+      title="Change priority"
     >
       ✏️
     </button>
   </div>
+  
+  <!-- Show reason if exists -->
+  <div v-if="lastPriorityChangeReason(selectedLead)" class="text-xs text-slate-600 mt-0.5 max-w-[150px] truncate">
+    {{ lastPriorityChangeReason(selectedLead) }}
+  </div>
+  
+  <div v-else class="text-xs text-slate-400 mt-0.5">
+    Priority
+  </div>
+</div>
+
+  
 
   <div v-if="selectedLead.assignedTo?.name" class="px-3 py-1.5 rounded-lg bg-slate-50 text-sm font-medium border">
     Owner: {{ selectedLead.assignedTo.name }}
@@ -1355,6 +1368,24 @@ async function saveEditedFollowUp() {
 
 
 // helper functions reused in UI
+
+
+function lastPriorityChangeReason(lead) {
+  if (!lead || !Array.isArray(lead.events) || !lead.events.length) return ''
+  
+  // Find the most recent priority_change event (newest first)
+  const priorityEvent = [...lead.events]
+    .sort((a, b) => new Date(b.at) - new Date(a.at))
+    .find(e => e.type === 'priority_change')
+  
+  if (!priorityEvent) return ''
+  
+  // Check for reason in this order: explicit reason field, note, metadata.reason
+  return priorityEvent.reason || 
+         priorityEvent.note || 
+         priorityEvent.metadata?.reason || 
+         ''
+}
 
 // humanize lead source for display
 function humanizeSource(src) {
@@ -3082,32 +3113,45 @@ async function confirmChangeStatus () {
 // PRIORITY change
 function openPriorityModal () {
   priorityChange.value = selectedLead.value?.priority || 'medium'
-  priorityReason.value = ''
+  
+  // Get the last reason from events and prefill the modal
+  priorityReason.value = lastPriorityChangeReason(selectedLead.value) || ''
+  
   showPriorityModal.value = true
 }
+
 function closePriorityModal () {
   showPriorityModal.value = false
 }
 async function confirmChangePriority () {
   if (!selectedLead.value) return
+  
   const prev = selectedLead.value.priority || null
+  const prevReason = lastPriorityChangeReason(selectedLead.value) || ''
   const next = priorityChange.value
+  const nextReason = priorityReason.value.trim()
+  
   selectedLead.value.priority = next
   selectedLead.value.priorityLabel = priorityLabelFrom(next)
   selectedLead.value.priorityUpdatedBy = currentUser.value.name
   selectedLead.value.priorityUpdatedAt = new Date().toISOString()
 
-  // Build event with from/to
+  // Build event with from/to INCLUDING REASON
   const ev = {
     type: 'priority_change',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    note: priorityReason.value || '',
+    note: nextReason || `Priority changed to ${next}`,
+    reason: nextReason,  // Store reason explicitly
     metadata: {
       short: `Priority ${prev || 'Not set'} → ${next}`,
       from: prev,
       to: next,
-      changes: { priority: { from: prev, to: next } }
+      reason: nextReason,  // Also store in metadata for easy access
+      changes: { 
+        priority: { from: prev, to: next },
+        reason: { from: prevReason, to: nextReason }
+      }
     }
   }
 
@@ -3120,7 +3164,7 @@ async function confirmChangePriority () {
       priority: next, 
       priorityUpdatedBy: currentUser.value.name,
       priorityUpdatedAt: selectedLead.value.priorityUpdatedAt,
-      events: selectedLead.value.events,
+      events: selectedLead.value.events,  // This includes the reason in the event
       updatedBy: currentUser.value.name
     })
   } catch (err) {

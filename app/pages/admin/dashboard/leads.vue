@@ -435,7 +435,7 @@
                         </optgroup>
                         <optgroup label="📣 Marketing">
                           <option value="google_ads">Google Ads</option>
-                          <option value="facebook">Facebook / Instagram</option>
+                          <option value="social_media">Social media platform</option>
                           <option value="organic_search">Organic Search</option>
                         </optgroup>
                         <optgroup label="🤝 Referrals">
@@ -1351,12 +1351,15 @@ function humanizeSource(src) {
   if (!src && src !== 0) return '—'; // empty fallback
 
   // optional explicit mapping for exceptions (custom labels)
-  const MAP = {
-    custom_itinerary: 'custom itinerary', // you can add more entries
-    facebook_ad: 'Facebook ad',
-    google_search: 'Google search',
-    email: 'Email'
-  };
+const MAP = {
+  custom_itinerary: 'custom itinerary',
+  facebook_ad: 'Facebook ad',
+  google_search: 'Google search',
+  email: 'Email',
+  social_media: 'Social media platform',
+  facebook: 'Social media platform',
+  instagram: 'Social media platform'
+};
 
   // if we have an explicit label, use it
   if (MAP[src]) return MAP[src];
@@ -1784,23 +1787,38 @@ async function saveContactEdits () {
   }
 
   // Compute changes (previous -> next) for fields we care about
-  const fields = ['name','email','phone','countryCode','age','originCity','country','source','leadSourceDetail']
-  const changes = {}
-  fields.forEach(f => {
-    const prev = selectedLead.value[f] === undefined ? null : selectedLead.value[f]
-    const next = patchBody[f] === undefined ? null : patchBody[f]
-    // treat numbers vs strings carefully; convert to string for comparison
-    if (String(prev ?? '') !== String(next ?? '')) {
+const fields = ['name','email','phone','countryCode','age','originCity','country','source','leadSourceDetail']
+const changes = {}
+fields.forEach(f => {
+  const prev = selectedLead.value[f] === undefined ? null : selectedLead.value[f]
+  const next = patchBody[f] === undefined ? null : patchBody[f]
+  // treat numbers vs strings carefully; convert to string for comparison
+  if (String(prev ?? '') !== String(next ?? '')) {
+    if (f === 'source') {
+      // keep raw values but add user-friendly labels for UI/metadata.short
+      changes[f] = {
+        from: prev,
+        to: next,
+        from_label: prev ? humanizeSource(prev) : prev,
+        to_label: next ? humanizeSource(next) : next
+      }
+    } else {
       changes[f] = { from: prev, to: next }
     }
-  })
+  }
+})
+
 
   // If there are changes, create an event describing them
   if (Object.keys(changes).length) {
     const shortParts = Object.keys(changes).map(k => {
-      const c = changes[k]
-      return `${k}: ${c.from ?? '—'} → ${c.to ?? '—'}`
-    }).slice(0,5) // limit length
+  const c = changes[k]
+  if (k === 'source') {
+    return `${k}: ${c.from_label ?? c.from ?? '—'} → ${c.to_label ?? c.to ?? '—'}`
+  }
+  return `${k}: ${c.from ?? '—'} → ${c.to ?? '—'}`
+}).slice(0,5) // limit length
+
     const ev = {
       type: 'contact_edited',
       at: new Date().toISOString(),

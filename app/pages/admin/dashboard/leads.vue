@@ -556,76 +556,82 @@
                 <button class="px-4 py-2 rounded-lg border bg-white text-sm" @click="copyPublicLink">Copy public link</button>
               </div>
 
-              <!-- Follow-ups -->
-              <div class="border rounded-xl p-4 bg-slate-50/60">
-                <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-xs font-semibold text-slate-500">Follow-ups</h3>
-                  <span class="text-xs text-slate-400">{{ followUpsForSelectedLead.length }} follow-ups</span>
-                </div>
-                
-                <!-- Current follow-up status -->
-                <div v-if="selectedLead.nextFollowUpAt" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <div class="text-sm font-semibold text-amber-800">Next follow-up scheduled</div>
-                      <div class="text-sm text-amber-700 mt-1">{{ formatDateTime(selectedLead.nextFollowUpAt) }}</div>
-                    </div>
-                    <button
-                      class="px-3 py-1 text-sm rounded border border-amber-300 text-amber-700 hover:bg-amber-100"
-                      @click="clearFollowUp"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-                
-                <div v-if="followUpsForSelectedLead.length" class="space-y-2">
-                  <div 
-                    v-for="followup in followUpsForSelectedLead" 
-                    :key="followup.id" 
-                    class="flex items-start justify-between gap-3 bg-white p-3 rounded-lg border"
-                  >
-                    <div class="flex-1">
-                      <div class="font-medium text-slate-900">{{ followup.title || 'Follow-up' }}</div>
-                      <div class="text-sm text-slate-700 mt-1">{{ followup.content }}</div>
-                      <div class="flex items-center gap-3 mt-2">
-                        <span class="text-xs text-slate-400">
-                          {{ followup.by?.name || currentUser.name }} • {{ formatDateShort(followup.createdAt) }}
-                        </span>
-                        <span v-if="followup.status === 'completed'" class="text-xs text-emerald-600">✓ Completed</span>
-                        <span v-else-if="followup.status === 'missed'" class="text-xs text-rose-600">✗ Missed</span>
-                        <span v-else class="text-xs text-amber-600">⏰ Scheduled</span>
-                      </div>
-                    </div>
-                    <div class="text-right flex items-start gap-2">
-                      <select 
-                        v-model="followup.status" 
-                        @change="updateFollowUpStatus(followup)"
-                        class="text-xs border rounded px-2 py-1"
-                      >
-                        <option value="scheduled">Scheduled</option>
-                        <option value="completed">Completed</option>
-                        <option value="missed">Missed</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                      <button 
-    class="text-xs text-sky-600 hover:text-sky-800"
-    @click="openEditFollowUpModal(followup)"
-  >
-    Edit
-  </button> 
-                      <button 
-                        class="text-xs text-rose-600 hover:text-rose-800"
-                        @click="deleteFollowUp(followup)"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                <p v-else class="text-xs text-slate-400">No follow-ups logged yet for this lead.</p>
-              </div>
+              <!-- Follow-ups section -->
+<div class="border rounded-xl p-4 bg-slate-50/60">
+  <div class="flex items-center justify-between mb-2">
+    <h3 class="text-xs font-semibold text-slate-500">Follow-ups</h3>
+    <span class="text-xs text-slate-400">{{ followUpsForSelectedLead.length }} follow-ups</span>
+  </div>
+  
+  <div v-if="followUpsForSelectedLead.length" class="space-y-4">
+    <div 
+      v-for="followup in followUpsForSelectedLead" 
+      :key="followup.id" 
+      class="bg-white p-4 rounded-lg border space-y-3"
+    >
+      <!-- DATE PROMINENTLY DISPLAYED -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="text-lg font-semibold text-slate-900">
+            {{ formatDateTime(followup.metadata?.followUpDate || followup.scheduledDate) }}
+          </div>
+          <span class="text-xs px-2 py-1 rounded-full" 
+            :class="{
+              'bg-emerald-100 text-emerald-700': followup.status === 'completed',
+              'bg-rose-100 text-rose-700': followup.status === 'missed',
+              'bg-amber-100 text-amber-700': followup.status === 'scheduled',
+              'bg-slate-100 text-slate-700': followup.status === 'cancelled'
+            }">
+            {{ followup.status === 'completed' ? '✓ Completed' : 
+               followup.status === 'missed' ? '✗ Missed' : 
+               followup.status === 'scheduled' ? '⏰ Scheduled' : 
+               followup.status === 'cancelled' ? '✗ Cancelled' : 
+               '⏰ Scheduled' }}
+          </span>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <!-- Status dropdown -->
+          <select 
+            v-model="followup.status" 
+            @change="updateFollowUpStatus(followup)"
+            class="text-xs border rounded px-2 py-1"
+          >
+            <option value="scheduled">Scheduled</option>
+            <option value="completed">Completed</option>
+            <option value="missed">Missed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          
+          <button 
+            class="text-xs text-sky-600 hover:text-sky-800"
+            @click="openEditFollowUpModal(followup)"
+          >
+            Edit
+          </button> 
+          <button 
+            class="text-xs text-rose-600 hover:text-rose-800"
+            @click="deleteFollowUp(followup)"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+      
+      <!-- NOTE SECTION (only shown if there's a note) -->
+      <div v-if="followup.note || followup.content" class="pt-2 border-t">
+        <div class="text-sm text-slate-700">{{ followup.note || followup.content }}</div>
+      </div>
+      
+      <!-- META INFO -->
+      <div class="text-xs text-slate-400 pt-2 border-t">
+        {{ followup.by?.name || currentUser.name }} • {{ formatDateShort(followup.createdAt) }}
+      </div>
+    </div>
+  </div>
+  
+  <p v-else class="text-xs text-slate-400">No follow-ups logged yet for this lead.</p>
+</div>
 
               <!-- Tasks -->
               <div class="border rounded-xl p-4 bg-slate-50/60">
@@ -932,11 +938,16 @@
         type="datetime-local"
         v-model="editFollowUpDate"
         :min="getCurrentDateTime()"
-        class="w-full border rounded px-2 py-2 mb-3"
+        class="w-full border rounded px-2 py-2 mb-4"
       />
 
       <label class="block text-xs text-slate-500 mb-1">Note (optional)</label>
-      <input v-model="editFollowUpNote" class="w-full border rounded px-2 py-2 mb-3" />
+      <textarea 
+        v-model="editFollowUpNote" 
+        rows="3"
+        class="w-full border rounded px-2 py-2 mb-4"
+        placeholder="Add a note about this follow-up..."
+      ></textarea>
 
       <div class="mt-4 flex justify-end gap-2">
         <button class="px-4 py-2 rounded border" @click="closeEditFollowUp">Cancel</button>
@@ -1253,9 +1264,10 @@ const statusOptions = [
 // Open edit modal
 function openEditFollowUpModal(followup) {
   editingFollowUp.value = followup
-  // followup.scheduledDate is from your mapping: metadata.followUpDate
-  editFollowUpDate.value = followup.scheduledDate ? dateTimeLocalValue(followup.scheduledDate) : getCurrentDateTime()
-  editFollowUpNote.value = followup.content || followup.note || ''
+  // Use followup.at (the original event timestamp) as the ID
+  // followup.scheduledDate is from metadata.followUpDate
+  editFollowUpDate.value = followup.metadata?.followUpDate ? dateTimeLocalValue(followup.metadata.followUpDate) : getCurrentDateTime()
+  editFollowUpNote.value = followup.note || followup.content || ''
   showEditFollowUp.value = true
 }
 
@@ -1276,91 +1288,137 @@ async function saveEditedFollowUp() {
 
   // Convert new date to ISO
   const newIso = new Date(editFollowUpDate.value).toISOString()
+  const formattedNewDate = formatDateTime(newIso)
 
   // Prepare local events array
   const events = selectedLead.value.events ? [...selectedLead.value.events] : []
 
-  // Try to locate original followup_set event by matching the event.at stamp (createdAt)
-  const followupId = editingFollowUp.value.createdAt || editingFollowUp.value.id || editingFollowUp.value.at
-  const idx = events.findIndex(e => e.type === 'followup_set' && (String(e.at) === String(followupId) || new Date(e.at).toISOString() === new Date(followupId).toISOString()))
+  // Try to locate original followup_set event
+  const followupId = editingFollowUp.value.at || editingFollowUp.value.createdAt || editingFollowUp.value.id
+  const idx = events.findIndex(e => e.type === 'followup_set' && e.at === followupId)
 
   let oldDateIso = null
+  let oldNote = null
+  let oldFormattedDate = null
+  
   if (idx !== -1) {
-    // store previous date for audit
-    oldDateIso = events[idx].metadata?.followUpDate ? new Date(events[idx].metadata.followUpDate).toISOString() : null
-
-    // update the followup_set event
+    // Store previous values for audit
+    const originalDate = events[idx].metadata?.followUpDate
+    oldDateIso = originalDate ? new Date(originalDate).toISOString() : null
+    oldNote = events[idx].note
+    oldFormattedDate = events[idx].metadata?.formattedDate || formatDateTime(originalDate)
+    
+    // Update the original followup_set event
     events[idx] = {
       ...events[idx],
-      note: editFollowUpNote.value ? editFollowUpNote.value : events[idx].note || `Follow-up set for ${formatDateTime(newIso)}`,
+      note: editFollowUpNote.value,
       metadata: {
         ...(events[idx].metadata || {}),
-        followUpDate: newIso
+        followUpDate: newIso,
+        formattedDate: formattedNewDate,
+        short: `Follow-up: ${formattedNewDate}`
       },
       updatedBy: currentUser.value.name,
       updatedAt: new Date().toISOString()
     }
+  }
+
+  // Check if note changed
+  const noteChanged = oldNote !== editFollowUpNote.value
+  
+  // Check if date changed - compare formatted dates to avoid timezone issues
+  let dateChanged = false
+  if (oldDateIso) {
+    // Compare dates ignoring milliseconds for accuracy
+    const oldDate = new Date(oldDateIso)
+    const newDate = new Date(newIso)
+    dateChanged = oldDate.getTime() !== newDate.getTime()
   } else {
-    // Fallback: if original not found, create a new followup_set event (safe fallback)
-    events.push({
-      type: 'followup_set',
-      at: new Date().toISOString(),
-      by: { name: currentUser.value.name },
-      note: editFollowUpNote.value ? editFollowUpNote.value : `Follow-up set for ${formatDateTime(newIso)}`,
-      status: 'scheduled',
-      metadata: {
-        short: `Follow-up set: ${formatDateTime(newIso)}`,
-        followUpDate: newIso
-      },
-      updatedBy: currentUser.value.name,
-      updatedAt: new Date().toISOString()
-    })
+    dateChanged = true // If there was no previous date, treat as changed
+  }
+
+  // If nothing changed, just close the modal
+  if (!noteChanged && !dateChanged) {
+    closeEditFollowUp()
+    return
+  }
+
+  // Determine the message based on what changed
+  let auditNote = ''
+  let auditShort = ''
+  
+  if (dateChanged && noteChanged) {
+    // Both date and note changed
+    auditNote = `Follow-up updated: ${formattedNewDate}`
+    auditShort = `Follow-up updated: ${formattedNewDate}`
+  } else if (dateChanged) {
+    // Only date changed
+    auditNote = `Follow-up date updated to ${formattedNewDate}`
+    auditShort = `Follow-up date updated: ${formattedNewDate}`
+  } else if (noteChanged) {
+    // Only note changed
+    auditNote = `Follow-up note updated`
+    auditShort = `Follow-up note updated`
   }
 
   // Append audit event: followup_updated
-  events.push({
+  const auditEvent = {
     type: 'followup_updated',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    note: `Follow-up updated to ${formatDateTime(newIso)}`,
+    note: auditNote,
     status: 'active',
     metadata: {
-      short: `Follow-up updated: ${formatDateTime(newIso)}`,
+      short: auditShort,
       followupId: idx !== -1 ? events[idx].at : null,
       changes: {
-        followUpDate: { from: oldDateIso, to: newIso }
+        note: noteChanged ? { from: oldNote, to: editFollowUpNote.value } : null,
+        followUpDate: dateChanged ? { from: oldDateIso, to: newIso } : null
       }
     },
     updatedBy: currentUser.value.name,
     updatedAt: new Date().toISOString()
-  })
+  }
+  
+  // Filter out null changes for cleaner metadata
+  if (!auditEvent.metadata.changes.note) delete auditEvent.metadata.changes.note
+  if (!auditEvent.metadata.changes.followUpDate) delete auditEvent.metadata.changes.followUpDate
+  
+  events.push(auditEvent)
 
   // Optimistically update local state
   selectedLead.value.events = events
-  // If this edited follow-up corresponds to currently scheduled one, update nextFollowUpAt
-  const currentNextIso = selectedLead.value.nextFollowUpAt ? new Date(selectedLead.value.nextFollowUpAt).toISOString() : null
-  const editedMatchesCurrent = oldDateIso && currentNextIso && oldDateIso === currentNextIso
-  if (editedMatchesCurrent || !currentNextIso) {
-    // set nextFollowUpAt to edited date (safe)
-    selectedLead.value.nextFollowUpAt = newIso
+  
+  // Update nextFollowUpAt if needed (only if date changed)
+  if (dateChanged) {
+    const currentNextIso = selectedLead.value.nextFollowUpAt ? new Date(selectedLead.value.nextFollowUpAt).toISOString() : null
+    
+    if (oldDateIso && currentNextIso && oldDateIso === currentNextIso) {
+      selectedLead.value.nextFollowUpAt = newIso
+    } else if (!selectedLead.value.nextFollowUpAt) {
+      selectedLead.value.nextFollowUpAt = newIso
+    }
   }
 
   closeEditFollowUp()
 
   // Push to server
   try {
-    await patchLead(selectedLead.value._id, {
+    const patchData = {
       events: events,
-      nextFollowUpAt: selectedLead.value.nextFollowUpAt,
       updatedBy: currentUser.value.name
-    })
-
-    // Refresh to be safe / consistent
+    }
+    
+    // Only include nextFollowUpAt if date changed
+    if (dateChanged && selectedLead.value.nextFollowUpAt) {
+      patchData.nextFollowUpAt = selectedLead.value.nextFollowUpAt
+    }
+    
+    await patchLead(selectedLead.value._id, patchData)
     await loadLeads()
   } catch (err) {
     console.error('Failed to save edited follow-up', err)
     alert('Failed to save follow-up. Reverting and reloading.')
-    // reload to restore from server
     await loadLeads()
   }
 }
@@ -1706,15 +1764,15 @@ const followUpsForSelectedLead = computed(() => {
     .map((followup, index) => ({
       id: `followup-${index}-${followup.at}`,
       title: 'Follow-up',
-      content: followup.note || `Follow-up scheduled`,
-      status: 'scheduled',
+      content: followup.note || `Follow-up scheduled`,  // This shows the note
+      status: followup.status || 'scheduled',
       by: followup.by || { name: currentUser.value.name },
       createdAt: followup.at,
-      scheduledDate: followup.metadata?.followUpDate,
+      scheduledDate: followup.metadata?.followUpDate,  // This is where the date comes from
       metadata: followup.metadata,
-      ...followup
+      ...followup  // Spread operator includes all original event properties
     }))
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Show newest first
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 })
 
 // select all toggle
@@ -2065,6 +2123,7 @@ async function setNextFollowUp () {
   
   // Convert to ISO string
   const iso = selectedDate.toISOString()
+  const formattedDate = formatDateTime(iso)
   
   // Store previous follow-up for event tracking
   const prevFollowUp = selectedLead.value.nextFollowUpAt || null
@@ -2072,15 +2131,17 @@ async function setNextFollowUp () {
   // Update local state
   selectedLead.value.nextFollowUpAt = iso
   
-  // Create follow-up event for timeline
+  // Create follow-up event - NOTE IS NOW EMPTY BY DEFAULT
   const ev = {
     type: 'followup_set',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    note: `Follow-up set for ${formatDateTime(iso)}`,
+    note: '',  // EMPTY NOTE - NO AUTO DATE TEXT
+    status: 'scheduled',
     metadata: {
-      short: `Follow-up set: ${formatDateTime(iso)}`,
+      short: `Follow-up: ${formattedDate}`,  // Date in metadata
       followUpDate: iso,
+      formattedDate: formattedDate,  // Store formatted date for easy access
       changes: { nextFollowUpAt: { from: prevFollowUp, to: iso } }
     }
   }
@@ -2098,7 +2159,10 @@ async function setNextFollowUp () {
     })
     
     // Show success message
-    alert(`Follow-up set for ${formatDateTime(iso)}`)
+    alert(`Follow-up set for ${formattedDate}`)
+    
+    // Clear the input
+    followUpInput.value = ''
     
     // Refresh data to ensure consistency
     await loadLeads()
@@ -2688,14 +2752,14 @@ async function updateFollowUpStatus(followup) {
   
   const events = selectedLead.value.events || []
   const index = events.findIndex(e => 
-    e.type === 'followup_set' && e.at === followup.createdAt
+    e.type === 'followup_set' && e.at === followup.at
   )
   
   if (index !== -1) {
     const before = events[index].status || 'scheduled'
     const after = followup.status
     
-    // Update follow-up status
+    // Update follow-up status in the event
     events[index] = {
       ...events[index],
       status: after,
@@ -2710,7 +2774,7 @@ async function updateFollowUpStatus(followup) {
       by: { name: currentUser.value.name },
       metadata: {
         short: `Follow-up status ${before} → ${after}`,
-        followupId: followup.createdAt,
+        followupId: followup.at,
         changes: { status: { from: before, to: after } }
       }
     }
@@ -3254,6 +3318,28 @@ function eventTitle (ev) {
   if (ev.type === 'followup_cleared') return 'Follow-up cleared'
   if (ev.type === 'followup_status_changed') return 'Follow-up status changed'
   if (ev.type === 'followup_deleted') return 'Follow-up deleted'
+  if (ev.type === 'followup_updated') {
+    // Check what was updated based on metadata or changes
+    const changes = ev.metadata?.changes || {}
+    
+    if (changes.followUpDate && changes.note) {
+      return 'Follow-up updated'
+    } else if (changes.followUpDate) {
+      return 'Follow-up date changed'
+    } else if (changes.note) {
+      return 'Follow-up note updated'
+    }
+    
+    // Fallback to checking the note content
+    const note = ev.note || ''
+    if (note.includes('date updated')) {
+      return 'Follow-up date changed'
+    } else if (note.includes('note updated')) {
+      return 'Follow-up note updated'
+    }
+    
+    return 'Follow-up updated'
+  }
   if (ev.type === 'assign') return 'Assigned'
   if (ev.type === 'contact_edited') return 'Contact edited'
   if (ev.type === 'priority_change') return 'Priority changed'

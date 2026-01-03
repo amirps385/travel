@@ -135,9 +135,16 @@
               </td>
 
               <!-- SOURCE -->
-              <td class="p-3 text-slate-600">
-                {{ lead.leadSourceDetail || lead.source || 'Website Form' }}
-              </td>
+<td class="p-3 text-slate-600">
+  <div class="font-medium">
+    {{ humanizeSource(lead.source) || 'Website Form' }}
+  </div>
+  <div class="text-xs text-slate-400 mt-0.5">
+    {{ lead.leadSourceDetail || '—' }}
+  </div>
+</td>
+
+
 
               <!-- STATUS -->
               <td class="p-3">
@@ -238,9 +245,10 @@
 
               <div class="mt-3 flex flex-wrap gap-2 items-center">
                 <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border text-sm">
-                  <span class="text-xs text-slate-500">Source</span>
-                  <strong class="ml-2">{{ selectedLead.leadSourceDetail || selectedLead.source || 'form' }}</strong>
-                </div>
+  <span class="text-xs text-slate-500">Source</span>
+  <strong class="ml-2">{{ selectedLead.leadSourceDetail || humanizeSource(selectedLead.source) || 'form' }}</strong>
+</div>
+
 
                 <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg" :class="priorityBadgeClass(selectedLead.priority)">
                   <strong class="text-sm">{{ priorityLabelFrom(selectedLead.priority) }}</strong>
@@ -357,13 +365,16 @@
                   </div>
                   
                   <div>
-                    <div class="text-sm font-medium">{{ selectedLead.source || 'Website Form' }}</div>
-                    <div class="text-xs text-slate-500">Lead source</div>
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.leadSourceDetail || '—' }}</div>
-                    <div class="text-xs text-slate-500">Source detail</div>
-                  </div>
+  <div class="text-sm font-medium">{{ humanizeSource(selectedLead.source) || 'Website Form' }}</div>
+  <div class="text-xs text-slate-500">Lead source</div>
+</div>
+
+
+                 <div>
+  <div class="text-sm font-medium">{{ selectedLead.leadSourceDetail || '—' }}</div>
+  <div class="text-xs text-slate-500">Source detail</div>
+</div>
+
                 </div>
 
                 <div v-else>
@@ -1061,6 +1072,8 @@ definePageMeta({
 
 const router = useRouter()
 
+// use the selectedLead ref (or remove this computed if you don't need it)
+const followUps = computed(() => getFollowUpsFromEvents(selectedLead.value?.events || []));
 
 
 // ---- Current User from Auth ----
@@ -1332,6 +1345,34 @@ async function saveEditedFollowUp() {
 
 
 // helper functions reused in UI
+
+// humanize lead source for display
+function humanizeSource(src) {
+  if (!src && src !== 0) return '—'; // empty fallback
+
+  // optional explicit mapping for exceptions (custom labels)
+  const MAP = {
+    custom_itinerary: 'custom itinerary', // you can add more entries
+    facebook_ad: 'Facebook ad',
+    google_search: 'Google search',
+    email: 'Email'
+  };
+
+  // if we have an explicit label, use it
+  if (MAP[src]) return MAP[src];
+
+  // fallback: replace underscores/dashes with space and trim
+  const s = String(src)
+    .replace(/[_-]+/g, ' ')
+    .trim();
+
+  // choose casing: if you prefer lowercase like "custom itinerary", use:
+  return s.toLowerCase();
+
+  // if you prefer Title Case instead, use:
+  // return s.split(' ').map(w => w[0]?.toUpperCase() + w.slice(1)).join(' ');
+}
+
 
 // Helper: get follow-ups from events array
 function getFollowUpsFromEvents(events = []) {

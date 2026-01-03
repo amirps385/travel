@@ -1742,19 +1742,26 @@ const callsForSelectedLead = computed(() => {
   if (!selectedLead.value) return []
   return (selectedLead.value.events || [])
     .filter(e => e.type === 'call')
-    .map((call, index) => ({
-      id: `call-${index}-${call.at}`,
-      title: 'Call',
-      summary: call.note,
-      duration: call.durationMinutes || 0,
-      outcome: call.outcome || '',
-      status: call.status || 'completed',
-      by: call.by || { name: currentUser.value.name },
-      createdAt: call.at,
-      updatedBy: call.updatedBy,
-      updatedAt: call.updatedAt,
-      ...call
-    }))
+    .map((call, index) => {
+      // Extract duration and outcome from metadata
+      const duration = call.metadata?.duration || 0
+      const outcome = call.metadata?.short || ''
+      
+      return {
+        id: `call-${index}-${call.at}`,
+        title: 'Call',
+        summary: call.note,
+        duration: duration,  // Use the extracted duration
+        outcome: outcome,    // Use the extracted outcome
+        status: call.status || 'completed',
+        by: call.by || { name: currentUser.value.name },
+        createdAt: call.at,
+        updatedBy: call.updatedBy,
+        updatedAt: call.updatedAt,
+        at: call.at, // Important for lookup
+        ...call
+      }
+    })
 })
 
 const followUpsForSelectedLead = computed(() => {
@@ -2356,10 +2363,10 @@ async function saveLogCall () {
     note: callNote.value || '',
     status: 'completed',
     metadata: { 
-      short: (callOutcome.value || '') + (callDuration.value ? ` • ${callDuration.value}m` : '')
+      short: callOutcome.value || '',
+      duration: callDuration.value || 0  // Store duration in metadata
     },
-    durationMinutes: callDuration.value || 0,
-    outcome: callOutcome.value || ''
+    updatedBy: currentUser.value.name
   }
   
   // Add to local state
@@ -2374,7 +2381,7 @@ async function saveLogCall () {
     console.log('Saving call to server...')
     
     const result = await patchLead(selectedLead.value._id, { 
-      events: selectedLead.value.events, // Send ALL events
+      events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
     
@@ -2398,50 +2405,84 @@ async function saveEditedCall () {
   console.log('Saving edited call:', editingCall.value)
   
   const events = selectedLead.value.events || []
+  
+  // Find the ORIGINAL call event
   const index = events.findIndex(e => 
     e.type === 'call' && e.at === editingCall.value.at
   )
   
   if (index !== -1) {
-    // Store old values for event
+    // Store old values for event tracking
     const oldCall = { ...events[index] }
+    const oldDuration = oldCall.metadata?.duration || 0
+    const oldOutcome = oldCall.metadata?.short || ''
+    const oldNote = oldCall.note || ''
     
-    // Update call
-    events[index].note = editCallNote.value.trim()
-    events[index].durationMinutes = editCallDuration.value
-    events[index].outcome = editCallOutcome.value
-    events[index].updatedBy = currentUser.value.name
-    events[index].updatedAt = new Date().toISOString()
+    // UPDATE THE ORIGINAL CALL EVENT with new values
+    events[index] = {
+      ...events[index],
+      note: editCallNote.value.trim(),
+      metadata: {
+        ...events[index].metadata,
+        short: editCallOutcome.value || '',      // Update outcome
+        duration: editCallDuration.value || 0    // Update duration
+      },
+      updatedBy: currentUser.value.name,
+      updatedAt: new Date().toISOString()
+    }
     
-    // Create call updated event
+    // Check what actually changed
+    const durationChanged = oldDuration !== editCallDuration.value
+    const outcomeChanged = oldOutcome !== editCallOutcome.value
+    const noteChanged = oldNote !== editCallNote.value.trim()
+    
+    // Build a descriptive message for the timeline
+    let changeDescriptions = []
+    if (noteChanged) changeDescriptions.push('summary updated')
+    if (durationChanged) changeDescriptions.push(`duration: ${oldDuration}m → ${editCallDuration.value}m`)
+    if (outcomeChanged) changeDescriptions.push(`outcome: ${oldOutcome || 'none'} → ${editCallOutcome.value}`)
+    
+    const changeMessage = changeDescriptions.length > 0 
+      ? changeDescriptions.join(', ')
+      : 'Call updated'
+    
+    // Create call updated event for timeline
     const updateEv = {
       type: 'call_updated',
       at: new Date().toISOString(),
       by: { name: currentUser.value.name },
+      note: `Call updated: ${changeMessage}`,
       metadata: {
-        short: `Call updated: ${editCallOutcome.value || 'No outcome'}`,
+        short: `Call updated: ${editCallOutcome.value || 'No outcome'}${durationChanged ? ` (${editCallDuration.value}m)` : ''}`,
         callId: editingCall.value.at,
         changes: {
-          summary: { from: oldCall.note, to: editCallNote.value.trim() },
-          duration: { from: oldCall.durationMinutes, to: editCallDuration.value },
-          outcome: { from: oldCall.outcome, to: editCallOutcome.value }
+          summary: noteChanged ? { from: oldNote, to: editCallNote.value.trim() } : null,
+          duration: durationChanged ? { from: oldDuration, to: editCallDuration.value } : null,
+          outcome: outcomeChanged ? { from: oldOutcome, to: editCallOutcome.value } : null
         }
       }
     }
     
+    // Clean up null changes for cleaner metadata
+    if (!updateEv.metadata.changes.summary) delete updateEv.metadata.changes.summary
+    if (!updateEv.metadata.changes.duration) delete updateEv.metadata.changes.duration
+    if (!updateEv.metadata.changes.outcome) delete updateEv.metadata.changes.outcome
+    
+    // Add the update event to the timeline
     events.push(updateEv)
     
-    console.log('Updated call at index:', index)
+    console.log('Updated original call at index:', index, events[index])
+    console.log('Timeline event:', updateEv)
     
     try {
       const result = await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
+        events: events,
         updatedBy: currentUser.value.name
       })
       
       console.log('Call update successful:', result)
       
-      // Refresh data
+      // Force refresh to update UI
       await loadLeads()
       
     } catch (err) {
@@ -2449,6 +2490,9 @@ async function saveEditedCall () {
       alert(`Failed to update call: ${err.message || 'Unknown error'}`)
       await loadLeads()
     }
+  } else {
+    console.error('Original call event not found for ID:', editingCall.value.at)
+    alert('Could not find the original call to update')
   }
   
   closeEditCall()
@@ -3055,11 +3099,40 @@ function closeLogCall () {
 }
 
 function openEditCallModal (call) {
-  editingCall.value = call
-  editCallNote.value = call.summary
-  editCallDuration.value = call.duration
-  editCallOutcome.value = call.outcome
-  showEditCall.value = true
+  console.log('Opening edit modal for call:', call)
+  
+  // Find the original call event from events array
+  const events = selectedLead.value.events || []
+  const originalCall = events.find(e => 
+    e.type === 'call' && e.at === call.at
+  )
+  
+  if (originalCall) {
+    editingCall.value = originalCall
+    
+    // Set the form values from the original call
+    editCallNote.value = originalCall.note || ''
+    
+    // Get outcome from metadata.short
+    const outcome = originalCall.metadata?.short || ''
+    editCallOutcome.value = outcome
+    
+    // Get duration from metadata.duration
+    const duration = originalCall.metadata?.duration || 0
+    editCallDuration.value = duration
+    
+    console.log('Form values set:', {
+      note: editCallNote.value,
+      duration: editCallDuration.value,
+      outcome: editCallOutcome.value,
+      metadata: originalCall.metadata
+    })
+    
+    showEditCall.value = true
+  } else {
+    console.error('Original call not found for:', call)
+    alert('Could not find the original call data')
+  }
 }
 function closeEditCall () {
   showEditCall.value = false
@@ -3306,7 +3379,20 @@ function eventTitle (ev) {
   if (ev.type === 'note_deleted') return 'Note deleted'
   if (ev.type === 'note_status_changed') return 'Note status changed'
   if (ev.type === 'call') return 'Call logged'
-  if (ev.type === 'call_updated') return 'Call updated'
+  if (ev.type === 'call_updated') {
+    // Show more descriptive title for call updates
+    const changes = ev.metadata?.changes || {}
+    let changeList = []
+    
+    if (changes.summary) changeList.push('summary')
+    if (changes.duration) changeList.push('duration')
+    if (changes.outcome) changeList.push('outcome')
+    
+    if (changeList.length > 0) {
+      return `Call ${changeList.join(', ')} updated`
+    }
+    return 'Call updated'
+  }
   if (ev.type === 'call_deleted') return 'Call deleted'
   if (ev.type === 'call_status_changed') return 'Call status changed'
   if (ev.type === 'task_created') return 'Task created'

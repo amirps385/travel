@@ -243,28 +243,38 @@
                 </div>
               </div>
 
-              <div class="mt-3 flex flex-wrap gap-2 items-center">
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border text-sm">
-  <span class="text-xs text-slate-500">Source</span>
-  <strong class="ml-2">{{ selectedLead.leadSourceDetail || humanizeSource(selectedLead.source) || 'form' }}</strong>
+             <div class="mt-3 flex flex-wrap gap-2 items-center">
+  <!-- Lead Source -->
+  <div class="inline-flex flex-col px-3 py-1.5 rounded-lg bg-slate-50 border text-sm">
+    <span class="text-xs text-slate-500">Lead source</span>
+    <strong class="text-slate-900">
+      {{ humanizeSource(selectedLead.source) || 'Website Form' }}
+    </strong>
+  </div>
+
+  <!-- Source Detail -->
+  <div v-if="selectedLead.leadSourceDetail" class="inline-flex flex-col px-3 py-1.5 rounded-lg bg-slate-50 border text-sm">
+    <span class="text-xs text-slate-500">Source detail</span>
+    <strong class="text-slate-900">
+      {{ selectedLead.leadSourceDetail }}
+    </strong>
+  </div>
+
+  <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg" :class="priorityBadgeClass(selectedLead.priority)">
+    <strong class="text-sm">{{ priorityLabelFrom(selectedLead.priority) }}</strong>
+    <span class="text-xs text-slate-700">Priority</span>
+    <button 
+      class="ml-2 text-xs text-slate-500 hover:text-slate-700"
+      @click="openPriorityModal"
+    >
+      ✏️
+    </button>
+  </div>
+
+  <div v-if="selectedLead.assignedTo?.name" class="px-3 py-1.5 rounded-lg bg-slate-50 text-sm font-medium border">
+    Owner: {{ selectedLead.assignedTo.name }}
+  </div>
 </div>
-
-
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg" :class="priorityBadgeClass(selectedLead.priority)">
-                  <strong class="text-sm">{{ priorityLabelFrom(selectedLead.priority) }}</strong>
-                  <span class="text-xs text-slate-700">Priority</span>
-                  <button 
-                    class="ml-2 text-xs text-slate-500 hover:text-slate-700"
-                    @click="openPriorityModal"
-                  >
-                    ✏️
-                  </button>
-                </div>
-
-                <div v-if="selectedLead.assignedTo?.name" class="px-3 py-1.5 rounded-lg bg-slate-50 text-sm font-medium border">
-                  Owner: {{ selectedLead.assignedTo.name }}
-                </div>
-              </div>
             </div>
 
             <div class="shrink-0 flex items-center gap-2">

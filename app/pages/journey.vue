@@ -160,19 +160,42 @@
         </section>
 
         <!-- Contact -->
-        <section>
-          <label class="block text-sm font-semibold mb-3">Contact details</label>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <input type="text" v-model="form.name" placeholder="Full name" class="border rounded-lg p-3" />
-            <input type="email" v-model="form.email" placeholder="Email address" class="border rounded-lg p-3" />
-            <input type="tel" v-model="form.phone" placeholder="Phone number" class="border rounded-lg p-3" />
-            <input type="text" v-model="form.originCity" placeholder="Origin city" class="border rounded-lg p-3" />
-          </div>
-          <div class="mt-2 space-y-1">
-            <p v-if="errors.name" class="text-xs text-rose-600">{{ errors.name }}</p>
-            <p v-if="errors.email" class="text-xs text-rose-600">{{ errors.email }}</p>
-          </div>
-        </section>
+<section>
+  <label class="block text-sm font-semibold mb-3">Contact details</label>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <input type="text" v-model="form.name" placeholder="Full name" class="border rounded-lg p-3" :data-prefilled="!!form.name" />
+    <input type="email" v-model="form.email" placeholder="Email address" class="border rounded-lg p-3" :data-prefilled="!!form.email" />
+
+    <!-- country code + phone matched UI -->
+    <div class="flex gap-2 items-center">
+      <input
+        type="tel"
+        v-model="form.countryCode"
+        placeholder="+255"
+        aria-label="Country code"
+        class="w-28 text-sm px-3 py-3 border border-gray-300 rounded-l-xl bg-white text-gray-900 text-center focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
+        :data-prefilled="!!form.countryCode"
+      />
+
+      <input
+        type="tel"
+        v-model="form.phone"
+        placeholder="712 345 678"
+        class="flex-1 text-sm px-4 py-3 border border-gray-300 rounded-r-xl bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+        :data-prefilled="!!form.phone"
+      />
+    </div>
+
+    <input type="text" v-model="form.originCity" placeholder="Origin city" class="border rounded-lg p-3" />
+  </div>
+
+  <div class="mt-2 space-y-1">
+    <p v-if="errors.name" class="text-xs text-rose-600">{{ errors.name }}</p>
+    <p v-if="errors.email" class="text-xs text-rose-600">{{ errors.email }}</p>
+  </div>
+</section>
+
       </div>
 
       <!-- RIGHT: Summary / CTA -->
@@ -247,7 +270,7 @@ const activities = [
 
 const whoOptions = ['single', 'couple', 'groups', 'family']
 
-// Form structure
+// Form structure (countryCode added)
 const form = ref({
   activities: [],
   days: 5,
@@ -260,6 +283,7 @@ const form = ref({
   name: '',
   email: '',
   phone: '',
+  countryCode: '', // NEW
   originCity: ''
 })
 
@@ -267,17 +291,46 @@ const errors = ref({})
 const isSubmitting = ref(false)
 const showPrefilledNotification = ref(false)
 
-// On component mount, check for prefilled data
+// --- Utilities for phone parsing/normalizing ---
+function normalizeCountryCode(raw = '') {
+  if (!raw) return ''
+  const s = String(raw).trim()
+  if (!s) return ''
+  if (s.startsWith('+')) return s
+  if (s.startsWith('00')) return `+${s.slice(2)}`
+  return `+${s}`
+}
+
+/**
+ * Attempt to split a combined phone string into { countryCode, phone }
+ * E.g. "+255 712345678" -> { countryCode: "+255", phone: "712345678" }
+ * Works with leading + or 00 or if not present returns {countryCode:'', phone: original}
+ */
+function splitCombinedPhone(str = '') {
+  if (!str) return { countryCode: '', phone: '' }
+  const s = String(str).trim()
+  // try +country first
+  const plusMatch = s.match(/^(\+?0{0,2}\d{1,4})\s*(.*)$/) // captures +255 or 00255 or 255
+  if (plusMatch) {
+    let ccRaw = plusMatch[1]
+    let remaining = plusMatch[2] || ''
+    // normalize cc
+    if (ccRaw.startsWith('00')) ccRaw = `+${ccRaw.slice(2)}`
+    else if (!ccRaw.startsWith('+')) ccRaw = `+${ccRaw}`
+    return { countryCode: ccRaw, phone: remaining.trim() }
+  }
+  return { countryCode: '', phone: s }
+}
+
+// --- Load prefilled data on mount ---
 onMounted(() => {
   loadPrefilledData()
 })
 
 function loadPrefilledData() {
   if (process.client) {
-    // Method 1: Check URL parameters first (most reliable)
     loadFromURLParams()
-    
-    // Method 2: Check localStorage as backup
+    // if not prefilled from URL, try localStorage/sessionStorage
     if (!showPrefilledNotification.value) {
       loadFromLocalStorage()
     }
@@ -286,24 +339,47 @@ function loadPrefilledData() {
 
 function loadFromURLParams() {
   const urlParams = new URLSearchParams(window.location.search)
-  
+
   if (urlParams.has('prefilled') && urlParams.get('prefilled') === 'true') {
     showPrefilledNotification.value = true
-    
-    // Basic contact info
+
     if (urlParams.has('name')) {
-      form.value.name = decodeURIComponent(urlParams.get('name'))
+      form.value.name = decodeURIComponent(urlParams.get('name') || '')
     }
     if (urlParams.has('email')) {
-      form.value.email = decodeURIComponent(urlParams.get('email'))
+      form.value.email = decodeURIComponent(urlParams.get('email') || '')
     }
-    
+
+    // phone & country code handling: priority -> countryCode param -> phoneCombined -> phone
+    if (urlParams.has('countryCode')) {
+      form.value.countryCode = normalizeCountryCode(urlParams.get('countryCode'))
+      if (urlParams.has('phone')) {
+        form.value.phone = urlParams.get('phone')
+      } else if (urlParams.has('phoneCombined')) {
+        const combined = urlParams.get('phoneCombined') || ''
+        const parsed = splitCombinedPhone(decodeURIComponent(combined))
+        form.value.countryCode = form.value.countryCode || normalizeCountryCode(parsed.countryCode)
+        form.value.phone = parsed.phone || form.value.phone
+      }
+    } else if (urlParams.has('phoneCombined')) {
+      const combined = urlParams.get('phoneCombined') || ''
+      const parsed = splitCombinedPhone(decodeURIComponent(combined))
+      form.value.countryCode = normalizeCountryCode(parsed.countryCode)
+      form.value.phone = parsed.phone
+    } else if (urlParams.has('phone')) {
+      // phone only, could include +prefix - try to parse
+      const p = urlParams.get('phone') || ''
+      const parsed = splitCombinedPhone(decodeURIComponent(p))
+      form.value.countryCode = normalizeCountryCode(parsed.countryCode)
+      form.value.phone = parsed.phone || p
+    }
+
     // Travel date
     if (urlParams.has('travelDate')) {
-      form.value.date = urlParams.get('travelDate')
+      form.value.date = urlParams.get('travelDate') || ''
     }
-    
-    // Travellers
+
+    // Travellers mapping (same as before)
     if (urlParams.has('travellers')) {
       const travellerParam = urlParams.get('travellers')
       const travellerMap = {
@@ -314,20 +390,17 @@ function loadFromURLParams() {
         '7+': 7,
         'group': 10
       }
-      
       const travellerCount = travellerMap[travellerParam] || 2
       form.value.travellers = travellerCount
-      
-      // Update who based on travellers
       if (travellerCount === 1) form.value.who = 'single'
       else if (travellerCount === 2) form.value.who = 'couple'
       else if (travellerCount >= 10) form.value.who = 'groups'
       else form.value.who = 'family'
     }
-    
+
     // Budget
     if (urlParams.has('budget')) {
-      const budgetParam = urlParams.get('budget')
+      const budgetParam = urlParams.get('budget') || ''
       const budgetMap = {
         '1000-2000': 1500,
         '2000-3000': 2500,
@@ -337,18 +410,17 @@ function loadFromURLParams() {
       }
       form.value.budget = budgetMap[budgetParam] || 1500
     }
-    
+
     // Interests
     if (urlParams.has('interests')) {
       try {
-        const interests = JSON.parse(urlParams.get('interests'))
+        const interests = JSON.parse(urlParams.get('interests') || '[]')
         const interestToActivity = {
           'safari': 'wild safari',
           'kilimanjaro': 'kilimanjaro trek',
           'zanzibar': 'beach holidays',
           'cultural': 'cultural tour'
         }
-        
         interests.forEach(interest => {
           const activity = interestToActivity[interest]
           if (activity && !form.value.activities.includes(activity)) {
@@ -359,49 +431,60 @@ function loadFromURLParams() {
         console.error('Error parsing interests:', e)
       }
     }
-    
-    // Update ages and genders arrays
+
     updateTravellerArrays()
-    
-    // Clear URL parameters
+
+    // Clear URL parameters (so refresh doesn't keep them)
     const newUrl = window.location.pathname
     window.history.replaceState({}, document.title, newUrl)
   }
 }
 
 function loadFromLocalStorage() {
-  // Check localStorage
   let storedData = localStorage.getItem('heroLeadData')
-  const timestamp = localStorage.getItem('heroLeadTimestamp')
-  
-  // If no data in localStorage, check sessionStorage
-  if (!storedData) {
-    storedData = sessionStorage.getItem('heroLeadData')
-  }
-  
+  // fallback to sessionStorage
+  if (!storedData) storedData = sessionStorage.getItem('heroLeadData')
+
   if (storedData) {
     try {
       const heroData = JSON.parse(storedData)
       showPrefilledNotification.value = true
-      
-      // Apply data to form (same mapping logic as URL params)
+
       if (heroData.name) form.value.name = heroData.name
       if (heroData.email) form.value.email = heroData.email
+
+      // countryCode priority: heroData.countryCode -> heroData.phoneCombined -> heroData.phone (with +)
+      if (heroData.countryCode) {
+        form.value.countryCode = normalizeCountryCode(heroData.countryCode)
+        if (heroData.phone) form.value.phone = heroData.phone
+        else if (heroData.phoneCombined) {
+          const p = splitCombinedPhone(heroData.phoneCombined)
+          form.value.phone = p.phone || form.value.phone
+        }
+      } else if (heroData.phoneCombined) {
+        const p = splitCombinedPhone(heroData.phoneCombined)
+        form.value.countryCode = normalizeCountryCode(p.countryCode)
+        form.value.phone = p.phone || ''
+      } else if (heroData.phone) {
+        const p = splitCombinedPhone(heroData.phone)
+        form.value.countryCode = normalizeCountryCode(p.countryCode)
+        form.value.phone = p.phone || heroData.phone
+      }
+
       if (heroData.travelDate) form.value.date = heroData.travelDate
-      
+
       if (heroData.travellers) {
         const travellerMap = {
           '1': 1, '2': 2, '3-4': 3, '5-6': 5, '7+': 7, 'group': 10
         }
         const travellerCount = travellerMap[heroData.travellers] || 2
         form.value.travellers = travellerCount
-        
         if (travellerCount === 1) form.value.who = 'single'
         else if (travellerCount === 2) form.value.who = 'couple'
         else if (travellerCount >= 10) form.value.who = 'groups'
         else form.value.who = 'family'
       }
-      
+
       if (heroData.budget) {
         const budgetMap = {
           '1000-2000': 1500, '2000-3000': 2500, '3000-5000': 4000,
@@ -409,7 +492,7 @@ function loadFromLocalStorage() {
         }
         form.value.budget = budgetMap[heroData.budget] || 1500
       }
-      
+
       if (heroData.interests && heroData.interests.length > 0) {
         const interestToActivity = {
           'safari': 'wild safari',
@@ -417,7 +500,6 @@ function loadFromLocalStorage() {
           'zanzibar': 'beach holidays',
           'cultural': 'cultural tour'
         }
-        
         heroData.interests.forEach(interest => {
           const activity = interestToActivity[interest]
           if (activity && !form.value.activities.includes(activity)) {
@@ -425,17 +507,16 @@ function loadFromLocalStorage() {
           }
         })
       }
-      
+
       updateTravellerArrays()
-      
-      // Clear storage after loading
+
+      // Clear storage after loading to avoid duplicate prefill later
       localStorage.removeItem('heroLeadData')
       localStorage.removeItem('heroLeadTimestamp')
       sessionStorage.removeItem('heroLeadData')
-      
     } catch (error) {
-      console.error('Error loading from storage:', error)
-      // Clear corrupted data
+      console.error('Error loading heroLeadData:', error)
+      // clear corrupted data
       localStorage.removeItem('heroLeadData')
       localStorage.removeItem('heroLeadTimestamp')
       sessionStorage.removeItem('heroLeadData')
@@ -507,26 +588,24 @@ async function handleSubmit() {
   try {
     const payload = JSON.parse(JSON.stringify(form.value))
     payload.createdAt = new Date().toISOString()
-    
-    // Include source information
+
     if (showPrefilledNotification.value) {
       payload.source = 'hero_lead_continuation'
     } else {
       payload.source = 'journey_page'
     }
 
-    // 1) Save to MongoDB via API
+    // Save to server
     await $fetch('/api/leads', {
       method: 'POST',
       body: payload,
     })
 
-    // 2) Keep local copy for thankyou page text
+    // Keep local copy for thankyou page text
     if (process.client) {
       localStorage.setItem('tripForm', JSON.stringify(payload))
     }
 
-    // 3) Redirect to thank you page
     router.push({ path: '/thankyou' })
   } catch (err) {
     console.error(err)
@@ -549,12 +628,12 @@ function resetForm() {
     name: '',
     email: '',
     phone: '',
+    countryCode: '',
     originCity: ''
   }
   errors.value = {}
   showPrefilledNotification.value = false
-  
-  // Also clear any stored data
+
   if (process.client) {
     localStorage.removeItem('heroLeadData')
     localStorage.removeItem('heroLeadTimestamp')

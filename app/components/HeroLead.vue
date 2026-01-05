@@ -1,4 +1,3 @@
-<!-- components/HeroLead.vue -->
 <template>
   <form @submit.prevent="submitLead" class="space-y-5">
     <!-- Form Header -->
@@ -13,28 +12,14 @@
 
     <!-- Full Name -->
     <div>
-      <label
-        for="fullName"
-        class="block text-sm font-medium text-gray-800 mb-1.5"
-      >
+      <label for="fullName" class="block text-sm font-medium text-gray-800 mb-1.5">
         Full Name <span class="text-red-500">*</span>
       </label>
       <div class="relative">
-        <div
-          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-        >
-          <svg
-            class="h-5 w-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </div>
         <input
@@ -45,34 +30,20 @@
           class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
                  focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
           placeholder="John Doe"
-        >
+        />
       </div>
     </div>
 
     <!-- Email -->
     <div>
-      <label
-        for="email"
-        class="block text-sm font-medium text-gray-800 mb-1.5"
-      >
+      <label for="email" class="block text-sm font-medium text-gray-800 mb-1.5">
         Email Address <span class="text-red-500">*</span>
       </label>
       <div class="relative">
-        <div
-          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-        >
-          <svg
-            class="h-5 w-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-            />
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
         <input
@@ -83,56 +54,60 @@
           class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
                  focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
           placeholder="john@example.com"
-        >
+        />
       </div>
     </div>
 
-    <!-- Phone / WhatsApp -->
+    <!-- Country Code + Phone (improved UI) -->
     <div>
-      <label
-        for="phone"
-        class="block text-sm font-medium text-gray-800 mb-1.5"
-      >
+      <label for="phone" class="block text-sm font-medium text-gray-800 mb-1.5">
         Phone / WhatsApp
-        <span class="text-xs text-gray-600 font-normal">
-          (optional but recommended)
-        </span>
+        <span class="text-xs text-gray-600 font-normal"> (include country code)</span>
+        <span class="text-xs text-gray-600 font-normal"> — optional but recommended</span>
       </label>
-      <div class="relative">
-        <div
-          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-        >
-          <svg
-            class="h-5 w-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498A1 1 0 0121 18.72V22a2 2 0 01-2 2h-1C9.716 24 3 17.284 3 9V5z"
-            />
-          </svg>
+
+      <div class="flex gap-2">
+        <!-- Country code small input -->
+        <div class="shrink-0 w-28">
+          <input
+            id="countryCode"
+            v-model="form.countryCode"
+            type="tel"
+            inputmode="tel"
+            placeholder="+255"
+            aria-label="Country code"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl sm:rounded-l-xl sm:rounded-r-none bg-white text-sm text-gray-900 text-center focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
+          />
         </div>
-        <input
-          id="phone"
-          v-model="form.phone"
-          type="tel"
-          class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
-                 focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
-          placeholder="+255 123 456 789"
-        >
+
+        <!-- Phone main input -->
+        <div class="flex-1">
+          <div
+            class="flex items-center border border-gray-300 rounded-xl sm:rounded-l-none sm:rounded-r-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-amber-500/30"
+          >
+            <svg class="h-5 w-5 text-gray-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498A1 1 0 0121 18.72V22a2 2 0 01-2 2h-1C9.716 24 3 17.284 3 9V5z" />
+            </svg>
+
+            <input
+              id="phone"
+              v-model="form.phone"
+              type="tel"
+              inputmode="tel"
+              class="flex-1 text-sm text-gray-900 bg-transparent placeholder-gray-400 focus:outline-none"
+              placeholder="123 456 789"
+            />
+          </div>
+        </div>
       </div>
+
+      <p class="text-xs text-gray-500 mt-2">Please include '+' in country code. Example: <span class="font-medium">+255 123456789</span></p>
     </div>
 
     <!-- Trip Type / Destination -->
     <div>
-      <label
-        for="tripType"
-        class="block text-sm font-medium text-gray-800 mb-1.5"
-      >
+      <label for="tripType" class="block text-sm font-medium text-gray-800 mb-1.5">
         Trip Type / Destination <span class="text-red-500">*</span>
       </label>
       <select
@@ -151,30 +126,16 @@
       </select>
     </div>
 
-    <!-- Travel Dates - Date Picker -->
+    <!-- Travel Dates -->
     <div>
-      <label
-        for="travelDate"
-        class="block text-sm font-medium text-gray-800 mb-1.5"
-      >
+      <label for="travelDate" class="block text-sm font-medium text-gray-800 mb-1.5">
         Approx. Travel Date <span class="text-red-500">*</span>
       </label>
       <div class="relative">
-        <div
-          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-        >
-          <svg
-            class="h-5 w-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
         <input
@@ -184,19 +145,14 @@
           required
           class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
                  focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
-        >
+        />
       </div>
-      <p class="text-xs text-gray-600 mt-1">
-        Flexible dates? You can approximate or select a preferred start date.
-      </p>
+      <p class="text-xs text-gray-600 mt-1">Flexible dates? Approximate is fine.</p>
     </div>
 
     <!-- Number of Travellers -->
     <div>
-      <label
-        for="travellers"
-        class="block text-sm font-medium text-gray-800 mb-1.5"
-      >
+      <label for="travellers" class="block text-sm font-medium text-gray-800 mb-1.5">
         Number of Travellers <span class="text-red-500">*</span>
       </label>
       <select
@@ -215,16 +171,11 @@
       </select>
     </div>
 
-    <!-- Budget Range -->
+    <!-- Budget -->
     <div>
-      <label
-        for="budget"
-        class="block text-sm font-medium text-gray-800 mb-1.5"
-      >
+      <label for="budget" class="block text-sm font-medium text-gray-800 mb-1.5">
         Budget Range (per person)
-        <span class="text-xs text-gray-600 font-normal block mt-0.5">
-          Helps us tailor recommendations
-        </span>
+        <span class="text-xs text-gray-600 font-normal block mt-0.5">Helps us tailor recommendations</span>
       </label>
       <select
         id="budget"
@@ -241,16 +192,11 @@
       </select>
     </div>
 
-    <!-- Message / Special Requests -->
+    <!-- Message -->
     <div>
-      <label
-        for="message"
-        class="block text-sm font-medium text-gray-800 mb-1.5"
-      >
+      <label for="message" class="block text-sm font-medium text-gray-800 mb-1.5">
         Message / Special Requests
-        <span class="text-xs text-gray-600 font-normal block mt-0.5">
-          Accommodation preferences, dietary needs, etc.
-        </span>
+        <span class="text-xs text-gray-600 font-normal block mt-0.5">Accommodation preferences, dietary needs, etc.</span>
       </label>
       <textarea
         id="message"
@@ -271,40 +217,17 @@
              disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
     >
       <div v-if="!loading" class="flex items-center justify-center">
-        <svg
-          class="w-5 h-5 mr-2"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         Get Free Quote Now
       </div>
       <div v-else class="flex items-center justify-center">
-        <svg
-          class="animate-spin h-5 w-5 mr-2 text-white"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            class="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          />
+        <svg class="animate-spin h-5 w-5 mr-2 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
         Processing...
       </div>
@@ -312,30 +235,17 @@
 
     <!-- Trust & Privacy Note -->
     <div class="pt-2">
-      <div
-        class="flex items-center justify-center text-xs text-gray-600 mb-2"
-      >
-        <svg
-          class="w-4 h-4 mr-1.5 text-emerald-500"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path
-            fill-rule="evenodd"
+      <div class="flex items-center justify-center text-xs text-gray-600 mb-2">
+        <svg class="w-4 h-4 mr-1.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd"
             d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-            clip-rule="evenodd"
-          />
+            clip-rule="evenodd" />
         </svg>
         <span>We'll get back to you within 24 hours</span>
       </div>
       <p class="text-xs text-center text-gray-600">
         By submitting, you agree to our
-        <a
-          href="/privacy"
-          class="text-emerald-700 hover:text-emerald-800 font-medium"
-        >
-          Privacy Policy
-        </a>.
+        <a href="/privacy" class="text-emerald-700 hover:text-emerald-800 font-medium">Privacy Policy</a>.
         Your information is secure.
       </p>
     </div>
@@ -345,30 +255,35 @@
 <script setup>
 import { ref } from 'vue'
 
-// Initialize form with updated fields while maintaining compatibility
 const form = ref({
   name: '',
   email: '',
   phone: '',
+  countryCode: '', // NEW: separate country code
   travelDate: '',
   travellers: '2',
-  interests: [], // Using array for compatibility with original
+  interests: [],
   budget: '',
   message: ''
 })
 
-// Helper to get the single selected interest from the dropdown
-const getSelectedInterest = () => {
-  if (Array.isArray(form.value.interests) && form.value.interests.length > 0) {
-    return form.value.interests[0]
-  }
-  return form.value.interests
-}
-
 const loading = ref(false)
 
+/**
+ * Utility: normalize country code to start with +
+ * Accepts values like '255', '+255', ' +255 ' -> returns '+255' or ''.
+ */
+function normalizeCountryCode(raw = '') {
+  if (!raw) return ''
+  const s = String(raw).trim()
+  if (!s) return ''
+  if (s.startsWith('+')) return s
+  // If user entered '00' style like 00255 convert to +255
+  if (s.startsWith('00')) return `+${s.slice(2)}`
+  return `+${s}`
+}
+
 const submitLead = async () => {
-  // Basic validation
   if (!form.value.name || !form.value.email || !form.value.travelDate) {
     alert('Please fill in all required fields')
     return
@@ -377,37 +292,51 @@ const submitLead = async () => {
   loading.value = true
 
   try {
-    // Convert single selection to array for compatibility
+    // Normalize country code
+    const normCode = normalizeCountryCode(form.value.countryCode)
+
+    // Build interests array (compat)
     const interestsArray = form.value.interests ? [form.value.interests] : []
 
-    // 1. Prepare data to pass to journey.vue
+    // Compose hero lead data (include separate countryCode and phone)
     const leadData = {
       name: form.value.name,
       email: form.value.email,
       phone: form.value.phone,
+      countryCode: normCode,
       travelDate: form.value.travelDate,
       travellers: form.value.travellers,
-      interests: interestsArray, // Keep as array for compatibility
+      interests: interestsArray,
       budget: form.value.budget,
       message: form.value.message,
       source: 'hero_lead',
       submittedAt: new Date().toISOString()
     }
 
-    // 2. Save to localStorage (most reliable for cross-page data)
+    // Save to localStorage + sessionStorage (so journey page can prefill)
     if (typeof window !== 'undefined') {
       localStorage.setItem('heroLeadData', JSON.stringify(leadData))
       localStorage.setItem('heroLeadTimestamp', Date.now().toString())
       sessionStorage.setItem('heroLeadData', JSON.stringify(leadData))
     }
 
-    // 3. Redirect to journey page with URL parameters
+    // Build URL params — include countryCode and phone separately,
+    // and also include a combined 'phoneCombined' param for backwards compat
     const params = new URLSearchParams()
     params.append('prefilled', 'true')
     params.append('name', form.value.name)
     params.append('email', form.value.email)
 
     if (form.value.phone) params.append('phone', form.value.phone)
+    if (normCode) params.append('countryCode', normCode)
+
+    // combined phone param e.g. "+255 123456789" so older pages that expected a single phone string still work
+    if (normCode && form.value.phone) {
+      params.append('phoneCombined', `${normCode} ${form.value.phone}`)
+    } else if (form.value.phone) {
+      params.append('phoneCombined', form.value.phone)
+    }
+
     if (form.value.travelDate) params.append('travelDate', form.value.travelDate)
     if (form.value.travellers) params.append('travellers', form.value.travellers)
     if (form.value.budget) params.append('budget', form.value.budget)
@@ -415,14 +344,23 @@ const submitLead = async () => {
       params.append('interests', JSON.stringify(interestsArray))
     }
 
+    // immediate redirect (short timeout for UX)
     setTimeout(() => {
       window.location.href = `/journey?${params.toString()}`
-    }, 100)
+    }, 80)
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error submitting lead:', error)
     alert('Something went wrong. Please try again.')
   } finally {
     loading.value = false
   }
 }
 </script>
+
+<style scoped>
+/* keep styling consistent with journey page */
+input:focus, select:focus, button:focus {
+  outline: 2px solid rgba(96,165,250,0.35);
+  outline-offset: 2px;
+}
+</style>

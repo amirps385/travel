@@ -37,15 +37,11 @@ export default defineEventHandler(async (event) => {
     // Build query based on user role
     let query: any = { _id: id }
     
-    // If user is not admin/superadmin, check if they have access
-    if (!['admin', 'superadmin'].includes(currentUser.role)) {
-      // For lead-manager and other roles, only allow access if lead is assigned to them or unassigned
-      query.$or = [
-        { assignedToId: currentUser._id || currentUser.id },
-        { assignedToId: null },
-        { assignedToId: { $exists: false } }
-      ]
-    }
+    // If user is not admin/superadmin, allow access ONLY if the lead is assigned to them
+if (!['admin', 'superadmin'].includes(currentUser.role)) {
+  query.assignedToId = currentUser._id || currentUser.id
+}
+
     
     const lead = (await Lead.findOne(query)
       .populate('assignedToId', 'name email role')

@@ -22,31 +22,21 @@ export default defineEventHandler(async (event) => {
   }
   
   // Build query based on user role
-  let query = {}
-  
-  if (currentUser) {
-    // If user is lead-manager, only show leads assigned to them OR unassigned leads
-    if (currentUser.role === 'lead-manager') {
-      query = {
-        $or: [
-          { assignedToId: currentUser._id || currentUser.id },
-          { assignedToId: null },
-          { assignedToId: { $exists: false } }
-        ]
-      }
+let query = {}
+
+if (currentUser) {
+  // Admins and superadmins see everything
+  if (['admin', 'superadmin'].includes(currentUser.role)) {
+    query = {}
+  } else {
+    // Non-admin roles (lead-manager, content-manager, itinerary-planner, etc.)
+    // should only see leads explicitly assigned to them.
+    query = {
+      assignedToId: currentUser._id || currentUser.id
     }
-    // Other non-admin roles (content-manager, itinerary-planner)
-    else if (!['admin', 'superadmin'].includes(currentUser.role)) {
-      query = {
-        $or: [
-          { assignedToId: currentUser._id || currentUser.id },
-          { assignedToId: null },
-          { assignedToId: { $exists: false } }
-        ]
-      }
-    }
-    // Admin and superadmin can see all leads (no filter needed)
   }
+}
+
   
   // If no user is logged in (shouldn't happen for admin routes, but just in case)
   if (!currentUser) {

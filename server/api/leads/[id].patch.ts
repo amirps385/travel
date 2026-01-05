@@ -61,19 +61,20 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Lead not found' })
   }
 
-  // Permission check: Non-admin users can only modify leads assigned to them
-  if (!['admin', 'superadmin'].includes(currentUser.role)) {
-    const leadAssignedToId = existingLead.assignedToId ? String(existingLead.assignedToId) : null
-    const currentUserId = String(currentUser._id || currentUser.id)
+ // Permission check: Non-admin users can only modify leads assigned to them
+if (!['admin', 'superadmin'].includes(currentUser.role)) {
+  const leadAssignedToId = existingLead.assignedToId ? String(existingLead.assignedToId) : null
+  const currentUserId = String(currentUser._id || currentUser.id)
 
-    // Check if lead is assigned to current user OR is unassigned
-    if (leadAssignedToId && leadAssignedToId !== currentUserId) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'You can only modify leads assigned to you or unassigned leads'
-      })
-    }
+  // Deny unless the lead is explicitly assigned to the current user
+  if (leadAssignedToId !== currentUserId) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'You can only modify leads assigned to you'
+    })
   }
+}
+
 
   // Check if user is trying to change assignment
   if (body.assignedToId !== undefined || body.assignedTo !== undefined) {

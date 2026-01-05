@@ -666,14 +666,14 @@
                     </div>
                     <div class="text-right flex items-start gap-2">
                       <select 
-                        v-model="t.status" 
-                        @change="updateTaskStatus(t)"
-                        class="text-xs border rounded px-2 py-1"
-                      >
-                        <option v-for="status in taskStatusOptions" :key="status.value" :value="status.value">
-                          {{ status.label }}
-                        </option>
-                      </select>
+  :value="t.status" 
+  @change="handleTaskStatusChange(t, $event.target.value)"
+  class="text-xs border rounded px-2 py-1"
+>
+  <option v-for="status in taskStatusOptions" :key="status.value" :value="status.value">
+    {{ status.label }}
+  </option>
+</select>
                       <div class="flex flex-col gap-1">
                         <button 
                           class="text-xs text-sky-600 hover:text-sky-800"
@@ -1426,6 +1426,22 @@ async function saveEditedFollowUp() {
 
 
 // helper functions reused in UI
+
+function formatDateTimeShort (value) {
+  if (!value) return '—'
+  try {
+    return new Date(value).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return value
+  }
+}
+
+
 
 
 function lastPriorityChangeReason(lead) {
@@ -2516,59 +2532,78 @@ async function createTask () {
   
   console.log('New task object:', t)
   
-  // Ensure tasks array exists
   if (!selectedLead.value.tasks) {
     selectedLead.value.tasks = []
   }
   selectedLead.value.tasks.push(t)
   
-  // Create task creation event for timeline
-  const ev = {
+  // Create task creation event
+  const createEv = {
     type: 'task_created',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    note: `Task created: ${t.title}`,
+    note: `Task created: ${t.title} (status: ${t.status})`,
     metadata: {
       short: `Task created: ${t.title}`,
       taskId: t.id
     }
   }
   
-  // Ensure events array exists
+  // Create INITIAL status change event (null → initial status)
+  const statusEv = {
+    type: 'task_status_changed',
+    at: new Date().toISOString(),
+    by: { name: currentUser.value.name },
+    note: `Task status: → ${t.status}`,
+    metadata: {
+      short: `Task "${t.title}" → ${t.status}`,
+      taskId: t.id,
+      changes: { status: { from: null, to: t.status } }
+    }
+  }
+  
   if (!selectedLead.value.events) {
     selectedLead.value.events = []
   }
-  selectedLead.value.events.push(ev)
-  
-  console.log('Updated tasks:', selectedLead.value.tasks)
-  console.log('Updated events:', selectedLead.value.events)
+  selectedLead.value.events.push(createEv, statusEv)
   
   closeCreateTask()
   
   try {
-    // Send BOTH tasks and events to server
     const patchData = {
       tasks: selectedLead.value.tasks,
       events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     }
     
-    console.log('Sending PATCH data:', patchData)
-    
     const result = await patchLead(selectedLead.value._id, patchData)
-    
     console.log('Task creation successful:', result)
-    
-    // Force refresh the leads to get updated data from server
     await loadLeads()
     
   } catch (err) {
     console.error('Failed to create task:', err)
     alert(`Failed to create task: ${err.message || 'Unknown error'}`)
-    
-    // Reload from server to restore original state
     await loadLeads()
   }
+}
+
+async function handleTaskStatusChange(task, newStatus) {
+  console.log('Task status changing from', task.status, 'to', newStatus)
+  
+  // Store old status before updating UI
+  const oldStatus = task.status || 'open'
+  
+  // If no actual change, do nothing
+  if (oldStatus === newStatus) {
+    console.log('No status change, skipping')
+    return
+  }
+  
+  // Update UI immediately for better UX
+  task.status = newStatus
+  
+  // Call the update function with both old and new status
+  await updateTaskStatus(task, oldStatus)
 }
 
 async function saveEditedTask () {
@@ -2578,10 +2613,13 @@ async function saveEditedTask () {
   
   const taskIndex = selectedLead.value.tasks.findIndex(t => t.id === editingTask.value.id)
   if (taskIndex !== -1) {
-    // Store old values for event
-    const oldTask = { ...selectedLead.value.tasks[taskIndex] }
+    // Store COMPLETE OLD TASK BEFORE ANY CHANGES
+    const oldTask = { 
+      ...selectedLead.value.tasks[taskIndex],
+      status: selectedLead.value.tasks[taskIndex].status || 'open'
+    }
     
-    // Update task
+    // Now update the task
     selectedLead.value.tasks[taskIndex].title = editTaskTitle.value.trim()
     selectedLead.value.tasks[taskIndex].due = editTaskDue.value ? new Date(editTaskDue.value).toISOString() : null
     selectedLead.value.tasks[taskIndex].note = editTaskNote.value
@@ -2589,19 +2627,80 @@ async function saveEditedTask () {
     selectedLead.value.tasks[taskIndex].updatedBy = currentUser.value.name
     selectedLead.value.tasks[taskIndex].updatedAt = new Date().toISOString()
     
-    // Create update event
+    // Create update event - track all changes
+    const changes = {}
+    const changeDescriptions = [] // For building human-readable description
+    
+    // Check title change
+    if (oldTask.title !== editTaskTitle.value.trim()) {
+      changes.title = { from: oldTask.title, to: editTaskTitle.value.trim() }
+      changeDescriptions.push('title')
+    }
+    
+    // Check status change
+    if (oldTask.status !== editTaskStatus.value) {
+      changes.status = { from: oldTask.status, to: editTaskStatus.value }
+      changeDescriptions.push('status')
+    }
+    
+    // Check due date change
+    const oldDue = oldTask.due ? new Date(oldTask.due).toISOString() : null
+    const newDue = editTaskDue.value ? new Date(editTaskDue.value).toISOString() : null
+    if (oldDue !== newDue) {
+      changes.due = { from: oldDue, to: newDue }
+      changeDescriptions.push('due date')
+    }
+    
+    // Check note change
+    if (oldTask.note !== editTaskNote.value) {
+      changes.note = { from: oldTask.note || '', to: editTaskNote.value || '' }
+      changeDescriptions.push('note')
+    }
+    
+    // Build detailed change description for note field
+    const detailedChanges = []
+    if (changes.note) {
+      const fromNote = changes.note.from ? changes.note.from.slice(0, 50) + (changes.note.from.length > 50 ? '...' : '') : '(empty)'
+      const toNote = changes.note.to ? changes.note.to.slice(0, 50) + (changes.note.to.length > 50 ? '...' : '') : '(empty)'
+      detailedChanges.push(`note: ${fromNote} → ${toNote}`)
+    }
+    if (changes.due) {
+      const fromDate = changes.due.from ? formatDateTimeShort(changes.due.from) : '(not set)'
+      const toDate = changes.due.to ? formatDateTimeShort(changes.due.to) : '(not set)'
+      detailedChanges.push(`due: ${fromDate} → ${toDate}`)
+    }
+    if (changes.title) {
+      const fromTitle = changes.title.from || '(no title)'
+      const toTitle = changes.title.to || '(no title)'
+      detailedChanges.push(`title: ${fromTitle} → ${toTitle}`)
+    }
+    if (changes.status) {
+      const fromStatus = changes.status.from || 'not set'
+      const toStatus = changes.status.to || 'not set'
+      detailedChanges.push(`status: ${fromStatus} → ${toStatus}`)
+    }
+    
+    // Build a human-readable description for the timeline
+    let shortDescription = ''
+    if (changeDescriptions.length === 0) {
+      shortDescription = 'Task updated (no changes)'
+    } else if (changeDescriptions.length === 1) {
+      shortDescription = `Task ${changeDescriptions[0]} updated`
+    } else if (changeDescriptions.length === 2) {
+      shortDescription = `Task ${changeDescriptions[0]} and ${changeDescriptions[1]} updated`
+    } else {
+      shortDescription = `Task ${changeDescriptions.slice(0, -1).join(', ')} and ${changeDescriptions.slice(-1)[0]} updated`
+    }
+    
     const ev = {
       type: 'task_updated',
       at: new Date().toISOString(),
       by: { name: currentUser.value.name },
-      note: `Task updated: ${editTaskTitle.value.trim()}`,
+      note: detailedChanges.join('; '), // Single line with semicolons for display
       metadata: {
-        short: `Task updated: ${editTaskTitle.value.trim()}`,
+        short: shortDescription,
         taskId: editingTask.value.id,
-        changes: {
-          title: { from: oldTask.title, to: editTaskTitle.value.trim() },
-          status: { from: oldTask.status, to: editTaskStatus.value }
-        }
+        changes: changes
       }
     }
     
@@ -2610,7 +2709,26 @@ async function saveEditedTask () {
     }
     selectedLead.value.events.push(ev)
     
+    // ALSO create a status change event if status actually changed
+    if (oldTask.status !== editTaskStatus.value) {
+      const statusEv = {
+        type: 'task_status_changed',
+        at: new Date().toISOString(),
+        by: { name: currentUser.value.name },
+        note: `Task status changed: ${oldTask.status} → ${editTaskStatus.value}`,
+        metadata: {
+          short: `Task "${editTaskTitle.value.trim()}" ${oldTask.status} → ${editTaskStatus.value}`,
+          taskId: editingTask.value.id,
+          changes: { status: { from: oldTask.status, to: editTaskStatus.value } }
+        }
+      }
+      selectedLead.value.events.push(statusEv)
+    }
+    
     console.log('Updated task:', selectedLead.value.tasks[taskIndex])
+    console.log('Changes detected:', changes)
+    console.log('Event description:', shortDescription)
+    console.log('Detailed changes:', detailedChanges)
     
     try {
       const result = await patchLead(selectedLead.value._id, { 
@@ -2620,12 +2738,12 @@ async function saveEditedTask () {
       })
       
       console.log('Task update successful:', result)
-      await loadLeads() // Refresh data
+      await loadLeads()
       
     } catch (err) {
       console.error('Failed to update task:', err)
       alert(`Failed to update task: ${err.message || 'Unknown error'}`)
-      await loadLeads() // Restore from server
+      await loadLeads()
     }
   }
   
@@ -2633,15 +2751,15 @@ async function saveEditedTask () {
 }
 
 // ========== UPDATE STATUS FUNCTIONS - FIXED ==========
-async function updateTaskStatus(task) {
-  console.log('Updating task status for:', task)
+async function updateTaskStatus(task, oldStatus) {
+  console.log('Updating task status:', task.id, 'from', oldStatus, 'to', task.status)
   
   const idx = selectedLead.value.tasks.findIndex(t => t.id === task.id)
   if (idx !== -1) {
-    const before = selectedLead.value.tasks[idx].status || 'open'
+    const before = oldStatus || 'open'
     const after = task.status
     
-    // Update task
+    // Update the task in the array (already updated by handleTaskStatusChange, but ensure consistency)
     selectedLead.value.tasks[idx].status = after
     selectedLead.value.tasks[idx].updatedBy = currentUser.value.name
     selectedLead.value.tasks[idx].updatedAt = new Date().toISOString()
@@ -2674,14 +2792,12 @@ async function updateTaskStatus(task) {
       })
       
       console.log('Task status update successful:', result)
-      
-      // Refresh data
       await loadLeads()
       
     } catch (err) {
       console.error('Failed to update task status:', err)
       alert(`Failed to update task status: ${err.message || 'Unknown error'}`)
-      await loadLeads() // Restore from server
+      await loadLeads()
     }
   }
 }
@@ -3396,7 +3512,10 @@ function eventTitle (ev) {
   if (ev.type === 'call_deleted') return 'Call deleted'
   if (ev.type === 'call_status_changed') return 'Call status changed'
   if (ev.type === 'task_created') return 'Task created'
-  if (ev.type === 'task_updated') return 'Task updated'
+  if (ev.type === 'task_updated') {
+    // Just return "Task updated" - let the note field show the details
+    return 'Task updated'
+  }
   if (ev.type === 'task_deleted') return 'Task deleted'
   if (ev.type === 'task_status_changed') return 'Task status changed'
   if (ev.type === 'status_change') return 'Status changed'

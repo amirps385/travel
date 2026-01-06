@@ -56,6 +56,8 @@ const LeadSchema = new mongoose.Schema(
 
     budget: { type: Number },
 
+     preferredTime: { type: Date }, // Store as Date type
+
     // assignment & users
     assignedToId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 
@@ -76,6 +78,10 @@ const LeadSchema = new mongoose.Schema(
     // source details
     source: { type: String },
     leadSourceDetail: { type: String },
+    // add these fields in LeadSchema:
+message: { type: String, default: '' },
+timezone: { type: String, default: '' },
+
     utm: { type: mongoose.Schema.Types.Mixed },
 
     documents: [{ name: String, url: String, uploadedAt: Date, uploadedBy: String }],

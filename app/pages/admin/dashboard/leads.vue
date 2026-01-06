@@ -370,10 +370,17 @@
                     <div class="text-sm font-medium">{{ selectedLead.email || '—' }}</div>
                     <div class="text-xs text-slate-500">Email</div>
                   </div>
-                  <div>
-                    <div class="text-sm font-medium"><span v-if="selectedLead.countryCode">{{ selectedLead.countryCode }} </span>{{ selectedLead.phone || '—' }}</div>
-                    <div class="text-xs text-slate-500">Phone</div>
-                  </div>
+                  <!-- Country Code -->
+<div>
+  <div class="text-sm font-medium">{{ selectedLead.countryCode || '—' }}</div>
+  <div class="text-xs text-slate-500">Country Calling Code</div>
+</div>
+
+<!-- Phone Number -->
+<div>
+  <div class="text-sm font-medium">{{ selectedLead.phone || '—' }}</div>
+  <div class="text-xs text-slate-500">Phone Number</div>
+</div>
                   <div>
                     <div class="text-sm font-medium">{{ selectedLead.age ?? '—' }}</div>
                     <div class="text-xs text-slate-500">Age</div>
@@ -484,69 +491,101 @@
               </div>
 
               <!-- Trip info -->
-              <div class="border rounded-xl p-4 bg-slate-50/60">
-                <h3 class="text-xs font-semibold text-slate-500 mb-2">Trip</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.prettyDate || '—' }}</div>
-                    <div class="text-xs text-slate-500">Travel date</div>
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.days || '—' }}</div>
-                    <div class="text-xs text-slate-500">Days</div>
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.travellers || 0 }}</div>
-                    <div class="text-xs text-slate-500">Travellers</div>
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.who || '—' }}</div>
-                    <div class="text-xs text-slate-500">Who is travelling</div>
-                  </div>
+<div class="border rounded-xl p-4 bg-slate-50/60">
+  <h3 class="text-xs font-semibold text-slate-500 mb-2">Trip</h3>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.prettyDate || '—' }}</div>
+      <div class="text-xs text-slate-500">Travel date</div>
+    </div>
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.days || '—' }}</div>
+      <div class="text-xs text-slate-500">Days</div>
+    </div>
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.travellers || 0 }}</div>
+      <div class="text-xs text-slate-500">Travellers</div>
+    </div>
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.who || '—' }}</div>
+      <div class="text-xs text-slate-500">Who is travelling</div>
+    </div>
+    
+    <!-- Add Timezone -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.timezone || '—' }}</div>
+      <div class="text-xs text-slate-500">Timezone</div>
+    </div>
+    
+  
+    <!-- Add Preferred call time -->
+<div v-if="selectedLead.preferredTime">
+  <div class="text-sm font-medium">
+    {{ formatDateTime(selectedLead.preferredTime) }}
+  </div>
+  <div class="text-xs text-slate-500">Preferred call date & time</div>
+</div>
+    <div v-else-if="selectedLead.preferredTime">
+      <div class="text-sm font-medium">
+        {{ formatDateTime(selectedLead.preferredTime) }}
+      </div>
+      <div class="text-xs text-slate-500">Preferred call date & time</div>
+    </div>
+    
+    <!-- Add Budget (if exists) -->
+    <div v-if="selectedLead.budget">
+      <div class="text-sm font-medium">${{ selectedLead.budget }}</div>
+      <div class="text-xs text-slate-500">Budget / person</div>
+    </div>
+  </div>
 
-                  <div v-if="selectedLead.budget" class="col-span-2 mt-3">
-                    <div class="text-sm font-medium">${{ selectedLead.budget }}</div>
-                    <div class="text-xs text-slate-500">Budget / person</div>
-                  </div>
-                </div>
+  <!-- Add Message section if message exists -->
+  <div v-if="selectedLead.message" class="mt-4 pt-3 border-t">
+    <div class="flex items-center justify-between mb-1">
+      <h4 class="text-xs font-semibold text-slate-500">Message / notes</h4>
+    </div>
+    <div class="text-sm text-slate-700 bg-white p-3 rounded-lg border">
+      {{ selectedLead.message }}
+    </div>
+  </div>
 
-                <!-- Next follow-up quick input - IMPROVED DESIGN -->
-                <div class="mt-4 pt-3 border-t">
-                  <div class="flex items-center justify-between mb-1">
-                    <h4 class="text-xs font-semibold text-slate-500">Next follow-up</h4>
-                    <div v-if="selectedLead.nextFollowUpAt" class="text-xs text-slate-400">
-                      {{ formatDateTime(selectedLead.nextFollowUpAt) }}
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="flex-1">
-                      <input
-                        type="datetime-local"
-                        v-model="followUpInput"
-                        class="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        :min="getCurrentDateTime()"
-                      />
-                    </div>
-                    <button
-                      class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm hover:bg-sky-700 transition-colors"
-                      @click="setNextFollowUp"
-                      :disabled="!followUpInput"
-                    >
-                      Set follow-up
-                    </button>
-                    <button
-                      v-if="selectedLead.nextFollowUpAt"
-                      class="px-3 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm hover:bg-slate-50 transition-colors"
-                      @click="clearFollowUp"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                  <div v-if="showFollowUpError" class="mt-1 text-xs text-rose-600">
-                    Please select a future date and time
-                  </div>
-                </div>
-              </div>
+  <!-- Next follow-up quick input - IMPROVED DESIGN -->
+  <div class="mt-4 pt-3 border-t">
+    <div class="flex items-center justify-between mb-1">
+      <h4 class="text-xs font-semibold text-slate-500">Next follow-up</h4>
+      <div v-if="selectedLead.nextFollowUpAt" class="text-xs text-slate-400">
+        {{ formatDateTime(selectedLead.nextFollowUpAt) }}
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="flex-1">
+        <input
+          type="datetime-local"
+          v-model="followUpInput"
+          class="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+          :min="getCurrentDateTime()"
+        />
+      </div>
+      <button
+        class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm hover:bg-sky-700 transition-colors"
+        @click="setNextFollowUp"
+        :disabled="!followUpInput"
+      >
+        Set follow-up
+      </button>
+      <button
+        v-if="selectedLead.nextFollowUpAt"
+        class="px-3 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm hover:bg-slate-50 transition-colors"
+        @click="clearFollowUp"
+      >
+        Clear
+      </button>
+    </div>
+    <div v-if="showFollowUpError" class="mt-1 text-xs text-rose-600">
+      Please select a future date and time
+    </div>
+  </div>
+</div>
 
               <!-- quick actions -->
               <div class="flex flex-wrap gap-2">

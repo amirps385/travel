@@ -56,10 +56,8 @@
 
               <!-- CTA Button -->
               <div class="mt-4">
-                <a
-                  :href="calendlyLink"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <NuxtLink
+                  to="/bookacall"
                   class="group inline-flex items-center justify-center bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg border border-amber-400/30 hover:border-amber-300/40"
                 >
                   <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +72,7 @@
                   <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                   </svg>
-                </a>
+                </NuxtLink>
 
                 <!-- Trust indicator -->
                 <p class="mt-4 text-sm text-gray-400 flex items-center">
@@ -259,8 +257,6 @@
 </template>
 
 <script setup>
-const calendlyLink = 'https://calendly.com/zafstours/consultation'
-
 // Real travel expert images from Unsplash
 const expertImages = [
   'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face&q=80', // Professional African woman

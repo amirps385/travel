@@ -58,13 +58,39 @@
       </div>
     </div>
 
+    <!-- Validation summary -->
+    <div v-if="showValidationErrors && !isValid && validationAttempted" class="mb-6">
+      <div class="bg-rose-50 border border-rose-200 rounded-xl p-4">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-rose-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-rose-800 font-medium">
+            Please complete all required fields to generate your itinerary
+          </span>
+        </div>
+        <ul class="text-rose-700 text-sm mt-2 ml-7 list-disc space-y-1">
+          <li v-if="!form.name">Full name is required</li>
+          <li v-if="!form.email || !isEmailValid">Valid email address is required</li>
+          <li v-if="!form.date">Travel date is required</li>
+          <li v-if="form.activities.length === 0">Select at least one activity</li>
+        </ul>
+        <button 
+          @click="showValidationErrors = false"
+          class="ml-7 mt-2 text-sm text-rose-600 hover:text-rose-800 font-medium"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+
     <!-- FORM -->
     <form @submit.prevent="handleSubmit" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- LEFT: Controls -->
       <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow">
         <!-- Activities -->
         <section class="mb-5">
-          <label class="block text-sm font-semibold mb-3">Choose Your Activities</label>
+          <label class="block text-sm font-semibold mb-3">Choose Your Activities <span class="text-rose-500">*</span></label>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <button
               v-for="act in activities"
@@ -126,8 +152,13 @@
         <!-- Travel date & travellers -->
         <section class="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-semibold mb-2">Travel date</label>
-            <input type="date" v-model="form.date" class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-sky-300" />
+            <label class="block text-sm font-semibold mb-2">Travel date <span class="text-rose-500">*</span></label>
+            <input 
+              type="date" 
+              v-model="form.date" 
+              class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-sky-300" 
+              :class="{'border-rose-300': errors.date}"
+            />
             <p v-if="errors.date" class="mt-1 text-xs text-rose-600">{{ errors.date }}</p>
           </div>
 
@@ -160,41 +191,112 @@
         </section>
 
         <!-- Contact -->
-<section>
-  <label class="block text-sm font-semibold mb-3">Contact details</label>
+        <section class="mb-5">
+          <label class="block text-sm font-semibold mb-3">Contact details</label>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-    <input type="text" v-model="form.name" placeholder="Full name" class="border rounded-lg p-3" :data-prefilled="!!form.name" />
-    <input type="email" v-model="form.email" placeholder="Email address" class="border rounded-lg p-3" :data-prefilled="!!form.email" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Full Name -->
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">Full name <span class="text-rose-500">*</span></label>
+              <input 
+                type="text" 
+                v-model="form.name" 
+                placeholder="John Doe" 
+                class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-sky-300" 
+                :class="{'border-rose-300': errors.name}"
+                :data-prefilled="!!form.name" 
+              />
+              <p v-if="errors.name" class="mt-1 text-xs text-rose-600">{{ errors.name }}</p>
+            </div>
+            
+            <!-- Email -->
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">Email address <span class="text-rose-500">*</span></label>
+              <input 
+                type="email" 
+                v-model="form.email" 
+                placeholder="john@example.com" 
+                class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-sky-300" 
+                :class="{'border-rose-300': errors.email}"
+                :data-prefilled="!!form.email" 
+              />
+              <p v-if="errors.email" class="mt-1 text-xs text-rose-600">{{ errors.email }}</p>
+            </div>
 
-    <!-- country code + phone matched UI -->
-    <div class="flex gap-2 items-center">
-      <input
-        type="tel"
-        v-model="form.countryCode"
-        placeholder="+255"
-        aria-label="Country code"
-        class="w-28 text-sm px-3 py-3 border border-gray-300 rounded-l-xl bg-white text-gray-900 text-center focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
-        :data-prefilled="!!form.countryCode"
-      />
+            <!-- Country -->
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">Country</label>
+              <select 
+                v-model="form.country" 
+                class="w-full border rounded-lg p-3 bg-white focus:ring-2 focus:ring-sky-300 focus:border-sky-500"
+                :data-prefilled="!!form.country"
+              >
+                <option value="">Select your country</option>
+                <option v-for="country in countries" :key="country.code" :value="country.name">
+                  {{ country.flag }} {{ country.name }}
+                </option>
+              </select>
+            </div>
 
-      <input
-        type="tel"
-        v-model="form.phone"
-        placeholder="712 345 678"
-        class="flex-1 text-sm px-4 py-3 border border-gray-300 rounded-r-xl bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-        :data-prefilled="!!form.phone"
-      />
-    </div>
+            <!-- Origin City -->
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">Origin city</label>
+              <input 
+                type="text" 
+                v-model="form.originCity" 
+                placeholder="e.g., New York, London, Nairobi" 
+                class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-sky-300" 
+              />
+            </div>
 
-    <input type="text" v-model="form.originCity" placeholder="Origin city" class="border rounded-lg p-3" />
-  </div>
+            <!-- Phone Section - Improved Layout -->
+            <div class="md:col-span-2">
+              <label class="block text-sm text-slate-600 mb-1">Phone number</label>
+              <div class="flex gap-3">
+                <!-- Country Code -->
+                <div class="relative flex-1">
+                  <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-base">+</div>
+                  <input
+                    type="tel"
+                    v-model="form.countryCode"
+                    placeholder="255"
+                    aria-label="Country code"
+                    class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-500"
+                    :data-prefilled="!!form.countryCode"
+                    @input="formatCountryCode"
+                  />
+                </div>
+                
+                <!-- Phone Number -->
+                <div class="flex-2">
+                  <input
+                    type="tel"
+                    v-model="form.phone"
+                    placeholder="712 345 678"
+                    class="w-full px-3 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-500"
+                    :data-prefilled="!!form.phone"
+                    @input="formatPhoneNumber"
+                  />
+                </div>
+              </div>
+              <p class="mt-1 text-xs text-slate-500">Example: +255 712 345 678</p>
+            </div>
+          </div>
+        </section>
 
-  <div class="mt-2 space-y-1">
-    <p v-if="errors.name" class="text-xs text-rose-600">{{ errors.name }}</p>
-    <p v-if="errors.email" class="text-xs text-rose-600">{{ errors.email }}</p>
-  </div>
-</section>
+        <!-- Message / Special Requests -->
+        <section class="mb-5">
+          <label class="block text-sm font-semibold mb-2">Message / Special Requests</label>
+          <p class="text-sm text-slate-500 mb-3">
+            Accommodation preferences, dietary needs, etc.
+          </p>
+          <textarea 
+            v-model="form.message" 
+            rows="4" 
+            placeholder="Enter any special requests, dietary restrictions, accommodation preferences, or other details..."
+            class="w-full border rounded-lg p-3 focus:ring-2 focus:ring-sky-300"
+          ></textarea>
+        </section>
 
       </div>
 
@@ -221,9 +323,26 @@
 
             <div class="font-medium">Travel date</div>
             <div class="text-right">{{ formattedDate }}</div>
+            
+            <div class="font-medium">Country</div>
+            <div class="text-right">{{ form.country || '—' }}</div>
+            
+            <div class="font-medium">Message</div>
+            <div class="text-right">{{ form.message ? '✓ Provided' : '—' }}</div>
           </div>
 
           <div class="pt-3 border-t"></div>
+
+          <!-- Required fields hint -->
+          <div v-if="!isValid" class="text-xs text-rose-600 bg-rose-50 p-2 rounded-lg">
+            <p class="font-medium">Complete required fields to enable button:</p>
+            <ul class="mt-1 ml-4 list-disc space-y-0.5">
+              <li v-if="!form.name">Full name</li>
+              <li v-if="!form.email || !isEmailValid">Valid email</li>
+              <li v-if="!form.date">Travel date</li>
+              <li v-if="form.activities.length === 0">At least one activity</li>
+            </ul>
+          </div>
 
           <div class="flex gap-2">
             <button
@@ -231,6 +350,7 @@
               :disabled="!isValid || isSubmitting"
               class="flex-1 rounded-lg px-4 py-3 text-white font-semibold shadow-md transition disabled:opacity-50 inline-flex items-center justify-center gap-3"
               :class="isValid && !isSubmitting ? 'bg-sky-600 hover:bg-sky-700' : 'bg-slate-400 cursor-not-allowed'"
+              @click="attemptValidation"
             >
               <svg v-if="!isSubmitting" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 19l9-7-9-7-4 7v6l4-4z" />
@@ -270,7 +390,51 @@ const activities = [
 
 const whoOptions = ['single', 'couple', 'groups', 'family']
 
-// Form structure (countryCode added)
+// Popular countries for travel planning
+const countries = [
+  { code: 'US', name: 'United States', flag: '🇺🇸' },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+  { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+  { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+  { code: 'FR', name: 'France', flag: '🇫🇷' },
+  { code: 'IT', name: 'Italy', flag: '🇮🇹' },
+  { code: 'ES', name: 'Spain', flag: '🇪🇸' },
+  { code: 'NL', name: 'Netherlands', flag: '🇳🇱' },
+  { code: 'CH', name: 'Switzerland', flag: '🇨🇭' },
+  { code: 'SE', name: 'Sweden', flag: '🇸🇪' },
+  { code: 'NO', name: 'Norway', flag: '🇳🇴' },
+  { code: 'DK', name: 'Denmark', flag: '🇩🇰' },
+  { code: 'FI', name: 'Finland', flag: '🇫🇮' },
+  { code: 'BE', name: 'Belgium', flag: '🇧🇪' },
+  { code: 'AT', name: 'Austria', flag: '🇦🇹' },
+  { code: 'IE', name: 'Ireland', flag: '🇮🇪' },
+  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿' },
+  { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+  { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
+  { code: 'CN', name: 'China', flag: '🇨🇳' },
+  { code: 'IN', name: 'India', flag: '🇮🇳' },
+  { code: 'AE', name: 'United Arab Emirates', flag: '🇦🇪' },
+  { code: 'ZA', name: 'South Africa', flag: '🇿🇦' },
+  { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
+  { code: 'TZ', name: 'Tanzania', flag: '🇹🇿' },
+  { code: 'UG', name: 'Uganda', flag: '🇺🇬' },
+  { code: 'RW', name: 'Rwanda', flag: '🇷🇼' },
+  { code: 'ET', name: 'Ethiopia', flag: '🇪🇹' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬' },
+  { code: 'GH', name: 'Ghana', flag: '🇬🇭' },
+  { code: 'EG', name: 'Egypt', flag: '🇪🇬' },
+  { code: 'MA', name: 'Morocco', flag: '🇲🇦' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
+  { code: 'MX', name: 'Mexico', flag: '🇲🇽' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+  { code: 'PE', name: 'Peru', flag: '🇵🇪' },
+  { code: 'CO', name: 'Colombia', flag: '🇨🇴' }
+]
+
+// Form structure (country added)
 const form = ref({
   activities: [],
   days: 5,
@@ -282,14 +446,85 @@ const form = ref({
   budget: 1500,
   name: '',
   email: '',
+  country: '', // NEW - Country field
   phone: '',
-  countryCode: '', // NEW
-  originCity: ''
+  countryCode: '',
+  originCity: '',
+  message: '' // NEW - Message field
 })
 
 const errors = ref({})
 const isSubmitting = ref(false)
 const showPrefilledNotification = ref(false)
+const travellersManuallyEdited = ref(false)
+const showValidationErrors = ref(false)
+const validationAttempted = ref(false)
+
+// Email validation helper
+const isEmailValid = computed(() => {
+  if (!form.value.email) return false
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)
+})
+
+// Watch for who changes and update travellers if not manually edited
+watch(() => form.value.who, (newWho) => {
+  if (!travellersManuallyEdited.value) {
+    let defaultTravellers = 1
+    
+    if (newWho === 'single') {
+      defaultTravellers = 1
+    } else if (newWho === 'couple') {
+      defaultTravellers = 2
+    } else if (newWho === 'groups' || newWho === 'family') {
+      defaultTravellers = 3
+    }
+    
+    form.value.travellers = defaultTravellers
+    updateTravellerArrays()
+  }
+})
+
+// Watch for manual travellers input changes
+watch(() => form.value.travellers, () => {
+  travellersManuallyEdited.value = true
+})
+
+// Watch for country selection to auto-fill country code
+watch(() => form.value.country, (newCountry) => {
+  if (newCountry) {
+    const countryObj = countries.find(c => c.name === newCountry)
+    if (countryObj) {
+      // Set common country codes
+      const countryCodeMap = {
+        'United States': '1',
+        'United Kingdom': '44',
+        'Canada': '1',
+        'Australia': '61',
+        'Germany': '49',
+        'France': '33',
+        'Italy': '39',
+        'Spain': '34',
+        'Tanzania': '255',
+        'Kenya': '254',
+        'Uganda': '256',
+        'Rwanda': '250',
+        'South Africa': '27',
+        'India': '91',
+        'China': '86',
+        'Japan': '81',
+        'South Korea': '82',
+        'United Arab Emirates': '971',
+        'Brazil': '55',
+        'Mexico': '52',
+        'Argentina': '54'
+      }
+      
+      if (countryCodeMap[newCountry]) {
+        form.value.countryCode = countryCodeMap[newCountry]
+      }
+    }
+  }
+})
 
 // --- Utilities for phone parsing/normalizing ---
 function normalizeCountryCode(raw = '') {
@@ -322,6 +557,24 @@ function splitCombinedPhone(str = '') {
   return { countryCode: '', phone: s }
 }
 
+// Format country code input
+function formatCountryCode(event) {
+  let value = event.target.value.replace(/\D/g, '')
+  form.value.countryCode = value
+}
+
+// Format phone number input
+function formatPhoneNumber(event) {
+  let value = event.target.value.replace(/\D/g, '')
+  // Format as 712 345 678
+  if (value.length > 6) {
+    value = value.substring(0, 3) + ' ' + value.substring(3, 6) + ' ' + value.substring(6, 9)
+  } else if (value.length > 3) {
+    value = value.substring(0, 3) + ' ' + value.substring(3, 6)
+  }
+  form.value.phone = value
+}
+
 // --- Load prefilled data on mount ---
 onMounted(() => {
   loadPrefilledData()
@@ -348,6 +601,11 @@ function loadFromURLParams() {
     }
     if (urlParams.has('email')) {
       form.value.email = decodeURIComponent(urlParams.get('email') || '')
+    }
+    
+    // Country
+    if (urlParams.has('country')) {
+      form.value.country = decodeURIComponent(urlParams.get('country') || '')
     }
 
     // phone & country code handling: priority -> countryCode param -> phoneCombined -> phone
@@ -432,6 +690,11 @@ function loadFromURLParams() {
       }
     }
 
+    // Message / Special Requests
+    if (urlParams.has('message')) {
+      form.value.message = decodeURIComponent(urlParams.get('message') || '')
+    }
+
     updateTravellerArrays()
 
     // Clear URL parameters (so refresh doesn't keep them)
@@ -452,6 +715,9 @@ function loadFromLocalStorage() {
 
       if (heroData.name) form.value.name = heroData.name
       if (heroData.email) form.value.email = heroData.email
+      
+      // Country
+      if (heroData.country) form.value.country = heroData.country
 
       // countryCode priority: heroData.countryCode -> heroData.phoneCombined -> heroData.phone (with +)
       if (heroData.countryCode) {
@@ -506,6 +772,11 @@ function loadFromLocalStorage() {
             form.value.activities.push(activity)
           }
         })
+      }
+
+      // Message / Special Requests
+      if (heroData.message) {
+        form.value.message = heroData.message
       }
 
       updateTravellerArrays()
@@ -572,6 +843,12 @@ function validate() {
   return Object.keys(errors.value).length === 0
 }
 
+function attemptValidation() {
+  validationAttempted.value = true
+  showValidationErrors.value = true
+  validate()
+}
+
 const isValid = computed(() => {
   return form.value.name && 
          form.value.email && 
@@ -581,6 +858,9 @@ const isValid = computed(() => {
 })
 
 async function handleSubmit() {
+  validationAttempted.value = true
+  showValidationErrors.value = true
+  
   if (!validate()) return
 
   isSubmitting.value = true
@@ -589,13 +869,11 @@ async function handleSubmit() {
     const payload = JSON.parse(JSON.stringify(form.value))
     payload.createdAt = new Date().toISOString()
 
-    if (showPrefilledNotification.value) {
-      payload.source = 'hero_lead_continuation'
-    } else {
-      payload.source = 'journey_page'
-    }
+    // Always set source to 'custom_itinerary' for this page
+    payload.source = 'custom_itinerary'
+    payload.leadSourceDetail = 'Custom itinerary request form'
 
-    // Save to server
+    // Save to server - Updated to include all new fields
     await $fetch('/api/leads', {
       method: 'POST',
       body: payload,
@@ -606,9 +884,20 @@ async function handleSubmit() {
       localStorage.setItem('tripForm', JSON.stringify(payload))
     }
 
-    router.push({ path: '/thankyou' })
+    // Redirect to thank you page
+    router.push({ 
+      path: '/thankyou',
+      query: { 
+        name: form.value.name,
+        activities: form.value.activities.join(', '),
+        days: form.value.days,
+        travellers: form.value.travellers,
+        date: form.value.date,
+        budget: form.value.budget
+      }
+    })
   } catch (err) {
-    console.error(err)
+    console.error('Error saving lead:', err)
     alert('Something went wrong while saving your request. Please try again.')
   } finally {
     isSubmitting.value = false
@@ -627,12 +916,17 @@ function resetForm() {
     budget: 1500,
     name: '',
     email: '',
+    country: '',
     phone: '',
     countryCode: '',
-    originCity: ''
+    originCity: '',
+    message: '' // NEW - Reset message field
   }
   errors.value = {}
   showPrefilledNotification.value = false
+  travellersManuallyEdited.value = false
+  showValidationErrors.value = false
+  validationAttempted.value = false
 
   if (process.client) {
     localStorage.removeItem('heroLeadData')
@@ -650,8 +944,18 @@ input:focus, select:focus, button:focus {
 }
 
 /* Style for prefilled fields */
-input[data-prefilled="true"] {
+input[data-prefilled="true"], select[data-prefilled="true"] {
   background-color: #f0f9ff;
   border-color: #0ea5e9;
+}
+
+/* Required field indicator */
+.text-rose-500 {
+  color: #f43f5e;
+}
+
+/* Border color for error fields */
+.border-rose-300 {
+  border-color: #fda4af;
 }
 </style>

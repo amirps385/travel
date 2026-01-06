@@ -76,6 +76,8 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
 }
 
 
+
+
   // Check if user is trying to change assignment
   if (body.assignedToId !== undefined || body.assignedTo !== undefined) {
     // Only allow superadmin or admin to change assignment
@@ -266,6 +268,12 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
       // --- end follow-up specific fixes ---
     }
   }
+
+  // Handle preferredTime specifically
+if (body.preferredTime !== undefined) {
+  updateData.preferredTime = body.preferredTime ? new Date(body.preferredTime) : null
+}
+
 
   // Update lead
   const lead = await Lead.findByIdAndUpdate(

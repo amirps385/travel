@@ -58,7 +58,26 @@
       </div>
     </div>
 
-    <!-- Country Code + Phone (improved UI) -->
+    <!-- Country Selection -->
+    <div>
+      <label for="country" class="block text-sm font-medium text-gray-800 mb-1.5">
+        Country
+      </label>
+      <select
+        id="country"
+        v-model="form.country"
+        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
+               focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
+        @change="onCountryChange"
+      >
+        <option value="">Select your country</option>
+        <option v-for="country in popularCountries" :key="country.code" :value="country.name">
+          {{ country.flag }} {{ country.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Country Code + Phone -->
     <div>
       <label for="phone" class="block text-sm font-medium text-gray-800 mb-1.5">
         Phone / WhatsApp
@@ -67,16 +86,18 @@
       </label>
 
       <div class="flex gap-2">
-        <!-- Country code small input -->
-        <div class="shrink-0 w-28">
+        <!-- Country code input with + prefix -->
+        <div class="relative shrink-0 w-28">
+          <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">+</div>
           <input
             id="countryCode"
             v-model="form.countryCode"
             type="tel"
             inputmode="tel"
-            placeholder="+255"
+            placeholder="91"
             aria-label="Country code"
-            class="w-full px-3 py-2 border border-gray-300 rounded-xl sm:rounded-l-xl sm:rounded-r-none bg-white text-sm text-gray-900 text-center focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
+            class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-xl sm:rounded-l-xl sm:rounded-r-none bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
+            @input="formatCountryCode"
           />
         </div>
 
@@ -96,13 +117,15 @@
               type="tel"
               inputmode="tel"
               class="flex-1 text-sm text-gray-900 bg-transparent placeholder-gray-400 focus:outline-none"
-              placeholder="123 456 789"
+              placeholder="98765 43210"
+              @input="formatPhoneNumber"
+              maxlength="15" 
             />
           </div>
         </div>
       </div>
 
-      <p class="text-xs text-gray-500 mt-2">Please include '+' in country code. Example: <span class="font-medium">+255 123456789</span></p>
+      <p class="text-xs text-gray-500 mt-2">Example: <span class="font-medium">+91 98765 43210</span> (10 digits)</p>
     </div>
 
     <!-- Trip Type / Destination -->
@@ -253,13 +276,46 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+
+// Popular countries with their country codes
+const popularCountries = [
+  { code: 'TZ', name: 'Tanzania', flag: '🇹🇿', dialCode: '255' },
+  { code: 'KE', name: 'Kenya', flag: '🇰🇪', dialCode: '254' },
+  { code: 'UG', name: 'Uganda', flag: '🇺🇬', dialCode: '256' },
+  { code: 'RW', name: 'Rwanda', flag: '🇷🇼', dialCode: '250' },
+  { code: 'ZA', name: 'South Africa', flag: '🇿🇦', dialCode: '27' },
+  { code: 'IN', name: 'India', flag: '🇮🇳', dialCode: '91' },
+  { code: 'US', name: 'United States', flag: '🇺🇸', dialCode: '1' },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', dialCode: '44' },
+  { code: 'CA', name: 'Canada', flag: '🇨🇦', dialCode: '1' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺', dialCode: '61' },
+  { code: 'DE', name: 'Germany', flag: '🇩🇪', dialCode: '49' },
+  { code: 'FR', name: 'France', flag: '🇫🇷', dialCode: '33' },
+  { code: 'IT', name: 'Italy', flag: '🇮🇹', dialCode: '39' },
+  { code: 'ES', name: 'Spain', flag: '🇪🇸', dialCode: '34' },
+  { code: 'CN', name: 'China', flag: '🇨🇳', dialCode: '86' },
+  { code: 'JP', name: 'Japan', flag: '🇯🇵', dialCode: '81' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷', dialCode: '55' },
+  { code: 'MX', name: 'Mexico', flag: '🇲🇽', dialCode: '52' },
+  { code: 'AE', name: 'United Arab Emirates', flag: '🇦🇪', dialCode: '971' },
+  { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦', dialCode: '966' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬', dialCode: '234' },
+  { code: 'GH', name: 'Ghana', flag: '🇬🇭', dialCode: '233' },
+  { code: 'EG', name: 'Egypt', flag: '🇪🇬', dialCode: '20' },
+  { code: 'MA', name: 'Morocco', flag: '🇲🇦', dialCode: '212' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷', dialCode: '54' },
+  { code: 'CL', name: 'Chile', flag: '🇨🇱', dialCode: '56' },
+  { code: 'PE', name: 'Peru', flag: '🇵🇪', dialCode: '51' },
+  { code: 'CO', name: 'Colombia', flag: '🇨🇴', dialCode: '57' }
+]
 
 const form = ref({
   name: '',
   email: '',
+  country: '', // NEW: country field
   phone: '',
-  countryCode: '', // NEW: separate country code
+  countryCode: '', // Stores numeric code without +
   travelDate: '',
   travellers: '2',
   interests: [],
@@ -269,18 +325,74 @@ const form = ref({
 
 const loading = ref(false)
 
+// Watch for country changes to auto-fill country code
+function onCountryChange() {
+  if (form.value.country) {
+    const countryObj = popularCountries.find(c => c.name === form.value.country)
+    if (countryObj && countryObj.dialCode) {
+      // Set country code without + (just the numbers)
+      form.value.countryCode = countryObj.dialCode
+    }
+  }
+}
+
+// Format country code input (numbers only)
+function formatCountryCode(event) {
+  let value = event.target.value.replace(/\D/g, '')
+  // Limit to 4 digits for country codes
+  if (value.length > 4) {
+    value = value.substring(0, 4)
+  }
+  form.value.countryCode = value
+}
+
+// Format phone number input - FIXED VERSION
+function formatPhoneNumber(event) {
+  let value = event.target.value.replace(/\D/g, '')
+  
+  // Remove any formatting from previous call
+  const rawDigits = value
+  
+  // Don't limit the number of digits - allow up to 15 digits for phone numbers
+  // (Some countries have longer phone numbers)
+  
+  // Format based on length for Indian numbers (10 digits)
+  let formattedValue = rawDigits
+  
+  if (rawDigits.length <= 10) {
+    // Indian format: 98765 43210
+    if (rawDigits.length > 5) {
+      formattedValue = rawDigits.substring(0, 5) + ' ' + rawDigits.substring(5, 10)
+    }
+  } else {
+    // For longer numbers, format in groups of 3 or 4
+    if (rawDigits.length > 7) {
+      formattedValue = rawDigits.substring(0, 3) + ' ' + 
+                      rawDigits.substring(3, 6) + ' ' + 
+                      rawDigits.substring(6, 10) + ' ' +
+                      rawDigits.substring(10, 13)
+    } else if (rawDigits.length > 3) {
+      formattedValue = rawDigits.substring(0, 3) + ' ' + rawDigits.substring(3, 7)
+    }
+  }
+  
+  // Ensure we don't have trailing space
+  formattedValue = formattedValue.trim()
+  
+  // Update the display value (with formatting)
+  form.value.phone = formattedValue
+}
+
 /**
- * Utility: normalize country code to start with +
- * Accepts values like '255', '+255', ' +255 ' -> returns '+255' or ''.
+ * Normalize country code to ensure it's just numbers without +
  */
 function normalizeCountryCode(raw = '') {
   if (!raw) return ''
   const s = String(raw).trim()
   if (!s) return ''
-  if (s.startsWith('+')) return s
-  // If user entered '00' style like 00255 convert to +255
-  if (s.startsWith('00')) return `+${s.slice(2)}`
-  return `+${s}`
+  // Remove any + signs and keep only digits
+  const digits = s.replace(/\D/g, '')
+  return digits
 }
 
 const submitLead = async () => {
@@ -292,26 +404,34 @@ const submitLead = async () => {
   loading.value = true
 
   try {
-    // Normalize country code
-    const normCode = normalizeCountryCode(form.value.countryCode)
+    // Normalize country code to digits only (no +)
+    const countryCodeDigits = normalizeCountryCode(form.value.countryCode)
 
-    // Build interests array (compat)
+    // Build interests array
     const interestsArray = form.value.interests ? [form.value.interests] : []
 
-    // Compose hero lead data (include separate countryCode and phone)
+    // Prepare phone number - remove all formatting spaces and keep only digits
+    const phoneDigits = form.value.phone ? form.value.phone.replace(/\s/g, '') : ''
+
+    // Compose hero lead data
     const leadData = {
       name: form.value.name,
       email: form.value.email,
-      phone: form.value.phone,
-      countryCode: normCode,
+      phone: phoneDigits,
+      countryCode: countryCodeDigits, // Store as digits only
+      country: form.value.country, // Store country name
       travelDate: form.value.travelDate,
       travellers: form.value.travellers,
       interests: interestsArray,
       budget: form.value.budget,
       message: form.value.message,
       source: 'hero_lead',
+      leadSourceDetail: 'Hero form submission',
       submittedAt: new Date().toISOString()
     }
+
+    console.log('Hero lead data:', leadData)
+    console.log('Phone digits:', phoneDigits, 'Length:', phoneDigits.length)
 
     // Save to localStorage + sessionStorage (so journey page can prefill)
     if (typeof window !== 'undefined') {
@@ -320,23 +440,35 @@ const submitLead = async () => {
       sessionStorage.setItem('heroLeadData', JSON.stringify(leadData))
     }
 
-    // Build URL params — include countryCode and phone separately,
-    // and also include a combined 'phoneCombined' param for backwards compat
+    // Build URL params for journey page
     const params = new URLSearchParams()
     params.append('prefilled', 'true')
     params.append('name', form.value.name)
     params.append('email', form.value.email)
-
-    if (form.value.phone) params.append('phone', form.value.phone)
-    if (normCode) params.append('countryCode', normCode)
-
-    // combined phone param e.g. "+255 123456789" so older pages that expected a single phone string still work
-    if (normCode && form.value.phone) {
-      params.append('phoneCombined', `${normCode} ${form.value.phone}`)
-    } else if (form.value.phone) {
-      params.append('phoneCombined', form.value.phone)
+    
+    // Add country field
+    if (form.value.country) {
+      params.append('country', form.value.country)
+    }
+    
+    // Add country code (digits only)
+    if (countryCodeDigits) {
+      params.append('countryCode', countryCodeDigits)
+    }
+    
+    // Add phone
+    if (phoneDigits) {
+      params.append('phone', phoneDigits)
     }
 
+    // Also include combined phone for backward compatibility
+    if (countryCodeDigits && phoneDigits) {
+      params.append('phoneCombined', `+${countryCodeDigits} ${phoneDigits}`)
+    } else if (phoneDigits) {
+      params.append('phoneCombined', phoneDigits)
+    }
+
+    // Add other fields
     if (form.value.travelDate) params.append('travelDate', form.value.travelDate)
     if (form.value.travellers) params.append('travellers', form.value.travellers)
     if (form.value.budget) params.append('budget', form.value.budget)
@@ -344,10 +476,18 @@ const submitLead = async () => {
       params.append('interests', JSON.stringify(interestsArray))
     }
 
-    // immediate redirect (short timeout for UX)
+    // ADD ONLY THIS LINE: Include message in URL parameters
+    if (form.value.message) {
+      params.append('message', encodeURIComponent(form.value.message))
+    }
+
+    console.log('Redirecting to journey with params:', params.toString())
+
+    // Immediate redirect with short timeout for better UX
     setTimeout(() => {
       window.location.href = `/journey?${params.toString()}`
     }, 80)
+
   } catch (error) {
     console.error('Error submitting lead:', error)
     alert('Something went wrong. Please try again.')
@@ -362,5 +502,11 @@ const submitLead = async () => {
 input:focus, select:focus, button:focus {
   outline: 2px solid rgba(96,165,250,0.35);
   outline-offset: 2px;
+}
+
+/* Country code input styling */
+input#countryCode {
+  text-align: center;
+  font-family: monospace;
 }
 </style>

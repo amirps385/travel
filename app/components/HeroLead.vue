@@ -1,19 +1,19 @@
 <template>
-  <form @submit.prevent="submitLead" class="space-y-5">
+  <form @submit.prevent="submitLead" class="space-y-6">
     <!-- Form Header -->
     <div class="text-center mb-2">
       <h4 class="text-xl font-bold text-gray-900">
-        Plan Your Dream Trip
+        Plan Your Dream Trip in 30 Seconds
       </h4>
-      <p class="text-sm text-gray-700 mt-1">
-        Get your free custom quote in 24 hours
+      <p class="text-sm text-gray-700 mt-2">
+        Tell us who's traveling and when you're arriving — and unlock a personalized plan crafted just for you.
       </p>
     </div>
 
-    <!-- Full Name -->
+    <!-- Adults Count -->
     <div>
-      <label for="fullName" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Full Name <span class="text-red-500">*</span>
+      <label for="adults" class="block text-sm font-medium text-gray-800 mb-2">
+        Adults <span class="text-red-500">*</span>
       </label>
       <div class="relative">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -23,136 +23,49 @@
           </svg>
         </div>
         <input
-          id="fullName"
-          v-model="form.name"
-          type="text"
+          id="adults"
+          v-model.number="form.adults"
+          type="number"
+          min="1"
+          max="20"
           required
-          class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
+          class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
                  focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
-          placeholder="John Doe"
+          placeholder="Number of adults"
         />
       </div>
     </div>
 
-    <!-- Email -->
+    <!-- Children Count -->
     <div>
-      <label for="email" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Email Address <span class="text-red-500">*</span>
+      <label for="children" class="block text-sm font-medium text-gray-800 mb-2">
+        Children
+        <span class="text-xs text-gray-600 font-normal block mt-0.5">(Under 12 years)</span>
       </label>
       <div class="relative">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 2.5v-5.5m0 5.5h-5.5m5.5 0l-2.5-2.5" />
           </svg>
         </div>
         <input
-          id="email"
-          v-model="form.email"
-          type="email"
-          required
-          class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
+          id="children"
+          v-model.number="form.children"
+          type="number"
+          min="0"
+          max="20"
+          class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
                  focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
-          placeholder="john@example.com"
+          placeholder="Number of children"
         />
       </div>
     </div>
 
-    <!-- Country Selection -->
+    <!-- Estimated Arrival Date -->
     <div>
-      <label for="country" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Country
-      </label>
-      <select
-        id="country"
-        v-model="form.country"
-        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
-               focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
-        @change="onCountryChange"
-      >
-        <option value="">Select your country</option>
-        <option v-for="country in popularCountries" :key="country.code" :value="country.name">
-          {{ country.flag }} {{ country.name }}
-        </option>
-      </select>
-    </div>
-
-    <!-- Country Code + Phone -->
-    <div>
-      <label for="phone" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Phone / WhatsApp
-        <span class="text-xs text-gray-600 font-normal"> (include country code)</span>
-        <span class="text-xs text-gray-600 font-normal"> — optional but recommended</span>
-      </label>
-
-      <div class="flex gap-2">
-        <!-- Country code input with + prefix -->
-        <div class="relative shrink-0 w-28">
-          <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">+</div>
-          <input
-            id="countryCode"
-            v-model="form.countryCode"
-            type="tel"
-            inputmode="tel"
-            placeholder="91"
-            aria-label="Country code"
-            class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-xl sm:rounded-l-xl sm:rounded-r-none bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all"
-            @input="formatCountryCode"
-          />
-        </div>
-
-        <!-- Phone main input -->
-        <div class="flex-1">
-          <div
-            class="flex items-center border border-gray-300 rounded-xl sm:rounded-l-none sm:rounded-r-xl px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-amber-500/30"
-          >
-            <svg class="h-5 w-5 text-gray-400 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498A1 1 0 0121 18.72V22a2 2 0 01-2 2h-1C9.716 24 3 17.284 3 9V5z" />
-            </svg>
-
-            <input
-              id="phone"
-              v-model="form.phone"
-              type="tel"
-              inputmode="tel"
-              class="flex-1 text-sm text-gray-900 bg-transparent placeholder-gray-400 focus:outline-none"
-              placeholder="98765 43210"
-              @input="formatPhoneNumber"
-              maxlength="15" 
-            />
-          </div>
-        </div>
-      </div>
-
-      <p class="text-xs text-gray-500 mt-2">Example: <span class="font-medium">+91 98765 43210</span> (10 digits)</p>
-    </div>
-
-    <!-- Trip Type / Destination -->
-    <div>
-      <label for="tripType" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Trip Type / Destination <span class="text-red-500">*</span>
-      </label>
-      <select
-        id="tripType"
-        v-model="form.interests"
-        required
-        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
-               focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
-      >
-        <option value="" disabled selected>Select your adventure</option>
-        <option value="safari">Tanzania Safari</option>
-        <option value="kilimanjaro">Climbing Kilimanjaro</option>
-        <option value="zanzibar">Zanzibar &amp; Beach</option>
-        <option value="cultural">Day Trip / Cultural</option>
-        <option value="custom">Custom Trip / Multi-destination</option>
-      </select>
-    </div>
-
-    <!-- Travel Dates -->
-    <div>
-      <label for="travelDate" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Approx. Travel Date <span class="text-red-500">*</span>
+      <label for="arrivalDate" class="block text-sm font-medium text-gray-800 mb-2">
+        Estimated arrival date <span class="text-red-500">*</span>
       </label>
       <div class="relative">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -162,89 +75,32 @@
           </svg>
         </div>
         <input
-          id="travelDate"
-          v-model="form.travelDate"
+          id="arrivalDate"
+          v-model="form.arrivalDate"
           type="date"
           required
-          class="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
+          class="pl-10 w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
                  focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
+          :min="minDate"
         />
       </div>
-      <p class="text-xs text-gray-600 mt-1">Flexible dates? Approximate is fine.</p>
-    </div>
-
-    <!-- Number of Travellers -->
-    <div>
-      <label for="travellers" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Number of Travellers <span class="text-red-500">*</span>
-      </label>
-      <select
-        id="travellers"
-        v-model="form.travellers"
-        required
-        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
-               focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
-      >
-        <option value="1">1 Person</option>
-        <option value="2">2 People</option>
-        <option value="3-4">3–4 People</option>
-        <option value="5-6">5–6 People</option>
-        <option value="7+">7+ People</option>
-        <option value="group">Group (10+)</option>
-      </select>
-    </div>
-
-    <!-- Budget -->
-    <div>
-      <label for="budget" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Budget Range (per person)
-        <span class="text-xs text-gray-600 font-normal block mt-0.5">Helps us tailor recommendations</span>
-      </label>
-      <select
-        id="budget"
-        v-model="form.budget"
-        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
-               focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200"
-      >
-        <option value="">Select budget</option>
-        <option value="1000-2000">$1,000 - $2,000</option>
-        <option value="2000-3000">$2,000 - $3,000</option>
-        <option value="3000-5000">$3,000 - $5,000</option>
-        <option value="5000+">$5,000+</option>
-        <option value="custom">Custom/Luxury</option>
-      </select>
-    </div>
-
-    <!-- Message -->
-    <div>
-      <label for="message" class="block text-sm font-medium text-gray-800 mb-1.5">
-        Message / Special Requests
-        <span class="text-xs text-gray-600 font-normal block mt-0.5">Accommodation preferences, dietary needs, etc.</span>
-      </label>
-      <textarea
-        id="message"
-        v-model="form.message"
-        rows="3"
-        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white text-sm text-gray-900
-               focus:outline-none focus:ring-2 focus:ring-amber-500/70 focus:border-amber-500 transition-all duration-200 resize-none"
-        placeholder="Tell us about your dream trip, any special requirements, or questions..."
-      ></textarea>
+      <p class="text-xs text-gray-600 mt-2">Flexible dates? Approximate is fine.</p>
     </div>
 
     <!-- Submit Button -->
     <button
       type="submit"
       :disabled="loading"
-      class="w-full py-3 bg-linear-to-r from-amber-500 via-amber-400 to-emerald-600 text-white font-semibold rounded-xl
+      class="w-full py-3.5 bg-linear-to-r from-amber-500 via-amber-400 to-emerald-600 text-white font-bold rounded-xl
              shadow-lg shadow-amber-900/25 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300
-             disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+             disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 text-base"
     >
       <div v-if="!loading" class="flex items-center justify-center">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
-        Get Free Quote Now
+        Get My Personalized Plan
       </div>
       <div v-else class="flex items-center justify-center">
         <svg class="animate-spin h-5 w-5 mr-2 text-white" fill="none" viewBox="0 0 24 24">
@@ -252,151 +108,56 @@
           <path class="opacity-75" fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
-        Processing...
+        Creating your plan...
       </div>
     </button>
 
     <!-- Trust & Privacy Note -->
-    <div class="pt-2">
+    <div class="pt-3">
       <div class="flex items-center justify-center text-xs text-gray-600 mb-2">
         <svg class="w-4 h-4 mr-1.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd"
             d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
             clip-rule="evenodd" />
         </svg>
-        <span>We'll get back to you within 24 hours</span>
+        <span>100% free · No commitment required</span>
       </div>
       <p class="text-xs text-center text-gray-600">
-        By submitting, you agree to our
+        We'll get back to you within 24 hours with a personalized itinerary.
         <a href="/privacy" class="text-emerald-700 hover:text-emerald-800 font-medium">Privacy Policy</a>.
-        Your information is secure.
       </p>
     </div>
   </form>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
-// Popular countries with their country codes
-const popularCountries = [
-  { code: 'TZ', name: 'Tanzania', flag: '🇹🇿', dialCode: '255' },
-  { code: 'KE', name: 'Kenya', flag: '🇰🇪', dialCode: '254' },
-  { code: 'UG', name: 'Uganda', flag: '🇺🇬', dialCode: '256' },
-  { code: 'RW', name: 'Rwanda', flag: '🇷🇼', dialCode: '250' },
-  { code: 'ZA', name: 'South Africa', flag: '🇿🇦', dialCode: '27' },
-  { code: 'IN', name: 'India', flag: '🇮🇳', dialCode: '91' },
-  { code: 'US', name: 'United States', flag: '🇺🇸', dialCode: '1' },
-  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', dialCode: '44' },
-  { code: 'CA', name: 'Canada', flag: '🇨🇦', dialCode: '1' },
-  { code: 'AU', name: 'Australia', flag: '🇦🇺', dialCode: '61' },
-  { code: 'DE', name: 'Germany', flag: '🇩🇪', dialCode: '49' },
-  { code: 'FR', name: 'France', flag: '🇫🇷', dialCode: '33' },
-  { code: 'IT', name: 'Italy', flag: '🇮🇹', dialCode: '39' },
-  { code: 'ES', name: 'Spain', flag: '🇪🇸', dialCode: '34' },
-  { code: 'CN', name: 'China', flag: '🇨🇳', dialCode: '86' },
-  { code: 'JP', name: 'Japan', flag: '🇯🇵', dialCode: '81' },
-  { code: 'BR', name: 'Brazil', flag: '🇧🇷', dialCode: '55' },
-  { code: 'MX', name: 'Mexico', flag: '🇲🇽', dialCode: '52' },
-  { code: 'AE', name: 'United Arab Emirates', flag: '🇦🇪', dialCode: '971' },
-  { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦', dialCode: '966' },
-  { code: 'NG', name: 'Nigeria', flag: '🇳🇬', dialCode: '234' },
-  { code: 'GH', name: 'Ghana', flag: '🇬🇭', dialCode: '233' },
-  { code: 'EG', name: 'Egypt', flag: '🇪🇬', dialCode: '20' },
-  { code: 'MA', name: 'Morocco', flag: '🇲🇦', dialCode: '212' },
-  { code: 'AR', name: 'Argentina', flag: '🇦🇷', dialCode: '54' },
-  { code: 'CL', name: 'Chile', flag: '🇨🇱', dialCode: '56' },
-  { code: 'PE', name: 'Peru', flag: '🇵🇪', dialCode: '51' },
-  { code: 'CO', name: 'Colombia', flag: '🇨🇴', dialCode: '57' }
-]
+// Set minimum date to today
+const minDate = computed(() => {
+  const today = new Date()
+  return today.toISOString().split('T')[0]
+})
+
+// Get current date formatted as YYYY-MM-DD for default
+const getCurrentDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const form = ref({
-  name: '',
-  email: '',
-  country: '', // NEW: country field
-  phone: '',
-  countryCode: '', // Stores numeric code without +
-  travelDate: '',
-  travellers: '2',
-  interests: [],
-  budget: '',
-  message: ''
+  adults: 2,
+  children: 0,
+  arrivalDate: getCurrentDate() // Default to today
 })
 
 const loading = ref(false)
 
-// Watch for country changes to auto-fill country code
-function onCountryChange() {
-  if (form.value.country) {
-    const countryObj = popularCountries.find(c => c.name === form.value.country)
-    if (countryObj && countryObj.dialCode) {
-      // Set country code without + (just the numbers)
-      form.value.countryCode = countryObj.dialCode
-    }
-  }
-}
-
-// Format country code input (numbers only)
-function formatCountryCode(event) {
-  let value = event.target.value.replace(/\D/g, '')
-  // Limit to 4 digits for country codes
-  if (value.length > 4) {
-    value = value.substring(0, 4)
-  }
-  form.value.countryCode = value
-}
-
-// Format phone number input - FIXED VERSION
-function formatPhoneNumber(event) {
-  let value = event.target.value.replace(/\D/g, '')
-  
-  // Remove any formatting from previous call
-  const rawDigits = value
-  
-  // Don't limit the number of digits - allow up to 15 digits for phone numbers
-  // (Some countries have longer phone numbers)
-  
-  // Format based on length for Indian numbers (10 digits)
-  let formattedValue = rawDigits
-  
-  if (rawDigits.length <= 10) {
-    // Indian format: 98765 43210
-    if (rawDigits.length > 5) {
-      formattedValue = rawDigits.substring(0, 5) + ' ' + rawDigits.substring(5, 10)
-    }
-  } else {
-    // For longer numbers, format in groups of 3 or 4
-    if (rawDigits.length > 7) {
-      formattedValue = rawDigits.substring(0, 3) + ' ' + 
-                      rawDigits.substring(3, 6) + ' ' + 
-                      rawDigits.substring(6, 10) + ' ' +
-                      rawDigits.substring(10, 13)
-    } else if (rawDigits.length > 3) {
-      formattedValue = rawDigits.substring(0, 3) + ' ' + rawDigits.substring(3, 7)
-    }
-  }
-  
-  // Ensure we don't have trailing space
-  formattedValue = formattedValue.trim()
-  
-  // Update the display value (with formatting)
-  form.value.phone = formattedValue
-}
-
-/**
- * Normalize country code to ensure it's just numbers without +
- */
-function normalizeCountryCode(raw = '') {
-  if (!raw) return ''
-  const s = String(raw).trim()
-  if (!s) return ''
-  // Remove any + signs and keep only digits
-  const digits = s.replace(/\D/g, '')
-  return digits
-}
-
 const submitLead = async () => {
-  if (!form.value.name || !form.value.email || !form.value.travelDate) {
+  if (!form.value.adults || !form.value.arrivalDate) {
     alert('Please fill in all required fields')
     return
   }
@@ -404,84 +165,66 @@ const submitLead = async () => {
   loading.value = true
 
   try {
-    // Normalize country code to digits only (no +)
-    const countryCodeDigits = normalizeCountryCode(form.value.countryCode)
-
-    // Build interests array
-    const interestsArray = form.value.interests ? [form.value.interests] : []
-
-    // Prepare phone number - remove all formatting spaces and keep only digits
-    const phoneDigits = form.value.phone ? form.value.phone.replace(/\s/g, '') : ''
-
-    // Compose hero lead data
+    // Prepare lead data for the journey page
     const leadData = {
-      name: form.value.name,
-      email: form.value.email,
-      phone: phoneDigits,
-      countryCode: countryCodeDigits, // Store as digits only
-      country: form.value.country, // Store country name
-      travelDate: form.value.travelDate,
-      travellers: form.value.travellers,
-      interests: interestsArray,
-      budget: form.value.budget,
-      message: form.value.message,
-      source: 'hero_lead',
-      leadSourceDetail: 'Hero form submission',
+      adults: parseInt(form.value.adults),
+      children: parseInt(form.value.children) || 0,
+      arrivalDate: form.value.arrivalDate,
+      totalTravelers: parseInt(form.value.adults) + (parseInt(form.value.children) || 0),
+      source: 'hero_quick_lead',
+      leadSourceDetail: 'Hero 30-second form submission',
       submittedAt: new Date().toISOString()
     }
 
     console.log('Hero lead data:', leadData)
-    console.log('Phone digits:', phoneDigits, 'Length:', phoneDigits.length)
 
-    // Save to localStorage + sessionStorage (so journey page can prefill)
+    // CLEAR ALL OLD DATA FIRST before saving new
     if (typeof window !== 'undefined') {
-      localStorage.setItem('heroLeadData', JSON.stringify(leadData))
-      localStorage.setItem('heroLeadTimestamp', Date.now().toString())
+      // Clear old localStorage data
+      localStorage.removeItem('heroLeadData')
+      localStorage.removeItem('heroQuickLeadData')
+      localStorage.removeItem('prefilledAdults')
+      localStorage.removeItem('prefilledChildren')
+      localStorage.removeItem('prefilledArrivalDate')
+      localStorage.removeItem('journeyForm') // Clear old journey form data too
+      
+      // Clear old sessionStorage data
+      sessionStorage.removeItem('heroLeadData')
+      sessionStorage.removeItem('heroQuickLeadData')
+      sessionStorage.removeItem('prefilledAdults')
+      sessionStorage.removeItem('prefilledChildren')
+      sessionStorage.removeItem('prefilledArrivalDate')
+      
+      // Now save NEW data to sessionStorage (primary - clears when tab closes)
       sessionStorage.setItem('heroLeadData', JSON.stringify(leadData))
+      
+      // Also save to localStorage (backup, but fresh)
+      localStorage.setItem('heroLeadData', JSON.stringify(leadData))
+      
+      // Store simple values for easy access
+      sessionStorage.setItem('prefilledAdults', form.value.adults)
+      sessionStorage.setItem('prefilledChildren', form.value.children || '0')
+      sessionStorage.setItem('prefilledArrivalDate', form.value.arrivalDate)
+      
+      localStorage.setItem('prefilledAdults', form.value.adults)
+      localStorage.setItem('prefilledChildren', form.value.children || '0')
+      localStorage.setItem('prefilledArrivalDate', form.value.arrivalDate)
     }
 
-    // Build URL params for journey page
+    // Build URL params for journey page - pass the 3 key fields
     const params = new URLSearchParams()
     params.append('prefilled', 'true')
-    params.append('name', form.value.name)
-    params.append('email', form.value.email)
+    params.append('adults', form.value.adults)
+    params.append('children', form.value.children || '0')
+    params.append('arrivalDate', form.value.arrivalDate)
+    params.append('source', 'hero_quick')
     
-    // Add country field
-    if (form.value.country) {
-      params.append('country', form.value.country)
-    }
-    
-    // Add country code (digits only)
-    if (countryCodeDigits) {
-      params.append('countryCode', countryCodeDigits)
-    }
-    
-    // Add phone
-    if (phoneDigits) {
-      params.append('phone', phoneDigits)
-    }
-
-    // Also include combined phone for backward compatibility
-    if (countryCodeDigits && phoneDigits) {
-      params.append('phoneCombined', `+${countryCodeDigits} ${phoneDigits}`)
-    } else if (phoneDigits) {
-      params.append('phoneCombined', phoneDigits)
-    }
-
-    // Add other fields
-    if (form.value.travelDate) params.append('travelDate', form.value.travelDate)
-    if (form.value.travellers) params.append('travellers', form.value.travellers)
-    if (form.value.budget) params.append('budget', form.value.budget)
-    if (interestsArray.length > 0) {
-      params.append('interests', JSON.stringify(interestsArray))
-    }
-
-    // ADD ONLY THIS LINE: Include message in URL parameters
-    if (form.value.message) {
-      params.append('message', encodeURIComponent(form.value.message))
-    }
+    // Calculate total travelers
+    const total = parseInt(form.value.adults) + (parseInt(form.value.children) || 0)
+    params.append('travelers', total)
 
     console.log('Redirecting to journey with params:', params.toString())
+    console.log('Cleared old storage and saved new data')
 
     // Immediate redirect with short timeout for better UX
     setTimeout(() => {
@@ -495,18 +238,44 @@ const submitLead = async () => {
     loading.value = false
   }
 }
+
+// On component mount, check if we should prefill from URL params
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search)
+    const prefilledAdults = urlParams.get('adults')
+    const prefilledChildren = urlParams.get('children')
+    const prefilledArrivalDate = urlParams.get('arrivalDate')
+    
+    if (prefilledAdults) form.value.adults = parseInt(prefilledAdults)
+    if (prefilledChildren) form.value.children = parseInt(prefilledChildren)
+    if (prefilledArrivalDate) form.value.arrivalDate = prefilledArrivalDate
+  }
+})
 </script>
 
 <style scoped>
-/* keep styling consistent with journey page */
-input:focus, select:focus, button:focus {
+/* Style for number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: auto;
+  cursor: pointer;
+}
+
+/* Keep focus styles consistent */
+input:focus, button:focus {
   outline: 2px solid rgba(96,165,250,0.35);
   outline-offset: 2px;
 }
 
-/* Country code input styling */
-input#countryCode {
-  text-align: center;
-  font-family: monospace;
+/* Make date input show calendar icon */
+input[type="date"] {
+  color-scheme: light;
+}
+
+/* Ensure placeholder text is visible */
+input::placeholder {
+  color: #9ca3af;
 }
 </style>

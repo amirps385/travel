@@ -375,6 +375,30 @@
 </template>
 
 <script setup>
+
+  // In Hero.vue's script setup
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  // Clear any old hero form data when homepage loads
+  // This ensures fresh start every time user visits homepage
+  if (typeof window !== 'undefined') {
+    console.log('Homepage loaded - clearing old hero form data from storage')
+    
+    // Clear old hero data but NOT journeyForm (preserves user progress if they go back)
+    localStorage.removeItem('heroLeadData')
+    localStorage.removeItem('heroQuickLeadData')
+    localStorage.removeItem('prefilledAdults')
+    localStorage.removeItem('prefilledChildren')
+    localStorage.removeItem('prefilledArrivalDate')
+    
+    sessionStorage.removeItem('heroLeadData')
+    sessionStorage.removeItem('heroQuickLeadData')
+    sessionStorage.removeItem('prefilledAdults')
+    sessionStorage.removeItem('prefilledChildren')
+    sessionStorage.removeItem('prefilledArrivalDate')
+  }
+})
 // scroll to tours section when primary button is clicked
 const scrollToTours = () => {
   const toursSection = document.querySelector('#tours')

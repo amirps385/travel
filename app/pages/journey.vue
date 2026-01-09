@@ -1325,7 +1325,7 @@ async function handleSubmit() {
       timezone: timezone, // Browser-detected timezone
       consentToContact: form.consentToContact,
       source: 'custom_itinerary',
-      leadSourceDetail: 'Requested form via custom itinerary page'
+      leadSourceDetail: 'Homepage Hero - 30-second Trip Planner Form'
     }
 
     if (process.client) localStorage.setItem('journeyForm', JSON.stringify(payload))
@@ -1350,19 +1350,159 @@ async function handleSubmit() {
 
 onMounted(() => {
   try {
+    // First check for prefilled data from URL parameters (hero form)
+    const urlParams = new URLSearchParams(window.location.search)
+    const isPrefilled = urlParams.get('prefilled') === 'true'
+    
+    // ALWAYS prioritize URL parameters over localStorage
+    if (isPrefilled) {
+      const prefilledAdults = urlParams.get('adults')
+      const prefilledChildren = urlParams.get('children') || '0'
+      const prefilledArrivalDate = urlParams.get('arrivalDate')
+      
+      console.log('🚀 Prefilled data from hero form URL params (HIGHEST PRIORITY):', {
+        adults: prefilledAdults,
+        children: prefilledChildren,
+        arrivalDate: prefilledArrivalDate
+      })
+      
+      // Update form with prefilled values
+      if (prefilledAdults) {
+        form.adults = parseInt(prefilledAdults)
+        // Initialize adult ages array
+        const needed = Math.max(1, Number(prefilledAdults) || 1)
+        form.adultAges = Array(needed).fill(30)
+      }
+      
+      if (prefilledChildren) {
+        form.children = parseInt(prefilledChildren)
+        // Initialize child ages array
+        const needed = Math.max(0, Number(prefilledChildren) || 0)
+        form.childAges = Array(needed).fill(1)
+      }
+      
+      if (prefilledArrivalDate) {
+        // Check if it's a full date or just month
+        if (prefilledArrivalDate.includes('-') && prefilledArrivalDate.length === 10) {
+          // Full date YYYY-MM-DD
+          form.date = prefilledArrivalDate
+          dateIsMonthOnly.value = false
+        } else if (prefilledArrivalDate.length === 7) {
+          // Just month YYYY-MM
+          form.monthValue = prefilledArrivalDate
+          dateIsMonthOnly.value = true
+        }
+      }
+      
+      // IMPORTANT: Clear localStorage/sessionStorage for these fields 
+      // when we have URL params to prevent old data from persisting
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('heroLeadData')
+        localStorage.removeItem('heroQuickLeadData')
+        sessionStorage.removeItem('heroLeadData')
+        sessionStorage.removeItem('heroQuickLeadData')
+      }
+    }
+    
+    // Only check storage if NO URL parameters were provided
+    else {
+      console.log('No URL params found, checking storage for data...')
+      
+      // Check sessionStorage first (most recent)
+      let heroLeadData = null
+      
+      try {
+        heroLeadData = sessionStorage.getItem('heroLeadData')
+        if (!heroLeadData) {
+          // Fallback to localStorage
+          heroLeadData = localStorage.getItem('heroLeadData')
+        }
+      } catch (e) {
+        console.error('Error accessing storage:', e)
+      }
+      
+      if (heroLeadData) {
+        try {
+          const parsedHeroData = JSON.parse(heroLeadData)
+          console.log('Found hero lead data in storage (NO URL params):', parsedHeroData)
+          
+          // Only use storage data if we don't have URL params
+          if (parsedHeroData.adults) {
+            form.adults = parsedHeroData.adults
+            const needed = Math.max(1, Number(parsedHeroData.adults) || 1)
+            form.adultAges = Array(needed).fill(30)
+          }
+          
+          if (parsedHeroData.children !== undefined) {
+            form.children = parsedHeroData.children
+            const needed = Math.max(0, Number(parsedHeroData.children) || 0)
+            form.childAges = Array(needed).fill(1)
+          }
+          
+          if (parsedHeroData.arrivalDate) {
+            const arrivalDate = parsedHeroData.arrivalDate
+            if (arrivalDate.includes('-') && arrivalDate.length === 10) {
+              form.date = arrivalDate
+              dateIsMonthOnly.value = false
+            } else if (arrivalDate.length === 7) {
+              form.monthValue = arrivalDate
+              dateIsMonthOnly.value = true
+            }
+          }
+          
+        } catch (e) {
+          console.error('Error parsing hero lead data:', e)
+        }
+      }
+    }
+    
+    // Always check for cached journey form data (user progress) 
+    // but don't let it override URL params or hero form data
     const cached = localStorage.getItem('journeyForm')
     if (cached) {
       const parsed = JSON.parse(cached)
-      // hydrate only known keys
+      console.log('Found cached journeyForm (user progress):', parsed)
+      
+      // Only hydrate fields that weren't set by URL params or hero form
       Object.keys(parsed).forEach(k => {
-        if (k in form) form[k] = parsed[k]
+        if (k in form) {
+          // Don't override if URL params already set these
+          const urlHasAdults = isPrefilled && urlParams.has('adults')
+          const urlHasChildren = isPrefilled && urlParams.has('children')
+          const urlHasDate = isPrefilled && urlParams.has('arrivalDate')
+          
+          const shouldSkip = 
+            (k === 'adults' && (isPrefilled || form.adults !== 2)) ||
+            (k === 'children' && (isPrefilled || form.children !== 0)) ||
+            (k === 'date' && (isPrefilled || form.date)) ||
+            (k === 'monthValue' && (isPrefilled || form.monthValue))
+          
+          if (!shouldSkip) {
+            form[k] = parsed[k]
+          }
+        }
       })
-      if (parsed.date && parsed.date.length === 7) {
+      
+      if (parsed.date && parsed.date.length === 7 && !form.monthValue) {
         form.monthValue = parsed.date.slice(0,7)
         dateIsMonthOnly.value = true
       }
     }
-  } catch (e) { /* ignore */ }
+    
+    // Log final state for debugging
+    console.log('✅ Final form state after loading:', {
+      adults: form.adults,
+      children: form.children,
+      date: form.date,
+      monthValue: form.monthValue,
+      adultAges: form.adultAges,
+      childAges: form.childAges,
+      source: isPrefilled ? 'URL params' : (cached ? 'cached journey' : 'defaults')
+    })
+    
+  } catch (e) { 
+    console.error('❌ Error loading prefilled data:', e)
+  }
 })
 
 const displayDate = computed(() => {

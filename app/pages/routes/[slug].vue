@@ -3,33 +3,30 @@
     <!-- Image Modal -->
     <div v-if="modalOpen" class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/90"
          @click.self="closeModal">
-      <!-- Close Button -->
-      <button @click="closeModal" 
+      <button @click="closeModal"
               class="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      
+
       <div class="relative max-w-7xl w-full h-full flex items-center justify-center">
         <div class="relative w-full max-h-[85vh] flex flex-col">
-          <!-- Image Container -->
           <div class="flex-1 flex items-center justify-center overflow-hidden">
-            <img :src="modalImage" :alt="modalAlt" 
+            <img :src="modalImage" :alt="modalAlt"
                  class="max-w-full max-h-full object-contain rounded-lg" />
           </div>
-          
-          <!-- Navigation arrows for gallery images -->
-          <div v-if="isGalleryModal && experience.gallery.length > 1" 
+
+          <div v-if="isGalleryModal && experience.gallery.length > 1"
                class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-between px-4">
-            <button @click.stop="prevImage" 
+            <button @click.stop="prevImage"
                     class="p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors disabled:opacity-30"
                     :disabled="currentGalleryIndex <= 0">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <button @click.stop="nextImage" 
+            <button @click.stop="nextImage"
                     class="p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
                     :disabled="currentGalleryIndex >= experience.gallery.length - 1">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,14 +34,12 @@
               </svg>
             </button>
           </div>
-          
-          <!-- Image caption -->
+
           <div v-if="modalAlt" class="mt-4 text-center text-white text-sm md:text-base">
             {{ modalAlt }}
           </div>
-          
-          <!-- Gallery counter -->
-          <div v-if="isGalleryModal && experience.gallery.length > 1" 
+
+          <div v-if="isGalleryModal && experience.gallery.length > 1"
                class="mt-2 text-center text-white/80 text-sm">
             {{ currentGalleryIndex + 1 }} / {{ experience.gallery.length }}
           </div>
@@ -244,7 +239,6 @@
               <h3 class="text-lg font-semibold text-gray-900 mb-3">Quick Facts</h3>
 
               <dl class="grid grid-cols-2 gap-4 text-sm text-gray-700">
-                <!-- Start Altitude -->
                 <div>
                   <dt class="text-xs text-gray-500">Start Altitude</dt>
                   <dd class="font-medium">
@@ -255,7 +249,6 @@
                   </dd>
                 </div>
 
-                <!-- Max Altitude -->
                 <div>
                   <dt class="text-xs text-gray-500">Max Altitude</dt>
                   <dd class="font-medium">
@@ -266,7 +259,6 @@
                   </dd>
                 </div>
 
-                <!-- Total Distance -->
                 <div>
                   <dt class="text-xs text-gray-500">Total Distance</dt>
                   <dd class="font-medium">
@@ -277,7 +269,6 @@
                   </dd>
                 </div>
 
-                <!-- Best Season -->
                 <div>
                   <dt class="text-xs text-gray-500">Best Season</dt>
                   <dd class="font-medium">
@@ -288,7 +279,6 @@
                   </dd>
                 </div>
 
-                <!-- Acclimatization -->
                 <div class="col-span-2">
                   <dt class="text-xs text-gray-500">Acclimatization</dt>
                   <dd class="font-medium">
@@ -327,10 +317,10 @@
             <section v-if="experience.gallery && experience.gallery.length" class="rounded-2xl bg-white p-5 shadow-sm">
               <h3 class="text-lg font-semibold text-gray-900 mb-3">Gallery</h3>
               <div class="grid grid-cols-3 gap-2">
-                <div v-for="(img, i) in experience.gallery.slice(0, 9)" :key="i" 
+                <div v-for="(img, i) in experience.gallery.slice(0, 9)" :key="i"
                      class="h-20 overflow-hidden rounded-lg cursor-zoom-in hover:opacity-90 transition-opacity group relative"
                      @click="openGalleryModal(img, i)">
-                  <img :src="img" :alt="experience.name + ' image ' + (i+1)" 
+                  <img :src="img" :alt="experience.name + ' image ' + (i+1)"
                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" />
                   <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
                 </div>
@@ -357,7 +347,8 @@
 <script setup>
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useHead, useSeoMeta } from '#imports' // Nuxt auto imports
+import { useHead, useSeoMeta } from '#imports'
+
 const route = useRoute()
 const slug = route.params.slug
 
@@ -366,7 +357,6 @@ const loading = ref(true)
 const error = ref(null)
 const openFaqs = ref({})
 
-// Modal state
 const modalOpen = ref(false)
 const modalImage = ref('')
 const modalAlt = ref('')
@@ -375,13 +365,12 @@ const currentGalleryIndex = ref(0)
 
 const placeholderHero = '/images/placeholder-hero.jpg'
 
-// format price
+// Helpers / UI computed
 const priceFormatted = computed(() => {
   if (!experience.value) return '—'
   return experience.value.startingPrice || experience.value.priceFrom || (experience.value.startingPrice === 0 ? '0' : '—')
 })
 
-// display duration with robust fallback
 const displayDuration = computed(() => {
   if (!experience.value) return ''
   const min = experience.value.durationMin
@@ -400,7 +389,6 @@ const hasWhatsIncluded = computed(() => {
 
 const sortedItinerary = computed(() => {
   if (!experience.value?.itinerary) return []
-  // ensure we sort by .day if present, else fallback to array order
   return [...experience.value.itinerary].sort((a, b) => ( (a.day || 0) - (b.day || 0) ))
 })
 
@@ -418,7 +406,7 @@ function toggleFaq(i) {
   openFaqs.value[i] = !openFaqs.value[i]
 }
 
-// Modal functions
+// modal
 function openModal(imageSrc, alt = '') {
   modalImage.value = imageSrc
   modalAlt.value = alt
@@ -462,50 +450,121 @@ function prevImage() {
   }
 }
 
-// Keyboard navigation
 function handleKeydown(event) {
   if (!modalOpen.value) return
-  
   switch(event.key) {
-    case 'Escape':
-      closeModal()
-      break
-    case 'ArrowRight':
-      if (isGalleryModal.value) nextImage()
-      break
-    case 'ArrowLeft':
-      if (isGalleryModal.value) prevImage()
-      break
+    case 'Escape': closeModal(); break
+    case 'ArrowRight': if (isGalleryModal.value) nextImage(); break
+    case 'ArrowLeft': if (isGalleryModal.value) prevImage(); break
   }
+}
+
+/**
+ * Normalizes and ensures there are upcoming group climbs for UI.
+ * - supports different field names
+ * - moves past/invalid dates into the future
+ * - if empty and running on localhost, generate mock climbs
+ */
+function ensureGroupClimbs(raw) {
+  // Accept multiple property names
+  let climbs = raw?.groupClimbs || raw?.group_climbs || raw?.groupEvents || raw?.group_climbs || []
+
+  // If climbs is not an array, try to coerce
+  if (!Array.isArray(climbs)) {
+    climbs = climbs ? [climbs] : []
+  }
+
+  const now = new Date()
+  const normalized = climbs.map((g, idx) => {
+    // support multiple possible date keys
+    const origDate = g?.date || g?.startDate || g?.start_date || g?.when || null
+    let dt = null
+    if (origDate) {
+      try {
+        dt = new Date(origDate)
+        if (isNaN(dt.getTime())) dt = null
+      } catch { dt = null }
+    }
+
+    // If invalid/past, set to future spaced dates
+    if (!dt || dt <= now) {
+      const future = new Date(now)
+      future.setDate(now.getDate() + 7 * (idx + 1)) // 7 days x index spacing
+      return {
+        ...g,
+        date: future.toISOString()
+      }
+    }
+
+    // normalized ISO
+    return {
+      ...g,
+      date: dt.toISOString()
+    }
+  })
+
+  // If normalized is empty and we're on localhost, generate 3 mock climbs for dev
+  if ((!normalized || normalized.length === 0) && (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))) {
+    const mock = []
+    for (let i = 1; i <= 3; i++) {
+      const d = new Date(now)
+      d.setDate(now.getDate() + 7 * i)
+      mock.push({
+        id: `mock-${i}`,
+        date: d.toISOString(),
+        days: (raw?.defaultDays) || 7,
+        groupSize: (raw?.defaultGroupSize) || 8,
+        price: (raw?.defaultPrice) || 1200,
+        spotsLeft: (raw?.defaultSpotsLeft) || 8,
+        title: raw?.name ? `${raw.name} - Mock Group ${i}` : `Mock Group ${i}`
+      })
+    }
+    console.debug('[routes/slug] generated mock group climbs (localhost)', mock)
+    return mock
+  }
+
+  return normalized
 }
 
 async function fetchExperience(slugParam) {
   loading.value = true
   error.value = null
   try {
-    // use $fetch to call your API
-    const res = await $fetch(`/api/routes/${encodeURIComponent(slugParam)}`).catch(err => { throw err })
+    const res = await $fetch(`/api/routes/${encodeURIComponent(slugParam)}`)
     if (!res || !res.success) {
       throw createError({ statusCode: 404, message: 'Route not found' })
     }
+
+    // attach raw data
     experience.value = res.data
 
-    // init FAQs open state: open first by default
+    // Debug: log returned group climb fields so you can inspect in console
+    console.debug('[routes/slug] API groupClimbs keys:', {
+      has_groupClimbs: Array.isArray(res.data?.groupClimbs),
+      has_group_climbs: Array.isArray(res.data?.group_climbs),
+      has_groupEvents: Array.isArray(res.data?.groupEvents),
+      returned: res.data?.groupClimbs || res.data?.group_climbs || res.data?.groupEvents || null
+    })
+
+    // initialize FAQs open state
     openFaqs.value = {}
     if (Array.isArray(experience.value.faqs)) {
       experience.value.faqs.forEach((f, idx) => (openFaqs.value[idx] = idx === 0))
     }
 
-    // console debug helpful info
-    console.debug('[routes/slug] loaded', {
-      name: experience.value.name,
-      duration: experience.value.duration,
-      min: experience.value.durationMin,
-      max: experience.value.durationMax,
-      gallery: (experience.value.gallery || []).length
-    })
+    // ENSURE group climbs exist and are upcoming
+    experience.value.groupClimbs = ensureGroupClimbs(experience.value)
 
-    // set head meta — prefers SEO values from API where present
+    // finally sort by date ascending
+    if (Array.isArray(experience.value.groupClimbs)) {
+      experience.value.groupClimbs.sort((a, b) => {
+        try { return new Date(a.date) - new Date(b.date) } catch { return 0 }
+      })
+    }
+
+    console.debug('[routes/slug] final groupClimbs used on page', experience.value.groupClimbs || [])
+
+    // set meta/seo
     const title = experience.value.seo?.title || experience.value.name || 'Route'
     const desc = experience.value.seo?.description || experience.value.shortDescription || (experience.value.description || '').slice(0, 160)
     useHead({
@@ -532,107 +591,51 @@ async function fetchExperience(slugParam) {
   }
 }
 
-// Utility: display a stat value or a placeholder
-function displayStatValue(val) {
-  if (val === undefined || val === null || String(val).trim() === '') return '—'
-  return String(val)
-}
-
-/*
-  Best season formatting helper
-  Accepts:
-   - { from, to, detail } (new)
-   - { value: 'Jan–Mar', detail: '' } (legacy)
-   - 'Jan–Mar' string
-   - null/undefined
-*/
+// Utility & helpers
+function displayStatValue(val) { if (val === undefined || val === null || String(val).trim() === '') return '—'; return String(val) }
 function formatBestSeasonDisplay(bestSeason) {
   if (!bestSeason) return 'Year-round'
-
-  // new style object
   if (typeof bestSeason === 'object') {
     if (bestSeason.from || bestSeason.to) {
       const from = bestSeason.from || ''
       const to = bestSeason.to || ''
       if (from.toLowerCase().includes('year') || to.toLowerCase().includes('year')) return 'Year-round'
-      if (from && to) {
-        return `${from}${from === to ? '' : ' – ' + to}`
-      }
+      if (from && to) return `${from}${from === to ? '' : ' – ' + to}`
       return (from || to) || 'Year-round'
     }
-    // legacy object with value
-    if (bestSeason.value) {
-      return String(bestSeason.value)
-    }
+    if (bestSeason.value) return String(bestSeason.value)
   }
-
   if (typeof bestSeason === 'string') {
     const s = bestSeason.trim()
     if (!s) return 'Year-round'
     return s
   }
-
   return 'Year-round'
 }
+function extractBestSeasonDetail(bestSeason) { if (!bestSeason) return ''; if (typeof bestSeason === 'object') return bestSeason.detail || ''; return '' }
 
-// extract detail/note from bestSeason in all shapes
-function extractBestSeasonDetail(bestSeason) {
-  if (!bestSeason) return ''
-  if (typeof bestSeason === 'object') {
-    return bestSeason.detail || ''
-  }
-  return ''
-}
-
-// initial load
 onMounted(() => {
   const s = route.params.slug
   if (s) fetchExperience(s)
-  
-  // Add keyboard event listener
   window.addEventListener('keydown', handleKeydown)
 })
 
-// Cleanup event listener
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
-  // Ensure overflow is reset if modal is open when component unmounts
   if (modalOpen.value) {
     document.body.style.overflow = 'auto'
     document.documentElement.style.overflow = 'auto'
   }
 })
 
-// refetch if slug changes
-watch(() => route.params.slug, (val) => {
-  if (val) fetchExperience(val)
-})
+watch(() => route.params.slug, (val) => { if (val) fetchExperience(val) })
 </script>
 
 <style scoped>
-/* small helpers */
 .animate-spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* basic page spacing */
 main { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-
-/* responsive tweaks */
-@media (min-width: 1024px) {
-  header .bg-white\/6 { padding: 2rem; }
-}
-
-/* Modal animations */
-.fixed {
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+@media (min-width: 1024px) { header .bg-white\/6 { padding: 2rem; } }
+.fixed { animation: fadeIn 0.2s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>

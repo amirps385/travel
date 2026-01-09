@@ -38,10 +38,9 @@ export default defineEventHandler(async (event) => {
     let query: any = { _id: id }
     
     // If user is not admin/superadmin, allow access ONLY if the lead is assigned to them
-if (!['admin', 'superadmin'].includes(currentUser.role)) {
-  query.assignedToId = currentUser._id || currentUser.id
-}
-
+    if (!['admin', 'superadmin'].includes(currentUser.role)) {
+      query.assignedToId = currentUser._id || currentUser.id
+    }
     
     const lead = (await Lead.findOne(query)
       .populate('assignedToId', 'name email role')
@@ -67,7 +66,8 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
       ...lead,
       _id: String(lead._id),
       id: String(lead._id),
-      assignedTo: assignedTo || null
+      assignedTo: assignedTo || null,
+      closedDate: lead.closedDate ? new Date(lead.closedDate).toISOString() : null
     }
   } catch (err: any) {
     console.error('Get lead error:', err)

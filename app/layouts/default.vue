@@ -30,7 +30,8 @@ const noPaddingPaths = [
   '/blog',        // Blog index page
   '/gallery',      // Gallery index page
   '/experiences', // Experiences index page
-   '/bookacall' 
+   '/bookacall',  // Book a Call page
+   '/groupclimb', // Group Climbs index page
 ]
 
 const mainClasses = computed(() => {

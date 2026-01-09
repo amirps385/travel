@@ -154,6 +154,10 @@
                 >
                   {{ statusLabelFrom(lead.status) }}
                 </span>
+                <!-- Show closed date if exists -->
+                <div v-if="lead.closedDate" class="text-xs text-slate-500 mt-1">
+                  {{ formatDateShort(lead.closedDate) }}
+                </div>
               </td>
 
               <!-- PRIORITY -->
@@ -174,12 +178,15 @@
               <!-- ACTIONS -->
               <td class="p-3 text-right">
                 <div class="inline-flex items-center gap-2 justify-end">
-                  <button
-                    class="px-3 py-1 text-xs rounded-full border hover:bg-slate-100"
-                    @click.stop="goToBuild(lead)"
-                  >
-                    Build
-                  </button>
+                 <button
+  class="px-3 py-1 text-xs rounded-full border hover:bg-slate-100"
+  :class="{'opacity-50 cursor-not-allowed': lead.status === 'new'}"
+  :disabled="lead.status === 'new'"
+  @click.stop="goToBuild(lead)"
+  :title="lead.status === 'new' ? 'New leads cannot be built yet' : 'Build Itinerary'"
+>
+  Build
+</button>
                   <button
                     class="px-3 py-1 text-xs rounded-full border hover:bg-slate-100"
                     @click.stop="openStatusChangeFor(lead)"
@@ -313,7 +320,15 @@
                   {{ selectedLead.assignedTo?.name || 'Unassigned' }}
                 </button>
 
-                <button class="px-4 py-2 rounded-lg bg-emerald-600 text-white" @click="handleConvert(selectedLead)">Convert / Build</button>
+                <button 
+  class="px-4 py-2 rounded-lg text-white"
+  :class="selectedLead.status === 'new' ? 'bg-emerald-400 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'"
+  :disabled="selectedLead.status === 'new'"
+  @click="handleConvert(selectedLead)"
+  :title="selectedLead.status === 'new' ? 'New leads cannot be converted yet' : 'Convert / Build'"
+>
+  Convert / Build
+</button>
 
                 <button class="px-4 py-2 rounded-lg border bg-white" @click="startEdit">Edit contact</button>
               </div>
@@ -335,6 +350,15 @@
               <div>
                 <div class="text-xs text-slate-500">Status</div>
                 <div class="mt-1 text-lg font-semibold">{{ statusLabelFrom(selectedLead.status) }}</div>
+                <!-- Show closed reason if applicable -->
+                <div v-if="(selectedLead.status === 'closed-lost' || selectedLead.status === 'closed-won') && selectedLead.closedReason" 
+                     class="text-xs text-slate-600 mt-1">
+                  {{ selectedLead.closedReason }}
+                </div>
+                <!-- Show closed date if applicable -->
+                <div v-if="selectedLead.closedDate" class="text-xs text-slate-400 mt-1">
+                  Closed: {{ formatDateShort(selectedLead.closedDate) }}
+                </div>
                 <div class="text-xs text-slate-400 mt-1">Updated: {{ formatDateTime(lastEventAt(selectedLead)) }}</div>
               </div>
               <div class="text-3xl">{{ statusIcon(selectedLead.status) }}</div>
@@ -361,139 +385,213 @@
             <!-- LEFT: Details (big) -->
             <div class="lg:col-span-2 space-y-4">
 
-              <!-- Contact card (editable) -->
-              <div class="border rounded-xl p-4 bg-slate-50/60">
-                <h3 class="text-xs font-semibold text-slate-500 mb-2">Contact</h3>
-
-                <div v-if="!isEditingLead" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.email || '—' }}</div>
-                    <div class="text-xs text-slate-500">Email</div>
-                  </div>
-                  <!-- Country Code -->
-<div>
-  <div class="text-sm font-medium">{{ selectedLead.countryCode || '—' }}</div>
-  <div class="text-xs text-slate-500">Country Calling Code</div>
-</div>
-
-<!-- Phone Number -->
-<div>
-  <div class="text-sm font-medium">{{ selectedLead.phone || '—' }}</div>
-  <div class="text-xs text-slate-500">Phone Number</div>
-</div>
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.age ?? '—' }}</div>
-                    <div class="text-xs text-slate-500">Age</div>
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.originCity || '—' }}</div>
-                    <div class="text-xs text-slate-500">Origin city</div>
-                  </div>
-                  <div>
-                    <div class="text-sm font-medium">{{ selectedLead.country || '—' }}</div>
-                    <div class="text-xs text-slate-500">Country</div>
-                  </div>
-                  
-                  <div>
-  <div class="text-sm font-medium">{{ humanizeSource(selectedLead.source) || 'Website Form' }}</div>
-  <div class="text-xs text-slate-500">Lead source</div>
-</div>
-
-
-                 <div>
-  <div class="text-sm font-medium">{{ selectedLead.leadSourceDetail || '—' }}</div>
-  <div class="text-xs text-slate-500">Source detail</div>
-</div>
-
-                </div>
-
-                <div v-else>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-xs text-slate-500 mb-1">Name</label>
-                      <input v-model="editForm.name" class="w-full border rounded px-2 py-1" />
-                    </div>
-                    <div>
-                      <label class="block text-xs text-slate-500 mb-1">Email</label>
-                      <input v-model="editForm.email" type="email" class="w-full border rounded px-2 py-1" />
-                    </div>
-                    <div class="flex gap-2">
-                      <div class="w-28">
-                        <label class="block text-xs text-slate-500 mb-1">Code</label>
-                        <input v-model="editForm.countryCode" placeholder="+255" class="w-full border rounded px-2 py-1" />
-                      </div>
-                      <div class="flex-1">
-                        <label class="block text-xs text-slate-500 mb-1">Phone (10 digits)</label>
-                        <input 
-                          v-model="editForm.phone" 
-                          type="tel" 
-                          class="w-full border rounded px-2 py-1"
-                          @input="validatePhoneNumber"
-                          maxlength="10"
-                        />
-                        <div v-if="editForm.phone && editForm.phone.length !== 10" class="text-xs text-rose-600 mt-1">
-                          Phone number must be 10 digits
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label class="block text-xs text-slate-500 mb-1">Age</label>
-                      <input type="number" v-model.number="editForm.age" min="1" max="120" class="w-full border rounded px-2 py-1" />
-                    </div>
-                    <div>
-                      <label class="block text-xs text-slate-500 mb-1">Origin city</label>
-                      <input v-model="editForm.originCity" class="w-full border rounded px-2 py-1" />
-                    </div>
-                    <div>
-                      <label class="block text-xs text-slate-500 mb-1">Country</label>
-                      <input v-model="editForm.country" class="w-full border rounded px-2 py-1" />
-                    </div>
-
-                    <div class="md:col-span-2">
-                      <label class="block text-xs text-slate-500 mb-1">Lead source</label>
-                      <select v-model="editForm.source" class="w-full border rounded px-2 py-1">
-                        <option value="">Select source</option>
-                        <optgroup label="📩 Website">
-                          <option value="website_form">Website Form</option>
-                          <option value="custom_itinerary">Custom Itinerary Request</option>
-                          <option value="book_call">Book a Call</option>
-                        </optgroup>
-                        <optgroup label="💬 Direct">
-                          <option value="whatsapp">WhatsApp</option>
-                          <option value="phone">Phone Call</option>
-                          <option value="email">Email</option>
-                        </optgroup>
-                        <optgroup label="📣 Marketing">
-                          <option value="google_ads">Google Ads</option>
-                          <option value="social_media">Social media platform</option>
-                          <option value="organic_search">Organic Search</option>
-                        </optgroup>
-                        <optgroup label="🤝 Referrals">
-                          <option value="referral_past_client">Referral – Past Client</option>
-                          <option value="partner_agent">Partner / Agent</option>
-                        </optgroup>
-                        <optgroup label="⚙️ Internal">
-                          <option value="manual">Manual Entry</option>
-                        </optgroup>
-                      </select>
-                    </div>
-
-                    <div class="md:col-span-2">
-                      <label class="block text-xs text-slate-500 mb-1">Source detail</label>
-                      <input v-model="editForm.leadSourceDetail" placeholder="e.g. ad campaign name, referrer name" class="w-full border rounded px-2 py-1" />
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="selectedLead.utm" class="mt-3 text-xs text-slate-400">
-                  UTM: {{ selectedLead.utm.source || '—' }} / {{ selectedLead.utm.medium || '—' }} / {{ selectedLead.utm.campaign || '—' }}
-                </div>
-              </div>
-
-              <!-- Trip info -->
+             <!-- Contact card (editable) -->
 <div class="border rounded-xl p-4 bg-slate-50/60">
-  <h3 class="text-xs font-semibold text-slate-500 mb-2">Trip</h3>
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <h3 class="text-xs font-semibold text-slate-500 mb-2">Contact</h3>
+
+  <div v-if="!isEditingLead" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <!-- Name -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.name || '—' }}</div>
+      <div class="text-xs text-slate-500">Full Name</div>
+    </div>
+    
+    <!-- Email -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.email || '—' }}</div>
+      <div class="text-xs text-slate-500">Email</div>
+    </div>
+    
+    <!-- Country Code -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.countryCode || '—' }}</div>
+      <div class="text-xs text-slate-500">Country Code</div>
+    </div>
+    
+    <!-- Phone Number -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.phone || '—' }}</div>
+      <div class="text-xs text-slate-500">Phone Number</div>
+    </div>
+    
+    <!-- Country -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.country || '—' }}</div>
+      <div class="text-xs text-slate-500">Country</div>
+    </div>
+    
+    <!-- Timezone -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.timezone || 'Not detected' }}</div>
+      <div class="text-xs text-slate-500">
+        {{ selectedLead.timezone ? 'Browser Timezone' : 'Timezone' }}
+        <span v-if="selectedLead.timezone" class="text-green-600">✓</span>
+      </div>
+    </div>
+    
+    <!-- Origin City -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.originCity || '—' }}</div>
+      <div class="text-xs text-slate-500">Origin City</div>
+    </div>
+    
+    <!-- Preferred Contact Method -->
+    <div v-if="selectedLead.preferredContactMethod">
+      <div class="text-sm font-medium">{{ selectedLead.preferredContactMethod }}</div>
+      <div class="text-xs text-slate-500">Preferred Contact</div>
+    </div>
+
+    <!-- Lead Source (readable) -->
+    <div>
+      <div class="text-sm font-medium">{{ humanizeSource(selectedLead.source) || 'Website Form' }}</div>
+      <div class="text-xs text-slate-500">Lead source</div>
+    </div>
+
+    <!-- Lead Source Detail (readable) -->
+    <div v-if="selectedLead.leadSourceDetail">
+      <div class="text-sm font-medium" :title="selectedLead.leadSourceDetail">
+        {{ displaySourceDetail(selectedLead.leadSourceDetail) }}
+      </div>
+      <div class="text-xs text-slate-500 flex items-center gap-2">
+        <span>Source detail</span>
+        
+      </div>
+    </div>
+
+    
+    <!-- Scheduled Call -->
+    <div v-if="selectedLead.scheduleCall" class="md:col-span-2">
+      <div class="text-sm font-medium text-emerald-600">✓ Call Scheduled</div>
+      <div class="text-xs text-slate-500">Client requested a call</div>
+    </div>
+  </div>
+
+  <!-- Editing mode -->
+  <div v-else>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="md:col-span-2">
+        <label class="block text-xs text-slate-500 mb-1">Full Name</label>
+        <input v-model="editForm.name" class="w-full border rounded px-2 py-1" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">Email</label>
+        <input v-model="editForm.email" type="email" class="w-full border rounded px-2 py-1" />
+      </div>
+      <div class="flex gap-2">
+        <div class="w-28">
+          <label class="block text-xs text-slate-500 mb-1">Code</label>
+          <input v-model="editForm.countryCode" placeholder="+255" class="w-full border rounded px-2 py-1" />
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs text-slate-500 mb-1">Phone</label>
+          <input 
+            v-model="editForm.phone" 
+            type="tel" 
+            class="w-full border rounded px-2 py-1"
+            @input="validatePhoneNumber"
+          />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">Country</label>
+        <input v-model="editForm.country" class="w-full border rounded px-2 py-1" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">Origin City</label>
+        <input v-model="editForm.originCity" class="w-full border rounded px-2 py-1" />
+      </div>
+      
+      <!-- New fields for editing -->
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">Timezone</label>
+        <input v-model="editForm.timezone" class="w-full border rounded px-2 py-1" placeholder="e.g., Asia/Kolkata" />
+      </div>
+
+      <!-- Source (editable as dropdown token) -->
+      <div class="md:col-span-2">
+        <label class="block text-xs text-slate-500 mb-1">Lead source</label>
+        <!-- keep name="source" so any focus helper can find it -->
+        <select
+          name="source"
+          v-model="editForm.source"
+          class="w-full border rounded px-2 py-1"
+          ref="sourceSelect"
+        >
+          <option value="">Select source</option>
+
+          <optgroup label="📩 Website">
+            <option value="website_form">Website Form</option>
+            <option value="custom_itinerary">Custom Itinerary Request</option>
+            <option value="book_call">Book a Call</option>
+            <option value="request_quote">Request a Quote</option>
+          </optgroup>
+
+          <optgroup label="💬 Direct">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="phone">Phone Call</option>
+            <option value="email">Email</option>
+          </optgroup>
+
+          <optgroup label="📣 Marketing">
+            <option value="google_ads">Google Ads</option>
+            <option value="facebook_ad">Facebook ad</option>
+            <option value="instagram_ad">Instagram ad</option>
+            <option value="social_media">Social media platform</option>
+            <option value="organic_search">Organic Search</option>
+          </optgroup>
+
+          <optgroup label="🤝 Referrals">
+            <option value="referral_past_client">Referral – Past Client</option>
+            <option value="partner_agent">Partner / Agent</option>
+          </optgroup>
+
+          <optgroup label="⚙️ Internal">
+            <option value="manual">Manual Entry</option>
+            <option value="import">Import</option>
+          </optgroup>
+        </select>
+
+        <div class="text-xs text-slate-400 mt-1">Choose a source token (backend-friendly). You can store a human label in leadSourceDetail when needed.</div>
+      </div>
+
+      <!-- Source detail (editable, free text) -->
+      <div class="md:col-span-2">
+        <label class="block text-xs text-slate-500 mb-1">Source detail (optional)</label>
+        <input v-model="editForm.leadSourceDetail" placeholder="More context (e.g., campaign name or form id)" class="w-full border rounded px-2 py-1" />
+        <div class="text-xs text-slate-400 mt-1">This shows in the lead view as the friendly string.</div>
+      </div>
+
+      
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">Preferred Contact</label>
+        <select v-model="editForm.preferredContactMethod" class="w-full border rounded px-2 py-1">
+          <option value="">Select method</option>
+          <option value="Email">Email</option>
+          <option value="Phone">Phone</option>
+          <option value="WhatsApp">WhatsApp</option>
+        </select>
+      </div>
+      
+      <div class="flex items-center gap-2 md:col-span-2">
+        <input type="checkbox" v-model="editForm.scheduleCall" id="scheduleCall" class="w-4 h-4" />
+        <label for="scheduleCall" class="text-xs text-slate-500">Schedule a call with travel expert</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- UTM tracking -->
+  <div v-if="selectedLead.utm" class="mt-3 text-xs text-slate-400">
+    UTM: {{ selectedLead.utm.source || '—' }} / {{ selectedLead.utm.medium || '—' }} / {{ selectedLead.utm.campaign || '—' }}
+  </div>
+</div>
+
+
+             <!-- Trip info -->
+<div class="border rounded-xl p-4 bg-slate-50/60">
+  <h3 class="text-xs font-semibold text-slate-500 mb-2">Trip Details</h3>
+  
+  <!-- First row: Basic trip info -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
     <div>
       <div class="text-sm font-medium">{{ selectedLead.prettyDate || '—' }}</div>
       <div class="text-xs text-slate-500">Travel date</div>
@@ -504,53 +602,119 @@
     </div>
     <div>
       <div class="text-sm font-medium">{{ selectedLead.travellers || 0 }}</div>
-      <div class="text-xs text-slate-500">Travellers</div>
+      <div class="text-xs text-slate-500">Total Travellers</div>
     </div>
     <div>
       <div class="text-sm font-medium">{{ selectedLead.who || '—' }}</div>
-      <div class="text-xs text-slate-500">Who is travelling</div>
+      <div class="text-xs text-slate-500">Group Type</div>
+    </div>
+  </div>
+  
+  <!-- Second row: Detailed breakdown -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+    <!-- Adults & Children -->
+    <div v-if="selectedLead.adults !== undefined">
+      <div class="text-sm font-medium">{{ selectedLead.adults || 0 }} Adults, {{ selectedLead.children || 0 }} Children</div>
+      <div class="text-xs text-slate-500">Travel group breakdown</div>
     </div>
     
-    <!-- Add Timezone -->
-    <div>
-      <div class="text-sm font-medium">{{ selectedLead.timezone || '—' }}</div>
+    <!-- Destination Countries -->
+    <div v-if="selectedLead.countries && selectedLead.countries.length">
+      <div class="text-sm font-medium">{{ selectedLead.countries.join(', ') }}</div>
+      <div class="text-xs text-slate-500">Destination Countries</div>
+    </div>
+    
+    <!-- Activities (THIS IS WHERE IT GOES) -->
+    <div v-if="selectedLead.activities && selectedLead.activities.length" class="sm:col-span-2 lg:col-span-2">
+      <div class="text-sm font-medium">
+        {{ selectedLead.activities.map(a => formatActivityName(a)).join(', ') }}
+      </div>
+      <div class="text-xs text-slate-500">Selected Activities</div>
+    </div>
+  </div>
+  
+  <!-- Rest of the Trip section remains the same... -->
+  <!-- Third row: Additional trip details -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+    <!-- Budget -->
+    <div v-if="selectedLead.budget">
+      <div class="text-sm font-medium">${{ selectedLead.budget.toLocaleString() }}</div>
+      <div class="text-xs text-slate-500">Budget per person</div>
+    </div>
+    
+    <!-- Kilimanjaro Route -->
+    <div v-if="selectedLead.kilimanjaroRoute">
+      <div class="text-sm font-medium">{{ selectedLead.kilimanjaroRoute.replace(/_/g, ' ').toUpperCase() }}</div>
+      <div class="text-xs text-slate-500">Kilimanjaro Route</div>
+    </div>
+    
+    <!-- Timezone -->
+    <div v-if="selectedLead.timezone">
+      <div class="text-sm font-medium">{{ selectedLead.timezone }}</div>
       <div class="text-xs text-slate-500">Timezone</div>
     </div>
     
-  
-    <!-- Add Preferred call time -->
-<div v-if="selectedLead.preferredTime">
-  <div class="text-sm font-medium">
-    {{ formatDateTime(selectedLead.preferredTime) }}
-  </div>
-  <div class="text-xs text-slate-500">Preferred call date & time</div>
-</div>
-    <div v-else-if="selectedLead.preferredTime">
-      <div class="text-sm font-medium">
-        {{ formatDateTime(selectedLead.preferredTime) }}
-      </div>
-      <div class="text-xs text-slate-500">Preferred call date & time</div>
+    <!-- Date Flexibility -->
+    <div>
+      <div class="text-sm font-medium">{{ selectedLead.dateIsMonthOnly ? 'Month Only' : 'Specific Date' }}</div>
+      <div class="text-xs text-slate-500">Date Flexibility</div>
     </div>
-    
-    <!-- Add Budget (if exists) -->
-    <div v-if="selectedLead.budget">
-      <div class="text-sm font-medium">${{ selectedLead.budget }}</div>
-      <div class="text-xs text-slate-500">Budget / person</div>
+  </div>
+  
+  <!-- Age Breakdown Section -->
+  <div v-if="(selectedLead.adultAges && selectedLead.adultAges.length) || (selectedLead.childAges && selectedLead.childAges.length)" 
+       class="mt-4 pt-4 border-t">
+    <h4 class="text-xs font-semibold text-slate-500 mb-2">Age Breakdown</h4>
+    <div class="space-y-2">
+      <!-- Adult Ages -->
+      <div v-if="selectedLead.adultAges && selectedLead.adultAges.length" class="flex flex-wrap gap-2">
+        <span class="text-xs font-medium text-slate-700">Adults:</span>
+        <div class="flex flex-wrap gap-1">
+          <span v-for="(age, index) in selectedLead.adultAges" :key="'adult-' + index" 
+                class="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded">
+            {{ age }} yrs
+          </span>
+        </div>
+      </div>
+      
+      <!-- Child Ages -->
+      <div v-if="selectedLead.childAges && selectedLead.childAges.length" class="flex flex-wrap gap-2">
+        <span class="text-xs font-medium text-slate-700">Children:</span>
+        <div class="flex flex-wrap gap-1">
+          <span v-for="(age, index) in selectedLead.childAges" :key="'child-' + index" 
+                class="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded">
+            {{ age }} yrs
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Add Message section if message exists -->
-  <div v-if="selectedLead.message" class="mt-4 pt-3 border-t">
+  <!-- Message section -->
+  <div v-if="selectedLead.message" class="mt-4 pt-4 border-t">
     <div class="flex items-center justify-between mb-1">
-      <h4 class="text-xs font-semibold text-slate-500">Message / notes</h4>
+      <h4 class="text-xs font-semibold text-slate-500">Message / Notes</h4>
     </div>
     <div class="text-sm text-slate-700 bg-white p-3 rounded-lg border">
       {{ selectedLead.message }}
     </div>
   </div>
 
-  <!-- Next follow-up quick input - IMPROVED DESIGN -->
-  <div class="mt-4 pt-3 border-t">
+  <!-- Preferred call time -->
+  <div v-if="selectedLead.preferredTime" class="mt-4 pt-4 border-t">
+    <div class="flex items-center justify-between mb-1">
+      <h4 class="text-xs font-semibold text-slate-500">Preferred Call Time</h4>
+      <div class="text-xs text-slate-400">
+        {{ formatDateTime(selectedLead.preferredTime) }}
+      </div>
+    </div>
+    <div class="text-sm text-slate-700">
+      Client requested a call {{ selectedLead.scheduleCall ? '✓' : '' }}
+    </div>
+  </div>
+
+  <!-- Next follow-up -->
+  <div class="mt-4 pt-4 border-t">
     <div class="flex items-center justify-between mb-1">
       <h4 class="text-xs font-semibold text-slate-500">Next follow-up</h4>
       <div v-if="selectedLead.nextFollowUpAt" class="text-xs text-slate-400">
@@ -760,7 +924,6 @@
                         class="text-xs border rounded px-2 py-1"
                       >
                         <option value="active">Active</option>
-                        <option value="archived">Archived</option>
                         <option value="resolved">Resolved</option>
                       </select>
                       <div class="flex flex-col gap-1">
@@ -1065,7 +1228,7 @@
           </div>
         </div>
       </div>
-    </transition>
+</transition>
 
     <!-- MODAL: Bulk assign (ADMIN ONLY) -->
     <transition name="fade">
@@ -1094,16 +1257,65 @@
           <h3 class="text-lg font-semibold mb-3">Change status</h3>
 
           <label class="block text-xs text-slate-500 mb-1">New status</label>
-          <select v-model="statusChange" class="w-full border rounded px-2 py-2 mb-3">
+          <select v-model="statusChange" class="w-full border rounded px-2 py-2 mb-3" @change="handleStatusChange">
             <option v-for="s in statusOptions" :key="s.key" :value="s.key">{{ s.label }}</option>
           </select>
 
-          <label class="block text-xs text-slate-500 mb-1">Reason (optional)</label>
-          <textarea v-model="statusReason" rows="3" class="w-full border rounded p-2 mb-3"></textarea>
+          <!-- Show date field for closed-won and closed-lost -->
+          <div v-if="statusChange === 'closed-won' || statusChange === 'closed-lost'" class="mb-3">
+            <label class="block text-xs text-slate-500 mb-1">
+              {{ statusChange === 'closed-won' ? 'Date Won' : 'Date Lost' }}
+            </label>
+            <input 
+              type="date" 
+              v-model="closedDate" 
+              class="w-full border rounded px-2 py-2"
+              :max="getCurrentDate()"
+            />
+          </div>
+
+          <!-- Show closed-lost reasons dropdown only when status is 'closed-lost' -->
+          <div v-if="statusChange === 'closed-lost'" class="mb-3">
+            <label class="block text-xs text-slate-500 mb-1">Reason for losing</label>
+            <select v-model="closedLostReason" class="w-full border rounded px-2 py-2">
+              <option value="">Select a reason</option>
+              <option v-for="reason in closedLostReasons" :key="reason.key" :value="reason.key">
+                {{ reason.label }}
+              </option>
+            </select>
+            
+            <!-- Show custom reason input when "Other" is selected -->
+            <div v-if="closedLostReason === 'other'" class="mt-3">
+              <label class="block text-xs text-slate-500 mb-1">Specify other reason</label>
+              <input 
+                v-model="customClosedLostReason" 
+                class="w-full border rounded px-2 py-2"
+                placeholder="Enter reason..."
+              />
+            </div>
+          </div>
+
+          <!-- General reason field (for other statuses) -->
+          <div v-if="statusChange !== 'closed-lost' && statusChange !== 'closed-won'">
+            <label class="block text-xs text-slate-500 mb-1">Reason (optional)</label>
+            <textarea v-model="statusReason" rows="3" class="w-full border rounded p-2 mb-3"></textarea>
+          </div>
+
+          <!-- Show additional notes field for closed-won -->
+          <div v-if="statusChange === 'closed-won'" class="mb-3">
+            <label class="block text-xs text-slate-500 mb-1">Notes (optional)</label>
+            <textarea v-model="statusReason" rows="3" class="w-full border rounded p-2 mb-3" placeholder="Add any notes about winning this lead..."></textarea>
+          </div>
 
           <div class="flex justify-end gap-2">
             <button class="px-4 py-2 rounded border" @click="closeStatusModal">Cancel</button>
-            <button class="px-4 py-2 rounded bg-amber-600 text-white" @click="confirmChangeStatus">Save</button>
+            <button 
+              class="px-4 py-2 rounded bg-amber-600 text-white"
+              :disabled="(statusChange === 'closed-lost' && !closedLostReason) || (statusChange === 'closed-won' && !closedDate) || (statusChange === 'closed-lost' && !closedDate)"
+              @click="confirmChangeStatus"
+            >
+              Save
+            </button>
           </div>
         </div>
       </div>
@@ -1174,7 +1386,25 @@ const taskStatusOptions = [
   { value: 'open', label: 'Open' },
   { value: 'in-progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
-  { value: 'done', label: 'Done' }
+]
+
+// ---- Status Options ----
+const statusOptions = [
+  { key: 'new', label: 'New' },
+  { key: 'qualified', label: 'Qualified' },
+  { key: 'unqualified', label: 'Unqualified' },
+  { key: 'working', label: 'Working' },
+  { key: 'closed-won', label: 'Closed / Won' },
+  { key: 'closed-lost', label: 'Closed / Lost' }
+]
+
+// ---- Closed/Lost Reasons ----
+const closedLostReasons = [
+  { key: 'lost-to-competitor', label: 'Lost to competitor' },
+  { key: 'low-budget', label: 'The budget was low' },
+  { key: 'unhappy-itinerary', label: 'Unhappy with the Itinerary' },
+  { key: 'just-checking-cost', label: 'Was just checking the cost' },
+  { key: 'other', label: 'Other' }
 ]
 
 // ---- Simple "today" text ----
@@ -1202,6 +1432,13 @@ const assignSelect = ref(null)
 const followUpInput = ref('')
 const showFollowUpError = ref(false)
 
+// --- Status modal state ---
+const statusChange = ref('new')
+const statusReason = ref('')
+const closedLostReason = ref('')
+const customClosedLostReason = ref('')
+const closedDate = ref('')
+const showStatusModal = ref(false)
 
 // --- Edit follow-up state ---
 const showEditFollowUp = ref(false)
@@ -1241,11 +1478,15 @@ const editForm = ref({
   email: '',
   phone: '',
   countryCode: '',
-  age: null,
-  originCity: '',
   country: '',
+  originCity: '',
+  age: null,
   source: '',
-  leadSourceDetail: ''
+  leadSourceDetail: '',
+  // New fields from journey.vue
+  preferredContactMethod: '',
+  timezone: '',
+  scheduleCall: false
 })
 const isSavingContact = ref(false)
 
@@ -1280,31 +1521,39 @@ const editingTask = ref(null)
 
 const showBulkAssign = ref(false)
 const bulkAssignTo = ref(null)
-const showStatusModal = ref(false)
-const statusChange = ref('new')
-const statusReason = ref('')
 const showPriorityModal = ref(false)
 const priorityChange = ref('medium')
 const priorityReason = ref('')
 const isLoadingPatch = ref(false)
 const isLoadingBulk = ref(false)
 
-// Status options (expanded)
-const statusOptions = [
-  { key: 'new', label: 'New / Open — Not contacted' },
-  { key: 'working', label: 'Working — Contacted / Attempting contact' },
-  { key: 'qualified', label: 'Qualified' },
-  { key: 'unqualified', label: 'Unqualified / Not converted' },
-  { key: 'converted', label: 'Closed — Converted' }
-]
+// Helper functions
+function getCurrentDate() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
+function handleStatusChange() {
+  // Reset closed-lost related fields when status changes
+  if (statusChange.value !== 'closed-lost') {
+    closedLostReason.value = ''
+    customClosedLostReason.value = ''
+  }
+  // Reset closed date when not closed-won or closed-lost
+  if (statusChange.value !== 'closed-won' && statusChange.value !== 'closed-lost') {
+    closedDate.value = ''
+  }
+  // Reset general reason field for non-closed-lost statuses
+  if (statusChange.value === 'closed-lost' || statusChange.value === 'closed-won') {
+    statusReason.value = ''
+  }
+}
 
-
-// Open edit modal
 function openEditFollowUpModal(followup) {
   editingFollowUp.value = followup
-  // Use followup.at (the original event timestamp) as the ID
-  // followup.scheduledDate is from metadata.followUpDate
   editFollowUpDate.value = followup.metadata?.followUpDate ? dateTimeLocalValue(followup.metadata.followUpDate) : getCurrentDateTime()
   editFollowUpNote.value = followup.note || followup.content || ''
   showEditFollowUp.value = true
@@ -1368,12 +1617,11 @@ async function saveEditedFollowUp() {
   // Check if date changed - compare formatted dates to avoid timezone issues
   let dateChanged = false
   if (oldDateIso) {
-    // Compare dates ignoring milliseconds for accuracy
     const oldDate = new Date(oldDateIso)
     const newDate = new Date(newIso)
     dateChanged = oldDate.getTime() !== newDate.getTime()
   } else {
-    dateChanged = true // If there was no previous date, treat as changed
+    dateChanged = true
   }
 
   // If nothing changed, just close the modal
@@ -1382,25 +1630,20 @@ async function saveEditedFollowUp() {
     return
   }
 
-  // Determine the message based on what changed
   let auditNote = ''
   let auditShort = ''
   
   if (dateChanged && noteChanged) {
-    // Both date and note changed
     auditNote = `Follow-up updated: ${formattedNewDate}`
     auditShort = `Follow-up updated: ${formattedNewDate}`
   } else if (dateChanged) {
-    // Only date changed
     auditNote = `Follow-up date updated to ${formattedNewDate}`
     auditShort = `Follow-up date updated: ${formattedNewDate}`
   } else if (noteChanged) {
-    // Only note changed
     auditNote = `Follow-up note updated`
     auditShort = `Follow-up note updated`
   }
 
-  // Append audit event: followup_updated
   const auditEvent = {
     type: 'followup_updated',
     at: new Date().toISOString(),
@@ -1419,16 +1662,13 @@ async function saveEditedFollowUp() {
     updatedAt: new Date().toISOString()
   }
   
-  // Filter out null changes for cleaner metadata
   if (!auditEvent.metadata.changes.note) delete auditEvent.metadata.changes.note
   if (!auditEvent.metadata.changes.followUpDate) delete auditEvent.metadata.changes.followUpDate
   
   events.push(auditEvent)
 
-  // Optimistically update local state
   selectedLead.value.events = events
   
-  // Update nextFollowUpAt if needed (only if date changed)
   if (dateChanged) {
     const currentNextIso = selectedLead.value.nextFollowUpAt ? new Date(selectedLead.value.nextFollowUpAt).toISOString() : null
     
@@ -1441,14 +1681,12 @@ async function saveEditedFollowUp() {
 
   closeEditFollowUp()
 
-  // Push to server
   try {
     const patchData = {
       events: events,
       updatedBy: currentUser.value.name
     }
     
-    // Only include nextFollowUpAt if date changed
     if (dateChanged && selectedLead.value.nextFollowUpAt) {
       patchData.nextFollowUpAt = selectedLead.value.nextFollowUpAt
     }
@@ -1462,9 +1700,16 @@ async function saveEditedFollowUp() {
   }
 }
 
-
-
 // helper functions reused in UI
+
+// Helper to format activity names (e.g., "wild_safari" → "Wild Safari")
+function formatActivityName(activity) {
+  if (!activity) return ''
+  return activity
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
 
 function formatDateTimeShort (value) {
   if (!value) return '—'
@@ -1480,20 +1725,15 @@ function formatDateTimeShort (value) {
   }
 }
 
-
-
-
 function lastPriorityChangeReason(lead) {
   if (!lead || !Array.isArray(lead.events) || !lead.events.length) return ''
   
-  // Find the most recent priority_change event (newest first)
   const priorityEvent = [...lead.events]
     .sort((a, b) => new Date(b.at) - new Date(a.at))
     .find(e => e.type === 'priority_change')
   
   if (!priorityEvent) return ''
   
-  // Check for reason in this order: explicit reason field, note, metadata.reason
   return priorityEvent.reason || 
          priorityEvent.note || 
          priorityEvent.metadata?.reason || 
@@ -1502,46 +1742,55 @@ function lastPriorityChangeReason(lead) {
 
 // humanize lead source for display
 function humanizeSource(src) {
-  if (!src && src !== 0) return '—'; // empty fallback
+  if (!src && src !== 0) return '—';
 
-  // optional explicit mapping for exceptions (custom labels)
-const MAP = {
-  custom_itinerary: 'custom itinerary',
-  facebook_ad: 'Facebook ad',
-  google_search: 'Google search',
-  email: 'Email',
-  social_media: 'Social media platform',
-  facebook: 'Social media platform',
-  instagram: 'Social media platform'
-};
+  const MAP = {
+    custom_itinerary: 'custom itinerary',
+    facebook_ad: 'Facebook ad',
+    google_search: 'Google search',
+    email: 'Email',
+    social_media: 'Social media platform',
+    facebook: 'Social media platform',
+    instagram: 'Social media platform'
+  };
 
-  // if we have an explicit label, use it
   if (MAP[src]) return MAP[src];
 
-  // fallback: replace underscores/dashes with space and trim
   const s = String(src)
     .replace(/[_-]+/g, ' ')
     .trim();
 
-  // choose casing: if you prefer lowercase like "custom itinerary", use:
   return s.toLowerCase();
-
-  // if you prefer Title Case instead, use:
-  // return s.split(' ').map(w => w[0]?.toUpperCase() + w.slice(1)).join(' ');
 }
 
+// --- New helper: pretty-print "leadSourceDetail" values ---
+function displaySourceDetail(detail) {
+  if (!detail) return '—'
+  const MAP = {
+    'request-quote-clone': 'Website — Quote Request',
+    'request-quote': 'Website — Quote Request',
+    'contact-form': 'Website — Contact Form',
+    'facebook_lead': 'Facebook Lead',
+    'facebook_ad': 'Facebook Ad',
+    'google_search': 'Google Search',
+    'whatsapp_form': 'WhatsApp Form'
+  }
+  if (MAP[detail]) return MAP[detail]
+
+  const s = String(detail).replace(/[_-]+/g, ' ').trim()
+  return s.length > 60 ? s.slice(0,57) + '...' : s
+}
 
 // Helper: get follow-ups from events array
 function getFollowUpsFromEvents(events = []) {
   return events
     .filter(e => e.type === 'followup_set' && e.status !== 'deleted')
     .map(e => {
-      // server stores ISO in metadata.followUpDate
       const iso = e.metadata?.followUpDate || e.metadata?.followupDate || null;
       const note = e.note || e.metadata?.short || '';
       return {
         id: e.at || e.metadata?.followupId || iso,
-        dateIso: iso,    // canonical ISO string or null
+        dateIso: iso,
         rawNote: note,
         status: e.status || 'scheduled',
         by: e.by,
@@ -1556,27 +1805,10 @@ function getFollowUpsFromEvents(events = []) {
     });
 }
 
-// Helper: format an ISO to readable string in Asia/Kolkata timezone
-function formatFollowUpLabel(iso) {
-  if (!iso) return '';
-  return new Date(iso).toLocaleString('en-US', {
-    timeZone: 'Asia/Kolkata',
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
-
 function lastStatusChangeReason (lead) {
   if (!lead || !Array.isArray(lead.events) || !lead.events.length) return ''
-  // look from newest to oldest for a status_change
   const ev = (lead.events || []).slice().reverse().find(e => e.type === 'status_change')
   if (!ev) return ''
-  // prefer explicit reason, then note, then metadata.short
   return (ev.reason && String(ev.reason).trim()) ||
          (ev.note && String(ev.note).trim()) ||
          (ev.metadata && String(ev.metadata.short || '').trim()) ||
@@ -1611,9 +1843,7 @@ function prettyDateFrom (d) {
 // Phone number validation
 function validatePhoneNumber() {
   if (editForm.value.phone) {
-    // Remove any non-digit characters
     editForm.value.phone = editForm.value.phone.replace(/\D/g, '')
-    // Limit to 10 digits
     if (editForm.value.phone.length > 10) {
       editForm.value.phone = editForm.value.phone.substring(0, 10)
     }
@@ -1645,22 +1875,21 @@ function normalizeLead (l) {
   copy.priorityLabel = priorityLabelFrom(copy.priority)
   copy.prettyDate = prettyDateFrom(copy.date || copy.travelDate)
   copy.nextFollowUpAt = copy.nextFollowUpAt || null
+  copy.closedDate = copy.closedDate || null
+  copy.closedReason = copy.closedReason || null
+  copy.closedLostDetails = copy.closedLostDetails || null
 
   // Resolve assignedTo:
   if (copy.assignedTo && typeof copy.assignedTo === 'object') {
-    // server returned a populated assignedTo object — keep it
     copy.assignedTo = copy.assignedTo
   } else if (copy.assignedToId) {
-    // try to map from loaded admins list
     copy.assignedTo = admins.value.find(a => String(a.id) === String(copy.assignedToId)) || null
   } else {
     copy.assignedTo = null
   }
 
-  // Add permission flags for UI
   copy.canBeAssignedByCurrentUser = canAssignLeads.value
   
-  // Normalize tasks
   if (copy.tasks) {
     copy.tasks = copy.tasks.map(task => ({
       ...task,
@@ -1670,7 +1899,6 @@ function normalizeLead (l) {
     }))
   }
 
-  // contact fields and others
   copy.age = copy.age ?? null
   copy.originCity = copy.originCity || ''
   copy.country = copy.country || ''
@@ -1685,12 +1913,11 @@ function normalizeLead (l) {
 async function loadAdmins () {
   try {
     const data = await $fetch('/api/admins')
-    // normalize shape to { id, name, email, role } and ensure id is string
     admins.value = (data || []).map(u => ({
       id: String(u.id ?? u._id ?? ''),
       name: u.name,
       email: u.email,
-      role: u.role || 'lead-manager' // Default to lead-manager if not specified
+      role: u.role || 'lead-manager'
     }))
   } catch (err) {
     console.error('Failed to load admins', err)
@@ -1712,13 +1939,11 @@ async function loadLeads () {
     console.log('Leads loaded from server:', data)
     leads.value = (data || []).map(normalizeLead)
     
-    // If we have a selected lead open, refresh it
     if (selectedLead.value) {
       const refreshedLead = leads.value.find(l => (l._id || l.id) === (selectedLead.value._id || selectedLead.value.id))
       if (refreshedLead) {
         console.log('Refreshing selected lead:', refreshedLead)
         selectedLead.value = refreshedLead
-        // Update follow-up input with current value
         followUpInput.value = refreshedLead.nextFollowUpAt ? dateTimeLocalValue(refreshedLead.nextFollowUpAt) : ''
       }
     }
@@ -1727,7 +1952,6 @@ async function loadLeads () {
     console.error('Failed to load leads:', err)
     leads.value = []
     
-    // Show error to user
     if (err.message && !err.message.includes('401') && !err.message.includes('403')) {
       alert('Failed to load leads. Please check your connection.')
     }
@@ -1779,7 +2003,7 @@ const tasksForSelectedLead = computed(() => {
 const notesForSelectedLead = computed(() => {
   if (!selectedLead.value) return []
   return (selectedLead.value.events || [])
-    .filter(e => e.type === 'note' && e.status !== 'deleted' && e.status !== 'archived') // hide deleted notes
+    .filter(e => e.type === 'note' && e.status !== 'deleted' && e.status !== 'archived')
     .map((note, index) => ({
       id: `note-${index}-${note.at}`,
       title: 'Note',
@@ -1798,7 +2022,6 @@ const callsForSelectedLead = computed(() => {
   return (selectedLead.value.events || [])
     .filter(e => e.type === 'call')
     .map((call, index) => {
-      // Extract duration and outcome from metadata
       const duration = call.metadata?.duration || 0
       const outcome = call.metadata?.short || ''
       
@@ -1806,14 +2029,14 @@ const callsForSelectedLead = computed(() => {
         id: `call-${index}-${call.at}`,
         title: 'Call',
         summary: call.note,
-        duration: duration,  // Use the extracted duration
-        outcome: outcome,    // Use the extracted outcome
+        duration: duration,
+        outcome: outcome,
         status: call.status || 'completed',
         by: call.by || { name: currentUser.value.name },
         createdAt: call.at,
         updatedBy: call.updatedBy,
         updatedAt: call.updatedAt,
-        at: call.at, // Important for lookup
+        at: call.at,
         ...call
       }
     })
@@ -1826,13 +2049,13 @@ const followUpsForSelectedLead = computed(() => {
     .map((followup, index) => ({
       id: `followup-${index}-${followup.at}`,
       title: 'Follow-up',
-      content: followup.note || `Follow-up scheduled`,  // This shows the note
+      content: followup.note || `Follow-up scheduled`,
       status: followup.status || 'scheduled',
       by: followup.by || { name: currentUser.value.name },
       createdAt: followup.at,
-      scheduledDate: followup.metadata?.followUpDate,  // This is where the date comes from
+      scheduledDate: followup.metadata?.followUpDate,
       metadata: followup.metadata,
-      ...followup  // Spread operator includes all original event properties
+      ...followup
     }))
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 })
@@ -1859,7 +2082,6 @@ function openLeadDetails (lead) {
   assignSelect.value = selectedLead.value.assignedTo?.id || null
   followUpInput.value = selectedLead.value.nextFollowUpAt ? dateTimeLocalValue(selectedLead.value.nextFollowUpAt) : ''
   showFollowUpError.value = false
-  // ensure edit mode off
   isEditingLead.value = false
 }
 
@@ -1867,7 +2089,6 @@ function openLeadDetails (lead) {
 function closeLeadDetails () {
   isDetailOpen.value = false
   selectedLead.value = null
-  // clear editing
   isEditingLead.value = false
   editForm.value = {
     name: '',
@@ -1897,11 +2118,14 @@ function startEdit () {
     email: selectedLead.value.email || '',
     phone: selectedLead.value.phone || '',
     countryCode: selectedLead.value.countryCode || '',
-    age: selectedLead.value.age ?? null,
-    originCity: selectedLead.value.originCity || '',
     country: selectedLead.value.country || '',
+    originCity: selectedLead.value.originCity || '',
+    age: selectedLead.value.age ?? null,
     source: selectedLead.value.source || '',
-    leadSourceDetail: selectedLead.value.leadSourceDetail || ''
+    leadSourceDetail: selectedLead.value.leadSourceDetail || '',
+    preferredContactMethod: selectedLead.value.preferredContactMethod || '',
+    timezone: selectedLead.value.timezone || '',
+    scheduleCall: selectedLead.value.scheduleCall || false
   }
   isEditingLead.value = true
 }
@@ -1914,11 +2138,14 @@ function cancelEdit () {
     email: '',
     phone: '',
     countryCode: '',
-    age: null,
-    originCity: '',
     country: '',
+    originCity: '',
+    age: null,
     source: '',
-    leadSourceDetail: ''
+    leadSourceDetail: '',
+    preferredContactMethod: '',
+    timezone: '',
+    scheduleCall: false
   }
 }
 
@@ -1933,30 +2160,29 @@ async function saveContactEdits () {
   isSavingContact.value = true
   const id = selectedLead.value._id
 
-  // Build patch body with new contact fields
-  const patchBody = {
-    name: editForm.value.name,
-    email: editForm.value.email,
-    phone: editForm.value.phone,
-    countryCode: editForm.value.countryCode,
-    age: editForm.value.age,
-    originCity: editForm.value.originCity,
-    country: editForm.value.country,
-    source: editForm.value.source,
-    leadSourceDetail: editForm.value.leadSourceDetail,
-    updatedBy: currentUser.value.name
-  }
+const patchBody = {
+  name: editForm.value.name,
+  email: editForm.value.email,
+  phone: editForm.value.phone,
+  countryCode: editForm.value.countryCode,
+  country: editForm.value.country,
+  originCity: editForm.value.originCity,
+  age: editForm.value.age,
+  source: editForm.value.source,
+  leadSourceDetail: editForm.value.leadSourceDetail,
+  preferredContactMethod: editForm.value.preferredContactMethod,
+  timezone: editForm.value.timezone,
+  scheduleCall: editForm.value.scheduleCall,
+  updatedBy: currentUser.value.name
+}
 
-  // Compute changes (previous -> next) for fields we care about
 const fields = ['name','email','phone','countryCode','age','originCity','country','source','leadSourceDetail']
 const changes = {}
 fields.forEach(f => {
   const prev = selectedLead.value[f] === undefined ? null : selectedLead.value[f]
   const next = patchBody[f] === undefined ? null : patchBody[f]
-  // treat numbers vs strings carefully; convert to string for comparison
   if (String(prev ?? '') !== String(next ?? '')) {
     if (f === 'source') {
-      // keep raw values but add user-friendly labels for UI/metadata.short
       changes[f] = {
         from: prev,
         to: next,
@@ -1969,8 +2195,6 @@ fields.forEach(f => {
   }
 })
 
-
-  // If there are changes, create an event describing them
   if (Object.keys(changes).length) {
     const shortParts = Object.keys(changes).map(k => {
   const c = changes[k]
@@ -1978,7 +2202,7 @@ fields.forEach(f => {
     return `${k}: ${c.from_label ?? c.from ?? '—'} → ${c.to_label ?? c.to ?? '—'}`
   }
   return `${k}: ${c.from ?? '—'} → ${c.to ?? '—'}`
-}).slice(0,5) // limit length
+}).slice(0,5)
 
     const ev = {
       type: 'contact_edited',
@@ -1991,7 +2215,6 @@ fields.forEach(f => {
     }
     selectedLead.value.events = selectedLead.value.events || []
     selectedLead.value.events.push(ev)
-    // include events in the patchBody so server persists the history
     patchBody.events = selectedLead.value.events
   }
 
@@ -2054,11 +2277,9 @@ async function assignLeadToSelected (adminId) {
   const prevAssigned = selectedLead.value.assignedTo?.name || null
   const nextAssigned = admin?.name || null
 
-  // update local UI
   selectedLead.value.assignedTo = admin
   selectedLead.value.assignedToId = adminId
 
-  // create assign event
   const ev = {
     type: 'assign',
     at: new Date().toISOString(),
@@ -2080,7 +2301,6 @@ async function assignLeadToSelected (adminId) {
       assignedTo: selectedLead.value.assignedTo,
       events: selectedLead.value.events,
       updatedBy: currentUser.value.name,
-      // Log who performed the assignment
       assignmentBy: currentUser.value.name,
       assignmentAt: new Date().toISOString()
     })
@@ -2118,7 +2338,6 @@ async function performBulkAssign () {
       lead.assignedToId = bulkAssignTo.value
       lead.assignedTo = admins.value.find(a => a.id === bulkAssignTo.value) || null
       
-      // Add assignment event
       const events = lead.events || []
       events.push({
         type: 'assign',
@@ -2153,7 +2372,6 @@ async function performBulkAssign () {
 function dateTimeLocalValue (iso) {
   try {
     const d = new Date(iso)
-    // Adjust for timezone offset to get correct local time display
     const offset = d.getTimezoneOffset() * 60000
     const adjustedDate = new Date(d.getTime() - offset)
     return adjustedDate.toISOString().slice(0, 16)
@@ -2171,7 +2389,6 @@ async function setNextFollowUp () {
     return
   }
   
-  // Validate that the selected date is in the future
   const selectedDate = new Date(followUpInput.value)
   const now = new Date()
   
@@ -2183,63 +2400,52 @@ async function setNextFollowUp () {
   
   showFollowUpError.value = false
   
-  // Convert to ISO string
   const iso = selectedDate.toISOString()
   const formattedDate = formatDateTime(iso)
   
-  // Store previous follow-up for event tracking
   const prevFollowUp = selectedLead.value.nextFollowUpAt || null
   
-  // Update local state
   selectedLead.value.nextFollowUpAt = iso
   
-  // Create follow-up event - NOTE IS NOW EMPTY BY DEFAULT
   const ev = {
     type: 'followup_set',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    note: '',  // EMPTY NOTE - NO AUTO DATE TEXT
+    note: '',
     status: 'scheduled',
     metadata: {
-      short: `Follow-up: ${formattedDate}`,  // Date in metadata
+      short: `Follow-up: ${formattedDate}`,
       followUpDate: iso,
-      formattedDate: formattedDate,  // Store formatted date for easy access
+      formattedDate: formattedDate,
       changes: { nextFollowUpAt: { from: prevFollowUp, to: iso } }
     }
   }
   
-  // Add to events array
   selectedLead.value.events = selectedLead.value.events || []
   selectedLead.value.events.push(ev)
   
   try {
-    // Send update to server
     await patchLead(selectedLead.value._id, { 
       nextFollowUpAt: iso,
       events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
     
-    // Show success message
     alert(`Follow-up set for ${formattedDate}`)
     
-    // Clear the input
     followUpInput.value = ''
     
-    // Refresh data to ensure consistency
     await loadLeads()
     
   } catch (err) {
     console.error('Failed to set follow-up', err)
     alert('Failed to set follow-up. Please try again.')
     
-    // Revert local changes
     selectedLead.value.nextFollowUpAt = prevFollowUp
     if (ev && selectedLead.value.events) {
       selectedLead.value.events = selectedLead.value.events.filter(e => e !== ev)
     }
     
-    // Reload from server
     await loadLeads()
   }
 }
@@ -2249,13 +2455,10 @@ async function clearFollowUp () {
   
   if (!confirm('Clear the scheduled follow-up?')) return
   
-  // Store previous follow-up for event tracking
   const prevFollowUp = selectedLead.value.nextFollowUpAt
   
-  // Update local state
   selectedLead.value.nextFollowUpAt = null
   
-  // Create follow-up cleared event for timeline
   const ev = {
     type: 'followup_cleared',
     at: new Date().toISOString(),
@@ -2268,38 +2471,31 @@ async function clearFollowUp () {
     }
   }
   
-  // Add to events array
   selectedLead.value.events = selectedLead.value.events || []
   selectedLead.value.events.push(ev)
   
-  // Clear input
   followUpInput.value = ''
   
   try {
-    // Send update to server
     await patchLead(selectedLead.value._id, { 
       nextFollowUpAt: null,
       events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
     
-    // Show success message
     alert('Follow-up cleared')
     
-    // Refresh data
     await loadLeads()
     
   } catch (err) {
     console.error('Failed to clear follow-up', err)
     alert('Failed to clear follow-up. Please try again.')
     
-    // Revert local changes
     selectedLead.value.nextFollowUpAt = prevFollowUp
     if (ev && selectedLead.value.events) {
       selectedLead.value.events = selectedLead.value.events.filter(e => e !== ev)
     }
     
-    // Reload from server
     await loadLeads()
   }
 }
@@ -2319,7 +2515,6 @@ async function addNote () {
     metadata: { short: noteText.value.trim().slice(0, 80) }
   }
   
-  // Add to local state
   if (!selectedLead.value.events) {
     selectedLead.value.events = []
   }
@@ -2331,20 +2526,18 @@ async function addNote () {
     console.log('Saving note to server...')
     
     const result = await patchLead(selectedLead.value._id, { 
-      events: selectedLead.value.events, // Send ALL events
+      events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
     
     console.log('Note saved successfully:', result)
     
-    // Refresh data
     await loadLeads()
     
   } catch (err) {
     console.error('failed to persist note', err)
     alert(`Failed to save note: ${err.message || 'Unknown error'}`)
     
-    // Reload from server to restore original state
     await loadLeads()
   }
 }
@@ -2360,15 +2553,12 @@ async function saveEditedNote () {
   )
   
   if (index !== -1) {
-    // Store old note for event
     const oldNote = events[index].note
     
-    // Update note
     events[index].note = editNoteText.value.trim()
     events[index].updatedBy = currentUser.value.name
     events[index].updatedAt = new Date().toISOString()
     
-    // Create note updated event
     const updateEv = {
       type: 'note_updated',
       at: new Date().toISOString(),
@@ -2386,13 +2576,12 @@ async function saveEditedNote () {
     
     try {
       const result = await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
+        events: events,
         updatedBy: currentUser.value.name
       })
       
       console.log('Note update successful:', result)
       
-      // Refresh data
       await loadLeads()
       
     } catch (err) {
@@ -2419,12 +2608,11 @@ async function saveLogCall () {
     status: 'completed',
     metadata: { 
       short: callOutcome.value || '',
-      duration: callDuration.value || 0  // Store duration in metadata
+      duration: callDuration.value || 0
     },
     updatedBy: currentUser.value.name
   }
   
-  // Add to local state
   if (!selectedLead.value.events) {
     selectedLead.value.events = []
   }
@@ -2442,14 +2630,12 @@ async function saveLogCall () {
     
     console.log('Call saved successfully:', result)
     
-    // Refresh data
     await loadLeads()
     
   } catch (err) {
     console.error('failed to persist call', err)
     alert(`Failed to save call: ${err.message || 'Unknown error'}`)
     
-    // Reload from server to restore original state
     await loadLeads()
   }
 }
@@ -2461,37 +2647,32 @@ async function saveEditedCall () {
   
   const events = selectedLead.value.events || []
   
-  // Find the ORIGINAL call event
   const index = events.findIndex(e => 
     e.type === 'call' && e.at === editingCall.value.at
   )
   
   if (index !== -1) {
-    // Store old values for event tracking
     const oldCall = { ...events[index] }
     const oldDuration = oldCall.metadata?.duration || 0
     const oldOutcome = oldCall.metadata?.short || ''
     const oldNote = oldCall.note || ''
     
-    // UPDATE THE ORIGINAL CALL EVENT with new values
     events[index] = {
       ...events[index],
       note: editCallNote.value.trim(),
       metadata: {
         ...events[index].metadata,
-        short: editCallOutcome.value || '',      // Update outcome
-        duration: editCallDuration.value || 0    // Update duration
+        short: editCallOutcome.value || '',
+        duration: editCallDuration.value || 0
       },
       updatedBy: currentUser.value.name,
       updatedAt: new Date().toISOString()
     }
     
-    // Check what actually changed
     const durationChanged = oldDuration !== editCallDuration.value
     const outcomeChanged = oldOutcome !== editCallOutcome.value
     const noteChanged = oldNote !== editCallNote.value.trim()
     
-    // Build a descriptive message for the timeline
     let changeDescriptions = []
     if (noteChanged) changeDescriptions.push('summary updated')
     if (durationChanged) changeDescriptions.push(`duration: ${oldDuration}m → ${editCallDuration.value}m`)
@@ -2501,7 +2682,6 @@ async function saveEditedCall () {
       ? changeDescriptions.join(', ')
       : 'Call updated'
     
-    // Create call updated event for timeline
     const updateEv = {
       type: 'call_updated',
       at: new Date().toISOString(),
@@ -2518,12 +2698,10 @@ async function saveEditedCall () {
       }
     }
     
-    // Clean up null changes for cleaner metadata
     if (!updateEv.metadata.changes.summary) delete updateEv.metadata.changes.summary
     if (!updateEv.metadata.changes.duration) delete updateEv.metadata.changes.duration
     if (!updateEv.metadata.changes.outcome) delete updateEv.metadata.changes.outcome
     
-    // Add the update event to the timeline
     events.push(updateEv)
     
     console.log('Updated original call at index:', index, events[index])
@@ -2537,7 +2715,6 @@ async function saveEditedCall () {
       
       console.log('Call update successful:', result)
       
-      // Force refresh to update UI
       await loadLeads()
       
     } catch (err) {
@@ -2576,7 +2753,6 @@ async function createTask () {
   }
   selectedLead.value.tasks.push(t)
   
-  // Create task creation event
   const createEv = {
     type: 'task_created',
     at: new Date().toISOString(),
@@ -2588,7 +2764,6 @@ async function createTask () {
     }
   }
   
-  // Create INITIAL status change event (null → initial status)
   const statusEv = {
     type: 'task_status_changed',
     at: new Date().toISOString(),
@@ -2629,19 +2804,15 @@ async function createTask () {
 async function handleTaskStatusChange(task, newStatus) {
   console.log('Task status changing from', task.status, 'to', newStatus)
   
-  // Store old status before updating UI
   const oldStatus = task.status || 'open'
   
-  // If no actual change, do nothing
   if (oldStatus === newStatus) {
     console.log('No status change, skipping')
     return
   }
   
-  // Update UI immediately for better UX
   task.status = newStatus
   
-  // Call the update function with both old and new status
   await updateTaskStatus(task, oldStatus)
 }
 
@@ -2652,13 +2823,11 @@ async function saveEditedTask () {
   
   const taskIndex = selectedLead.value.tasks.findIndex(t => t.id === editingTask.value.id)
   if (taskIndex !== -1) {
-    // Store COMPLETE OLD TASK BEFORE ANY CHANGES
     const oldTask = { 
       ...selectedLead.value.tasks[taskIndex],
       status: selectedLead.value.tasks[taskIndex].status || 'open'
     }
     
-    // Now update the task
     selectedLead.value.tasks[taskIndex].title = editTaskTitle.value.trim()
     selectedLead.value.tasks[taskIndex].due = editTaskDue.value ? new Date(editTaskDue.value).toISOString() : null
     selectedLead.value.tasks[taskIndex].note = editTaskNote.value
@@ -2666,23 +2835,19 @@ async function saveEditedTask () {
     selectedLead.value.tasks[taskIndex].updatedBy = currentUser.value.name
     selectedLead.value.tasks[taskIndex].updatedAt = new Date().toISOString()
     
-    // Create update event - track all changes
     const changes = {}
-    const changeDescriptions = [] // For building human-readable description
+    const changeDescriptions = []
     
-    // Check title change
     if (oldTask.title !== editTaskTitle.value.trim()) {
       changes.title = { from: oldTask.title, to: editTaskTitle.value.trim() }
       changeDescriptions.push('title')
     }
     
-    // Check status change
     if (oldTask.status !== editTaskStatus.value) {
       changes.status = { from: oldTask.status, to: editTaskStatus.value }
       changeDescriptions.push('status')
     }
     
-    // Check due date change
     const oldDue = oldTask.due ? new Date(oldTask.due).toISOString() : null
     const newDue = editTaskDue.value ? new Date(editTaskDue.value).toISOString() : null
     if (oldDue !== newDue) {
@@ -2690,13 +2855,11 @@ async function saveEditedTask () {
       changeDescriptions.push('due date')
     }
     
-    // Check note change
     if (oldTask.note !== editTaskNote.value) {
       changes.note = { from: oldTask.note || '', to: editTaskNote.value || '' }
       changeDescriptions.push('note')
     }
     
-    // Build detailed change description for note field
     const detailedChanges = []
     if (changes.note) {
       const fromNote = changes.note.from ? changes.note.from.slice(0, 50) + (changes.note.from.length > 50 ? '...' : '') : '(empty)'
@@ -2719,7 +2882,6 @@ async function saveEditedTask () {
       detailedChanges.push(`status: ${fromStatus} → ${toStatus}`)
     }
     
-    // Build a human-readable description for the timeline
     let shortDescription = ''
     if (changeDescriptions.length === 0) {
       shortDescription = 'Task updated (no changes)'
@@ -2735,7 +2897,7 @@ async function saveEditedTask () {
       type: 'task_updated',
       at: new Date().toISOString(),
       by: { name: currentUser.value.name },
-      note: detailedChanges.join('; '), // Single line with semicolons for display
+      note: detailedChanges.join('; '),
       metadata: {
         short: shortDescription,
         taskId: editingTask.value.id,
@@ -2748,7 +2910,6 @@ async function saveEditedTask () {
     }
     selectedLead.value.events.push(ev)
     
-    // ALSO create a status change event if status actually changed
     if (oldTask.status !== editTaskStatus.value) {
       const statusEv = {
         type: 'task_status_changed',
@@ -2798,12 +2959,10 @@ async function updateTaskStatus(task, oldStatus) {
     const before = oldStatus || 'open'
     const after = task.status
     
-    // Update the task in the array (already updated by handleTaskStatusChange, but ensure consistency)
     selectedLead.value.tasks[idx].status = after
     selectedLead.value.tasks[idx].updatedBy = currentUser.value.name
     selectedLead.value.tasks[idx].updatedAt = new Date().toISOString()
     
-    // Create status change event
     const ev = {
       type: 'task_status_changed',
       at: new Date().toISOString(),
@@ -2853,12 +3012,10 @@ async function updateNoteStatus(note) {
     const before = events[index].status || 'active'
     const after = note.status
     
-    // Update note status
     events[index].status = after
     events[index].updatedBy = currentUser.value.name
     events[index].updatedAt = new Date().toISOString()
     
-    // Create note status changed event
     const statusEv = {
       type: 'note_status_changed',
       at: new Date().toISOString(),
@@ -2876,13 +3033,12 @@ async function updateNoteStatus(note) {
     
     try {
       const result = await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
+        events: events,
         updatedBy: currentUser.value.name
       })
       
       console.log('Note status update successful:', result)
       
-      // Refresh data
       await loadLeads()
       
     } catch (err) {
@@ -2905,12 +3061,10 @@ async function updateCallStatus(call) {
     const before = events[index].status || 'completed'
     const after = call.status
     
-    // Update call status
     events[index].status = after
     events[index].updatedBy = currentUser.value.name
     events[index].updatedAt = new Date().toISOString()
     
-    // Create call status changed event
     const statusEv = {
       type: 'call_status_changed',
       at: new Date().toISOString(),
@@ -2928,13 +3082,12 @@ async function updateCallStatus(call) {
     
     try {
       const result = await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
+        events: events,
         updatedBy: currentUser.value.name
       })
       
       console.log('Call status update successful:', result)
       
-      // Refresh data
       await loadLeads()
       
     } catch (err) {
@@ -2958,7 +3111,6 @@ async function updateFollowUpStatus(followup) {
     const before = events[index].status || 'scheduled'
     const after = followup.status
     
-    // Update follow-up status in the event
     events[index] = {
       ...events[index],
       status: after,
@@ -2966,7 +3118,6 @@ async function updateFollowUpStatus(followup) {
       updatedAt: new Date().toISOString()
     }
     
-    // Create follow-up status changed event
     const statusEv = {
       type: 'followup_status_changed',
       at: new Date().toISOString(),
@@ -2984,13 +3135,12 @@ async function updateFollowUpStatus(followup) {
     
     try {
       const result = await patchLead(selectedLead.value._id, { 
-        events: events, // Send ALL events
+        events: events,
         updatedBy: currentUser.value.name
       })
       
       console.log('Follow-up status update successful:', result)
       
-      // Refresh data
       await loadLeads()
       
     } catch (err) {
@@ -3012,10 +3162,8 @@ async function deleteFollowUp(followup) {
   )
   
   if (index !== -1) {
-    // Store for event
     const deletedFollowup = { ...events[index] }
     
-    // Create deletion event BEFORE removing
     const delEv = {
       type: 'followup_deleted',
       at: new Date().toISOString(),
@@ -3027,10 +3175,8 @@ async function deleteFollowUp(followup) {
       }
     }
     
-    // Remove follow-up from events
     const filteredEvents = events.filter((e, i) => i !== index)
     
-    // Add deletion event
     filteredEvents.push(delEv)
     selectedLead.value.events = filteredEvents
     
@@ -3038,13 +3184,12 @@ async function deleteFollowUp(followup) {
     
     try {
       const result = await patchLead(selectedLead.value._id, { 
-        events: filteredEvents, // Send filtered events
+        events: filteredEvents,
         updatedBy: currentUser.value.name
       })
       
       console.log('Follow-up deletion successful:', result)
       
-      // Refresh data
       await loadLeads()
       
     } catch (err) {
@@ -3065,13 +3210,10 @@ async function deleteTask(task) {
     selectedLead.value.tasks = []
   }
   
-  // Store for event
   const deletedTask = { ...task }
   
-  // Remove task
   selectedLead.value.tasks = selectedLead.value.tasks.filter(t => t.id !== task.id)
   
-  // Create deletion event
   const ev = {
     type: 'task_deleted',
     at: new Date().toISOString(),
@@ -3100,13 +3242,12 @@ async function deleteTask(task) {
     
     console.log('Task deletion successful:', result)
     
-    // Refresh data
     await loadLeads()
     
   } catch (err) {
     console.error('Failed to delete task:', err)
     alert(`Failed to delete task: ${err.message || 'Unknown error'}`)
-    await loadLeads() // Restore from server
+    await loadLeads()
   }
 }
 
@@ -3121,10 +3262,8 @@ async function deleteNote(note) {
   const index = events.findIndex(e => e.type === 'note' && e.at === note.at)
   
   if (index !== -1) {
-    // Store for event
     const deletedNote = { ...events[index] }
     
-    // Mark the note as deleted
     events[index] = {
       ...events[index],
       status: 'deleted',
@@ -3132,7 +3271,6 @@ async function deleteNote(note) {
       updatedAt: new Date().toISOString()
     }
     
-    // Create deletion event
     const delEv = {
       type: 'note_deleted',
       at: new Date().toISOString(),
@@ -3144,7 +3282,6 @@ async function deleteNote(note) {
       }
     }
     
-    // Add deletion event
     events.push(delEv)
     
     console.log('Note marked as deleted at index:', index)
@@ -3157,13 +3294,11 @@ async function deleteNote(note) {
       
       console.log('Note deletion successful:', result)
       
-      // Refresh data
       await loadLeads()
       
     } catch (err) {
       console.error('Failed to delete note:', err)
       alert(`Failed to delete note: ${err.message || 'Unknown error'}`)
-      // reload to revert local changes
       await loadLeads()
     }
   }
@@ -3178,10 +3313,8 @@ async function deleteCall(call) {
   const index = events.findIndex(e => e.type === 'call' && e.at === call.at)
   
   if (index !== -1) {
-    // Store for event
     const deletedCall = { ...events[index] }
     
-    // Create deletion event BEFORE removing
     const delEv = {
       type: 'call_deleted',
       at: new Date().toISOString(),
@@ -3194,10 +3327,8 @@ async function deleteCall(call) {
       }
     }
     
-    // Remove call from events
     const filteredEvents = events.filter((e, i) => i !== index)
     
-    // Add deletion event
     filteredEvents.push(delEv)
     selectedLead.value.events = filteredEvents
     
@@ -3205,17 +3336,16 @@ async function deleteCall(call) {
     
     try {
       const result = await patchLead(selectedLead.value._id, { 
-        events: filteredEvents, // Send filtered events
+        events: filteredEvents,
         updatedBy: currentUser.value.name
       })
       
       console.log('Call deletion successful:', result)
       
-      // Refresh data
       await loadLeads()
       
     } catch (err) {
-      console.error('Failed to delete call:', err)
+      console.error('Failed to delete call', err)
       alert(`Failed to delete call: ${err.message || 'Unknown error'}`)
       await loadLeads()
     }
@@ -3256,7 +3386,6 @@ function closeLogCall () {
 function openEditCallModal (call) {
   console.log('Opening edit modal for call:', call)
   
-  // Find the original call event from events array
   const events = selectedLead.value.events || []
   const originalCall = events.find(e => 
     e.type === 'call' && e.at === call.at
@@ -3265,14 +3394,11 @@ function openEditCallModal (call) {
   if (originalCall) {
     editingCall.value = originalCall
     
-    // Set the form values from the original call
     editCallNote.value = originalCall.note || ''
     
-    // Get outcome from metadata.short
     const outcome = originalCall.metadata?.short || ''
     editCallOutcome.value = outcome
     
-    // Get duration from metadata.duration
     const duration = originalCall.metadata?.duration || 0
     editCallDuration.value = duration
     
@@ -3328,49 +3454,91 @@ function closeEditTask () {
 // STATUS change
 function openStatusModal (lead = null) {
   if (lead) openLeadDetails(lead)
-  // prefill status selector from current lead
   statusChange.value = selectedLead.value?.status || 'new'
-  // prefill reason from last status_change event (makes old reason visible)
   statusReason.value = lastStatusChangeReason(selectedLead.value) || ''
+  closedLostReason.value = ''
+  customClosedLostReason.value = ''
+  closedDate.value = selectedLead.value?.closedDate ? new Date(selectedLead.value.closedDate).toISOString().split('T')[0] : ''
   showStatusModal.value = true
 }
 
 function closeStatusModal () {
   showStatusModal.value = false
+  statusChange.value = 'new'
+  statusReason.value = ''
+  closedLostReason.value = ''
+  customClosedLostReason.value = ''
+  closedDate.value = ''
 }
+
 async function confirmChangeStatus () {
   if (!selectedLead.value) return
 
-  // previous status
+  // Validate required fields
+  if (statusChange.value === 'closed-lost' && !closedLostReason.value) {
+    alert('Please select a reason for losing the lead')
+    return
+  }
+  
+  if ((statusChange.value === 'closed-won' || statusChange.value === 'closed-lost') && !closedDate.value) {
+    alert('Please select a date for when the lead was ' + (statusChange.value === 'closed-won' ? 'won' : 'lost'))
+    return
+  }
+
   const prevStatus = selectedLead.value.status || null
-
-  // find last status_change event to get previous reason (if any)
   const lastStatusEv = (selectedLead.value.events || []).slice().reverse().find(e => e.type === 'status_change')
-
-  // safer fallback chain — avoid mixing ?? with || (caused your compile error)
-  // prefer lastStatusEv.reason, then lastStatusEv.note, then selectedLead.value.reason, else empty string
   const prevReason = lastStatusEv?.reason ?? lastStatusEv?.note ?? selectedLead.value?.reason ?? ''
 
-  // new values from modal
   const newStatus = statusChange.value
-  const newReason = (statusReason.value || '').trim()
+  let newReason = ''
+  let closedLostDetails = null
 
-  // optimistic UI update
+  // Build appropriate reason based on status
+  if (newStatus === 'closed-lost') {
+    const reasonObj = closedLostReasons.find(r => r.key === closedLostReason.value)
+    newReason = reasonObj ? reasonObj.label : 'Lost'
+    
+    // Add custom reason if "Other" is selected
+    if (closedLostReason.value === 'other' && customClosedLostReason.value) {
+      newReason = `Other: ${customClosedLostReason.value}`
+    }
+    
+    // Store closed-lost details for metadata
+    closedLostDetails = {
+      reasonKey: closedLostReason.value,
+      reasonLabel: newReason,
+      customReason: closedLostReason.value === 'other' ? customClosedLostReason.value : null
+    }
+  } else if (newStatus === 'closed-won') {
+    newReason = statusReason.value.trim() || 'Won'
+  } else {
+    newReason = statusReason.value.trim()
+  }
+
+  // Optimistic UI update
   selectedLead.value.status = newStatus
   selectedLead.value.statusLabel = statusLabelFrom(newStatus)
+  
+  // Update closed date if applicable
+  if (newStatus === 'closed-won' || newStatus === 'closed-lost') {
+    selectedLead.value.closedDate = new Date(closedDate.value).toISOString()
+    selectedLead.value.closedReason = newReason
+  } else {
+    selectedLead.value.closedDate = null
+    selectedLead.value.closedReason = null
+  }
 
-  // build event recording both old and new values
+  // Build event
   const ev = {
     type: 'status_change',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
-    note: newReason || '',      // short note retained for compatibility
-    reason: newReason || '',    // explicit reason field
+    note: newReason || '',
+    reason: newReason || '',
     metadata: {
       short: `Status ${prevStatus || '—'} → ${newStatus}`,
       from: prevStatus,
       to: newStatus,
-      // store fine-grained changes including previous/new reason
       changes: {
         status: { from: prevStatus, to: newStatus },
         reason: { from: prevReason || null, to: newReason || null }
@@ -3378,26 +3546,48 @@ async function confirmChangeStatus () {
     }
   }
 
-  // append to local events array
+  // Add closed date to event if applicable
+  if (newStatus === 'closed-won' || newStatus === 'closed-lost') {
+    ev.metadata.closedDate = selectedLead.value.closedDate
+  }
+
+  // Add closed-lost details if applicable
+  if (closedLostDetails) {
+    ev.metadata.closedLost = closedLostDetails
+  }
+
   selectedLead.value.events = selectedLead.value.events || []
   selectedLead.value.events.push(ev)
 
-  // close UI modal
   closeStatusModal()
 
-  // PATCH to server — include events so server persists the audit trail
+  // Prepare PATCH data
+  const patchData = {
+    status: newStatus,
+    reason: newReason || '',
+    events: selectedLead.value.events,
+    updatedBy: currentUser.value.name
+  }
+
+  // Add closed date and reason if applicable
+  if (newStatus === 'closed-won' || newStatus === 'closed-lost') {
+    patchData.closedDate = selectedLead.value.closedDate
+    patchData.closedReason = newReason
+  } else {
+    patchData.closedDate = null
+    patchData.closedReason = null
+  }
+
+  // Add closed-lost details to patch if applicable
+  if (closedLostDetails) {
+    patchData.closedLostDetails = closedLostDetails
+  }
+
   try {
-    await patchLead(selectedLead.value._id, {
-      status: newStatus,
-      reason: newReason || '',
-      note: newReason || '',           // keep compatibility if backend expects note
-      events: selectedLead.value.events,
-      updatedBy: currentUser.value.name
-    })
+    await patchLead(selectedLead.value._id, patchData)
   } catch (err) {
     console.error('status patch failed', err)
     alert('Failed to save status change — reloading data.')
-    // revert / reload from server to keep consistent
     await loadLeads()
   }
 }
@@ -3405,10 +3595,7 @@ async function confirmChangeStatus () {
 // PRIORITY change
 function openPriorityModal () {
   priorityChange.value = selectedLead.value?.priority || 'medium'
-  
-  // Get the last reason from events and prefill the modal
   priorityReason.value = lastPriorityChangeReason(selectedLead.value) || ''
-  
   showPriorityModal.value = true
 }
 
@@ -3428,18 +3615,17 @@ async function confirmChangePriority () {
   selectedLead.value.priorityUpdatedBy = currentUser.value.name
   selectedLead.value.priorityUpdatedAt = new Date().toISOString()
 
-  // Build event with from/to INCLUDING REASON
   const ev = {
     type: 'priority_change',
     at: new Date().toISOString(),
     by: { name: currentUser.value.name },
     note: nextReason || `Priority changed to ${next}`,
-    reason: nextReason,  // Store reason explicitly
+    reason: nextReason,
     metadata: {
       short: `Priority ${prev || 'Not set'} → ${next}`,
       from: prev,
       to: next,
-      reason: nextReason,  // Also store in metadata for easy access
+      reason: nextReason,
       changes: { 
         priority: { from: prev, to: next },
         reason: { from: prevReason, to: nextReason }
@@ -3456,7 +3642,7 @@ async function confirmChangePriority () {
       priority: next, 
       priorityUpdatedBy: currentUser.value.name,
       priorityUpdatedAt: selectedLead.value.priorityUpdatedAt,
-      events: selectedLead.value.events,  // This includes the reason in the event
+      events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
   } catch (err) {
@@ -3535,7 +3721,6 @@ function eventTitle (ev) {
   if (ev.type === 'note_status_changed') return 'Note status changed'
   if (ev.type === 'call') return 'Call logged'
   if (ev.type === 'call_updated') {
-    // Show more descriptive title for call updates
     const changes = ev.metadata?.changes || {}
     let changeList = []
     
@@ -3552,7 +3737,6 @@ function eventTitle (ev) {
   if (ev.type === 'call_status_changed') return 'Call status changed'
   if (ev.type === 'task_created') return 'Task created'
   if (ev.type === 'task_updated') {
-    // Just return "Task updated" - let the note field show the details
     return 'Task updated'
   }
   if (ev.type === 'task_deleted') return 'Task deleted'
@@ -3563,7 +3747,6 @@ function eventTitle (ev) {
   if (ev.type === 'followup_status_changed') return 'Follow-up status changed'
   if (ev.type === 'followup_deleted') return 'Follow-up deleted'
   if (ev.type === 'followup_updated') {
-    // Check what was updated based on metadata or changes
     const changes = ev.metadata?.changes || {}
     
     if (changes.followUpDate && changes.note) {
@@ -3574,7 +3757,6 @@ function eventTitle (ev) {
       return 'Follow-up note updated'
     }
     
-    // Fallback to checking the note content
     const note = ev.note || ''
     if (note.includes('date updated')) {
       return 'Follow-up date changed'
@@ -3595,7 +3777,8 @@ function statusPillClass (status) {
   if (status === 'working') return 'bg-amber-50 text-amber-700'
   if (status === 'qualified') return 'bg-emerald-50 text-emerald-700'
   if (status === 'unqualified') return 'bg-rose-50 text-rose-700'
-  if (status === 'converted') return 'bg-indigo-50 text-indigo-700'
+  if (status === 'closed-won') return 'bg-indigo-50 text-indigo-700'
+  if (status === 'closed-lost') return 'bg-rose-100 text-rose-800'
   return 'bg-slate-100 text-slate-700'
 }
 
@@ -3618,8 +3801,8 @@ function priorityBadgeClass (priority) {
 function statusIcon (s) {
   if (s === 'working') return '🔄'
   if (s === 'qualified') return '⭐'
-  if (s === 'converted') return '✅'
-  if (s === 'unqualified') return '❌'
+  if (s === 'closed-won') return '✅'
+  if (s === 'unqualified' || s === 'closed-lost') return '❌'
   return '🟢'
 }
 
@@ -3656,12 +3839,10 @@ async function patchLead (id, patchBody) {
     
     console.log('PATCH response received:', updated)
     
-    // Update local state
     const idx = leads.value.findIndex(l => (l._id || l.id) === (updated._id || updated.id))
     if (idx !== -1) {
       leads.value[idx] = normalizeLead(updated)
       
-      // Update selectedLead if it's the same lead
       if (selectedLead.value && (selectedLead.value._id || selectedLead.value.id) === (updated._id || updated.id)) {
         console.log('Updating selectedLead with server response')
         selectedLead.value = leads.value[idx]
@@ -3673,7 +3854,6 @@ async function patchLead (id, patchBody) {
   } catch (err) {
     console.error('PATCH request failed:', err)
     
-    // Try to get more specific error message
     let errorMessage = 'Failed to save changes'
     if (err.data?.statusMessage) {
       errorMessage = err.data.statusMessage
@@ -3707,9 +3887,9 @@ function openStatusChangeFor (lead) {
 
 // convert placeholder
 function handleConvert (lead) {
-  // you may want to enforce convert only when qualified:
-  if (lead && lead.status !== 'qualified') {
-    if (!confirm('Lead is not "Qualified". Are you sure you want to convert?')) return
+  if (lead && lead.status === 'new') {
+    alert('New leads cannot be converted yet. Please update the lead status first.')
+    return
   }
   goToBuild(lead)
 }
@@ -3739,7 +3919,6 @@ async function refreshSelectedLead() {
   try {
     const freshLead = await $fetch(`/api/leads/${selectedLead.value._id}`)
     selectedLead.value = normalizeLead(freshLead)
-    // Update follow-up input
     followUpInput.value = freshLead.nextFollowUpAt ? dateTimeLocalValue(freshLead.nextFollowUpAt) : ''
     console.log('Lead refreshed:', selectedLead.value)
   } catch (err) {
@@ -3759,10 +3938,8 @@ watch(selectedLead, (newVal) => {
 onMounted(async () => {
   console.log('Leads component mounted, current user:', currentUser.value)
   
-  // load admins first so normalizeLead() can resolve assignedTo from assignedToId
   await loadAdmins()
   
-  // then load leads (which calls normalizeLead for each lead)
   await loadLeads()
   
   console.log('Initial load complete, leads count:', leads.value.length)
@@ -3789,10 +3966,31 @@ input[type="datetime-local"]:focus {
   outline: none;
   border-color: #0ea5e9;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-  /* Removed the 'ring' property that was causing the warning */
 }
 
 input[type="datetime-local"]:hover {
+  border-color: #94a3b8;
+}
+
+/* Date input styling */
+input[type="date"] {
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #334155;
+  background-color: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s;
+}
+
+input[type="date"]:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+input[type="date"]:hover {
   border-color: #94a3b8;
 }
 
@@ -3846,5 +4044,47 @@ input[type="datetime-local"]:hover {
   margin-top: 0.25rem;
   color: #dc2626;
   font-size: 0.75rem;
+}
+
+/* Status badge improvements */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge-new {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge-qualified {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge-working {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge-unqualified {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge-closed-won {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-badge-closed-lost {
+  background-color: #fecaca;
+  color: #7f1d1d;
 }
 </style>

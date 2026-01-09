@@ -5,8 +5,8 @@ import { connectDB } from '../../utils/mongoose'
 import jwt from 'jsonwebtoken'
 
 interface TaskData {
-  id: string;
-  title: string;
+  id?: string;
+  title?: string;
   due?: string | Date;
   note?: string;
   status?: string;
@@ -61,22 +61,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Lead not found' })
   }
 
- // Permission check: Non-admin users can only modify leads assigned to them
-if (!['admin', 'superadmin'].includes(currentUser.role)) {
-  const leadAssignedToId = existingLead.assignedToId ? String(existingLead.assignedToId) : null
-  const currentUserId = String(currentUser._id || currentUser.id)
+  // Permission check: Non-admin users can only modify leads assigned to them
+  if (!['admin', 'superadmin'].includes(currentUser.role)) {
+    const leadAssignedToId = existingLead.assignedToId ? String(existingLead.assignedToId) : null
+    const currentUserId = String(currentUser._id || currentUser.id)
 
-  // Deny unless the lead is explicitly assigned to the current user
-  if (leadAssignedToId !== currentUserId) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'You can only modify leads assigned to you'
-    })
+    if (leadAssignedToId !== currentUserId) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'You can only modify leads assigned to you'
+      })
+    }
   }
-}
-
-
-
 
   // Check if user is trying to change assignment
   if (body.assignedToId !== undefined || body.assignedTo !== undefined) {
@@ -88,15 +84,12 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
       })
     }
 
-    // If assigning to a user (not unassigning)
     if (body.assignedToId) {
-      // Validate that the assigned user exists and has appropriate role
       const assignedUser = await User.findById(body.assignedToId)
       if (!assignedUser) {
         throw createError({ statusCode: 400, statusMessage: 'Assigned user not found' })
       }
 
-      // Only allow assignment to lead managers, admins, or superadmins
       if (!['lead-manager', 'admin', 'superadmin'].includes(assignedUser.role)) {
         throw createError({
           statusCode: 400,
@@ -104,11 +97,9 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
         })
       }
 
-      // Add assignment metadata
       body.assignmentBy = currentUser.name || currentUser.email
       body.assignmentAt = new Date()
     } else {
-      // Unassigning (setting to null)
       body.assignmentBy = currentUser.name || currentUser.email
       body.assignmentAt = new Date()
       body.unassigned = true
@@ -123,18 +114,66 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
     })
   }
 
-  // Add updated by information
+  // Build updateData and attach metadata
   const updateData: any = {
     ...body,
     updatedAt: new Date(),
     updatedBy: currentUser.name || currentUser.email
   }
 
+  // --- Normalize adults/children/ages/genders when provided (or partially provided) ---
+  if (
+    body.adults !== undefined ||
+    body.children !== undefined ||
+    body.adultAges !== undefined ||
+    body.childAges !== undefined ||
+    body.ages !== undefined ||
+    body.genders !== undefined
+  ) {
+    // Normalize numbers
+    const adults = body.adults !== undefined ? Number(body.adults || 0) : (existingLead.adults || 0)
+    const children = body.children !== undefined ? Number(body.children || 0) : (existingLead.children || 0)
+    const travellers = adults + children
+
+    // Normalize arrays (safe conversions)
+    const adultAges: number[] = Array.isArray(body.adultAges)
+      ? body.adultAges.map((a: any) => Number(a))
+      : (existingLead.adultAges || []).map((a: any) => Number(a))
+
+    const childAges: number[] = Array.isArray(body.childAges)
+      ? body.childAges.map((a: any) => Number(a))
+      : (existingLead.childAges || []).map((a: any) => Number(a))
+
+    // If body.ages supplied explicitly, use that (converted); otherwise combine adultAges + childAges
+    let agesCombined: number[] = []
+    if (Array.isArray(body.ages) && body.ages.length > 0) {
+      agesCombined = body.ages.map((a: any) => Number(a))
+    } else {
+      agesCombined = [...adultAges, ...childAges]
+    }
+
+    // Genders: prefer provided genders, otherwise fallback to existing or fill with 'unspecified'
+    let genders: string[] = Array.isArray(body.genders)
+      ? body.genders.map((g: any) => String(g))
+      : (existingLead.genders || []).map((g: any) => String(g))
+
+    if (agesCombined.length > genders.length) {
+      const diff = agesCombined.length - genders.length
+      genders = genders.concat(Array(diff).fill('unspecified'))
+    }
+
+    updateData.adults = adults
+    updateData.children = children
+    updateData.travellers = travellers
+    updateData.adultAges = adultAges
+    updateData.childAges = childAges
+    updateData.ages = agesCombined
+    updateData.genders = genders
+  }
+
   // Handle tasks specifically - ensure they're properly saved
   if (body.tasks !== undefined) {
-    // Validate tasks structure
     if (Array.isArray(body.tasks)) {
-      // Ensure each task has required fields
       updateData.tasks = body.tasks.map((task: TaskData) => ({
         id: task.id || `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         title: task.title || 'Untitled Task',
@@ -151,9 +190,7 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
 
   // Handle events specifically - ensure they're properly saved
   if (body.events !== undefined) {
-    // Validate events structure
     if (Array.isArray(body.events)) {
-      // Map incoming events into Date objects (preserve fields)
       updateData.events = body.events.map((ev: EventData) => ({
         type: ev.type || 'note',
         at: ev.at ? new Date(ev.at) : new Date(),
@@ -166,36 +203,26 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
         updatedAt: ev.updatedAt ? new Date(ev.updatedAt) : new Date()
       }))
 
-      // --- FOLLOW-UP SPECIFIC FIXES (only these) ---
-      // 1) If there is an explicit followup_set in incoming events, use the most recent one to set nextFollowUpAt
+      // --- FOLLOW-UP HELPERS ---
       const incomingFollowupSets = (body.events as EventData[]).filter(e => e.type === 'followup_set' && e.metadata && e.metadata.followUpDate)
       if (incomingFollowupSets.length > 0) {
-        // choose the last followup_set (frontend pushes the modifying followup_set last in many flows)
         const lastSet = incomingFollowupSets[incomingFollowupSets.length - 1]
         try {
-          // convert metadata.followUpDate to Date/ISO
           const followDate = lastSet.metadata.followUpDate
           if (followDate) {
             updateData.nextFollowUpAt = new Date(followDate)
           }
         } catch (err) {
-          // ignore parse errors, do not throw
+          // ignore parse errors
         }
       }
 
-      // 2) If incoming events contain followup_deleted, and that deleted follow-up matches the currently saved nextFollowUpAt,
-      //    clear nextFollowUpAt (so UI won't show a follow-up that was deleted).
       const incomingFollowupDeletes = (body.events as EventData[]).filter(e => e.type === 'followup_deleted' && e.metadata)
       if (incomingFollowupDeletes.length > 0) {
-        // current saved next followup iso (string) for comparison
         const currentNextIso = existingLead.nextFollowUpAt ? new Date(existingLead.nextFollowUpAt).toISOString() : null
-
         for (const del of incomingFollowupDeletes) {
-          // metadata.followupId may be an 'at' timestamp from the frontend (they use followup.createdAt)
           const metaId = del.metadata?.followupId
           const metaOriginalDate = del.metadata?.originalDate || del.metadata?.followUpDate
-
-          // If metadata contains an ISO date (originalDate or followUpDate) compare to currentNextIso
           if (metaOriginalDate) {
             try {
               const md = new Date(metaOriginalDate).toISOString()
@@ -205,11 +232,8 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
               }
             } catch {}
           }
-
-          // If metadata.followupId looks like an ISO or timestamp, try to find matching followup in existing events
           if (metaId) {
             try {
-              // Try match by event.at equality in existing lead
               const matching = (existingLead.events || []).find((e: any) => {
                 try {
                   return e.type === 'followup_set' && (new Date(e.at)).toISOString() === String(metaId)
@@ -230,8 +254,6 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
         }
       }
 
-      // 3) If incoming events include followup_status_changed referring to the active followup and the status is one
-      //    that should clear the scheduled follow-up (completed/cancelled), clear nextFollowUpAt.
       const incomingFollowupStatusChanges = (body.events as EventData[]).filter(e => e.type === 'followup_status_changed' && e.metadata)
       if (incomingFollowupStatusChanges.length > 0) {
         const currentNextIso = existingLead.nextFollowUpAt ? new Date(existingLead.nextFollowUpAt).toISOString() : null
@@ -241,15 +263,12 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
           const shouldClear = ['completed', 'cancelled', 'missed'].includes(String(newStatus).toLowerCase())
           if (!shouldClear) continue
 
-          // If the followupId refers to an event at timestamp or ISO that matches currentNextIso, clear it.
           if (followupId && currentNextIso) {
             try {
-              // If followupId is an ISO timestamp string (frontend used followup.createdAt), compare directly
               if (String(followupId) === currentNextIso) {
                 updateData.nextFollowUpAt = null
                 break
               }
-              // Also try to find the followup in existingLead.events and compare its metadata.followUpDate
               const existingFollow = (existingLead.events || []).find((e: any) => {
                 try {
                   return e.type === 'followup_set' && new Date(e.at).toISOString() === String(followupId)
@@ -265,17 +284,50 @@ if (!['admin', 'superadmin'].includes(currentUser.role)) {
           }
         }
       }
-      // --- end follow-up specific fixes ---
     }
   }
 
   // Handle preferredTime specifically
-if (body.preferredTime !== undefined) {
-  updateData.preferredTime = body.preferredTime ? new Date(body.preferredTime) : null
-}
+  if (body.preferredTime !== undefined) {
+    updateData.preferredTime = body.preferredTime ? new Date(body.preferredTime) : null
+  }
 
+  // NEW: Handle closed date and closed lost details specifically
+  if (body.closedDate !== undefined) {
+    updateData.closedDate = body.closedDate ? new Date(body.closedDate) : null
+  }
 
-  // Update lead
+  if (body.closedReason !== undefined) {
+    updateData.closedReason = body.closedReason || null
+  }
+
+  if (body.closedLostDetails !== undefined) {
+    updateData.closedLostDetails = body.closedLostDetails || null
+  }
+
+  // Clear closed date and reason when status changes away from closed-won/closed-lost
+  if (body.status !== undefined) {
+    const isClosedStatus = body.status === 'closed-won' || body.status === 'closed-lost'
+    if (!isClosedStatus) {
+      updateData.closedDate = null
+      updateData.closedReason = null
+      updateData.closedLostDetails = null
+    }
+  }
+
+  // Optional: Add status transition validation
+  if (body.status !== undefined) {
+    const validStatuses = ['new', 'qualified', 'unqualified', 'working', 'closed-won', 'closed-lost']
+    
+    if (!validStatuses.includes(body.status)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Invalid status: ${body.status}. Valid statuses are: ${validStatuses.join(', ')}`
+      })
+    }
+  }
+
+  // Update lead in DB
   const lead = await Lead.findByIdAndUpdate(
     id,
     { $set: updateData },
@@ -286,10 +338,10 @@ if (body.preferredTime !== undefined) {
     throw createError({ statusCode: 404, statusMessage: 'Lead not found' })
   }
 
-  // Return the updated lead
   return {
     ...lead,
     _id: String(lead._id),
-    id: String(lead._id)
+    id: String(lead._id),
+    closedDate: lead.closedDate ? new Date(lead.closedDate).toISOString() : null
   }
 })

@@ -1,23 +1,24 @@
 // server\models\Lead.ts
-
 import mongoose from 'mongoose'
 
-const EventSchema = new mongoose.Schema(
+const { Schema } = mongoose
+
+const EventSchema = new Schema(
   {
-    type: { type: String, required: true }, // note, call, followup_set, followup_cleared, status_change, task_created, etc.
+    type: { type: String, required: true },
     at: { type: Date, required: true, default: () => new Date() },
-    by: { type: mongoose.Schema.Types.Mixed }, // { name: 'User name' } or string
+    by: { type: Schema.Types.Mixed },
     note: { type: String },
     status: { type: String },
     reason: { type: String },
-    metadata: { type: mongoose.Schema.Types.Mixed },
+    metadata: { type: Schema.Types.Mixed },
     updatedBy: String,
     updatedAt: Date,
   },
   { _id: false }
 )
 
-const TaskSchema = new mongoose.Schema(
+const TaskSchema = new Schema(
   {
     id: { type: String, required: true },
     title: { type: String, required: true },
@@ -32,66 +33,84 @@ const TaskSchema = new mongoose.Schema(
   { _id: false }
 )
 
-const LeadSchema = new mongoose.Schema(
+const LeadSchema = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true },
     phone: { type: String, default: '' },
     countryCode: { type: String, default: '' },
-    // ADDED COUNTRY FIELD HERE:
+
+    // Contact country (single) — from contact details
     country: { type: String, default: '' },
 
-    // older fields from your schema
+    // Destination countries (array) — selected destinations like Kenya/Tanzania
+    countries: [{ type: String }],
+
     originCity: { type: String, default: '' },
+
+    // Trip fields
     activities: [{ type: String }],
     days: { type: Number },
     who: { type: String },
-    date: { type: String }, // keep form date as string if needed
-    travellers: { type: Number },
+    date: { type: String }, // keep as string (ISO or yyyy-mm-dd)
+    dateIsMonthOnly: { type: Boolean, default: false },
 
-    // new contact fields
-    age: { type: Number }, // single age (if UI uses single)
-    ages: [{ type: Number }], // keep array for group ages
+    // Traveller counts & ages
+    travellers: { type: Number },
+    adults: { type: Number, default: 0 },
+    children: { type: Number, default: 0 },
+    ages: [{ type: Number }], // flattened ages array if needed
+    adultAges: [{ type: Number }],
+    childAges: [{ type: Number }],
     genders: [{ type: String }],
 
+    // Budget
     budget: { type: Number },
 
-     preferredTime: { type: Date }, // Store as Date type
+    // Contact preferences
+    preferredContactMethod: { type: String, default: '' },
+    scheduleCall: { type: Boolean, default: false },
+    preferredTime: { type: Date }, // stored as Date when provided
+    timezone: { type: String, default: '' },
+
+    // Misc
+    message: { type: String, default: '' },
 
     // assignment & users
-    assignedToId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    assignedToId: { type: Schema.Types.ObjectId, ref: 'User' },
 
     // events/timeline/tasks
     events: [EventSchema],
     tasks: [TaskSchema],
 
-    // follow-up
     nextFollowUpAt: { type: Date },
 
-    // additional meta fields
-    status: { type: String, default: 'new' }, // new | working | qualified | unqualified | converted | closed
-    priority: { type: String, default: 'medium' }, // low|medium|high|very-high
+    // Status and priority fields
+    status: { type: String, default: 'new' },
+    priority: { type: String, default: 'medium' },
     priorityUpdatedAt: { type: Date },
     priorityUpdatedBy: { type: String },
     
+    // NEW: Closed date and reason fields
+    closedDate: { type: Date },
+    closedReason: { type: String },
+    closedLostDetails: {
+      reasonKey: { type: String },
+      reasonLabel: { type: String },
+      customReason: { type: String }
+    },
 
-    // source details
     source: { type: String },
     leadSourceDetail: { type: String },
-    // add these fields in LeadSchema:
-message: { type: String, default: '' },
-timezone: { type: String, default: '' },
 
-    utm: { type: mongoose.Schema.Types.Mixed },
+    utm: { type: Schema.Types.Mixed },
 
     documents: [{ name: String, url: String, uploadedAt: Date, uploadedBy: String }],
 
-    // who last updated
     updatedBy: { type: String },
-
   },
   {
-    timestamps: true // createdAt, updatedAt
+    timestamps: true,
   }
 )
 

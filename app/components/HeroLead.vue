@@ -165,6 +165,24 @@ const submitLead = async () => {
   loading.value = true
 
   try {
+    // Generate a unique session ID for this form submission
+    const sessionId = `hero_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    
+    // NUCLEAR CLEAR: Remove ALL possible localStorage items before saving new
+    if (typeof window !== 'undefined') {
+      // Clear ALL localStorage items that start with 'hero' or contain 'prefilled'
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('hero') || key.includes('prefilled') || key === 'heroSessionId') {
+          localStorage.removeItem(key)
+        }
+      })
+      
+      // Clear ALL sessionStorage
+      sessionStorage.clear()
+      
+      console.log('🧹 NUKED all hero-related localStorage before saving new')
+    }
+
     // Prepare lead data for the journey page
     const leadData = {
       adults: parseInt(form.value.adults),
@@ -172,64 +190,50 @@ const submitLead = async () => {
       arrivalDate: form.value.arrivalDate,
       totalTravelers: parseInt(form.value.adults) + (parseInt(form.value.children) || 0),
       source: 'hero_quick_lead',
-      leadSourceDetail: 'Hero 30-second form submission',
-      submittedAt: new Date().toISOString()
+      leadSourceDetail: `Homepage Quick Planner - ${form.value.adults}A/${form.value.children}C - ${form.value.arrivalDate}`,
+      submittedAt: new Date().toISOString(),
+      sessionId: sessionId
     }
 
     console.log('Hero lead data:', leadData)
 
-    // CLEAR ALL OLD DATA FIRST before saving new
+    // Save NEW data to storage with VERY SHORT expiration
     if (typeof window !== 'undefined') {
-      // Clear old localStorage data
-      localStorage.removeItem('heroLeadData')
-      localStorage.removeItem('heroQuickLeadData')
-      localStorage.removeItem('prefilledAdults')
-      localStorage.removeItem('prefilledChildren')
-      localStorage.removeItem('prefilledArrivalDate')
-      localStorage.removeItem('journeyForm') // Clear old journey form data too
+      // Save session ID
+      localStorage.setItem('heroSessionId', sessionId)
       
-      // Clear old sessionStorage data
-      sessionStorage.removeItem('heroLeadData')
-      sessionStorage.removeItem('heroQuickLeadData')
-      sessionStorage.removeItem('prefilledAdults')
-      sessionStorage.removeItem('prefilledChildren')
-      sessionStorage.removeItem('prefilledArrivalDate')
+      // Save data with expiration timestamp (5 minutes)
+      const dataWithExpiry = {
+        ...leadData,
+        _expiry: Date.now() + (5 * 60 * 1000) // 5 minutes from now
+      }
       
-      // Now save NEW data to sessionStorage (primary - clears when tab closes)
-      sessionStorage.setItem('heroLeadData', JSON.stringify(leadData))
+      localStorage.setItem('heroLeadData', JSON.stringify(dataWithExpiry))
       
-      // Also save to localStorage (backup, but fresh)
-      localStorage.setItem('heroLeadData', JSON.stringify(leadData))
-      
-      // Store simple values for easy access
-      sessionStorage.setItem('prefilledAdults', form.value.adults)
-      sessionStorage.setItem('prefilledChildren', form.value.children || '0')
-      sessionStorage.setItem('prefilledArrivalDate', form.value.arrivalDate)
-      
-      localStorage.setItem('prefilledAdults', form.value.adults)
-      localStorage.setItem('prefilledChildren', form.value.children || '0')
-      localStorage.setItem('prefilledArrivalDate', form.value.arrivalDate)
+      console.log('💾 Saved NEW hero form data with 5-minute expiry')
     }
 
-    // Build URL params for journey page - pass the 3 key fields
+    // Build URL params for journey page
     const params = new URLSearchParams()
     params.append('prefilled', 'true')
     params.append('adults', form.value.adults)
     params.append('children', form.value.children || '0')
     params.append('arrivalDate', form.value.arrivalDate)
     params.append('source', 'hero_quick')
+    params.append('sessionId', sessionId)
     
-    // Calculate total travelers
     const total = parseInt(form.value.adults) + (parseInt(form.value.children) || 0)
     params.append('travelers', total)
 
-    console.log('Redirecting to journey with params:', params.toString())
-    console.log('Cleared old storage and saved new data')
+    console.log('Redirecting to journey with FRESH session:', sessionId)
 
-    // Immediate redirect with short timeout for better UX
-    setTimeout(() => {
-      window.location.href = `/journey?${params.toString()}`
-    }, 80)
+    // Use replaceState to prevent back button issues
+    if (window.history.replaceState) {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    
+    // Redirect to journey page IMMEDIATELY
+    window.location.href = `/journey?${params.toString()}`
 
   } catch (error) {
     console.error('Error submitting lead:', error)

@@ -251,7 +251,7 @@
                 min="1" 
                 max="30" 
                 step="1" 
-                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500 disabled:[&::-webkit-slider-thumb]:bg-gray-400"
+                class="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500 disabled:[&::-webkit-slider-thumb]:bg-gray-400"
               />
               <div class="flex justify-between text-xs text-gray-500">
                 <span>Short</span>
@@ -943,7 +943,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -1289,6 +1289,28 @@ function validate() {
   return validationMessages.value.length === 0
 }
 
+// Auto-save form to localStorage as user types (debounced)
+watch(() => ({ ...form }), (newForm) => {
+  // Don't save during initial load or when clearing
+  if (typeof window === 'undefined') return
+  
+  // Debounce the save
+  clearTimeout(window.__journeySaveTimeout)
+  window.__journeySaveTimeout = setTimeout(() => {
+    // Save to localStorage for user progress
+    localStorage.setItem('journeyForm', JSON.stringify(newForm))
+    console.log('💾 Auto-saved form progress')
+  }, 1000)
+}, { deep: true })
+
+// Clean up on unmount
+onBeforeUnmount(() => {
+  // Clean up any timeouts
+  if (typeof window !== 'undefined' && window.__journeySaveTimeout) {
+    clearTimeout(window.__journeySaveTimeout)
+  }
+})
+
 // send payload to your /api/leads (with browser timezone)
 async function handleSubmit() {
   if (!validate()) return
@@ -1322,15 +1344,47 @@ async function handleSubmit() {
       preferredContactMethod: form.preferredContactMethod,
       scheduleCall: form.scheduleCall,
       preferredTime: form.preferredTime || null,
-      timezone: timezone, // Browser-detected timezone
+      timezone: timezone,
       consentToContact: form.consentToContact,
       source: 'custom_itinerary',
-      leadSourceDetail: 'Homepage Hero - 30-second Trip Planner Form'
+      leadSourceDetail: 'Custom Itinerary Builder - Step-by-Step Trip Planning'
     }
 
-    if (process.client) localStorage.setItem('journeyForm', JSON.stringify(payload))
+    // IMPORTANT: Clear ALL storage BEFORE saving to prevent back button issues
+    if (typeof window !== 'undefined') {
+      // Clear ALL hero-related data
+      const keysToRemove = [
+        'heroLeadData',
+        'heroQuickLeadData',
+        'prefilledAdults',
+        'prefilledChildren',
+        'prefilledArrivalDate',
+        'heroFormTimestamp',
+        'heroSessionId',
+        'heroLeadTimestamp',
+        'isFreshHeroData',
+        'journeyForm' // Clear journey form too!
+      ]
+      
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+      
+      // Clear ALL sessionStorage
+      sessionStorage.clear()
+      
+      console.log('🧹 Cleared ALL storage before submission to prevent back button issues')
+    }
 
+    // Save to API
     await $fetch('/api/leads', { method: 'POST', body: payload })
+
+    // DO NOT save to localStorage after submission
+    // This prevents back button from restoring form
+
+    // Clear browser cache by modifying history
+    if (typeof window !== 'undefined' && window.history.replaceState) {
+      // Replace current state with empty state
+      window.history.replaceState(null, '', window.location.href)
+    }
 
     router.push({
       path: '/thankyou',
@@ -1340,6 +1394,14 @@ async function handleSubmit() {
         activities: form.activities.join(', ')
       }
     })
+    
+    // Force reload after redirect to prevent browser back button cache
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/thankyou'
+      }
+    }, 100)
+    
   } catch (err) {
     console.error('Error saving lead:', err)
     alert('Something went wrong while sending your request. Please try again.')
@@ -1350,17 +1412,126 @@ async function handleSubmit() {
 
 onMounted(() => {
   try {
+    // Check if this is a back navigation from thank you page
+    const navigationEntry = window.performance?.getEntriesByType('navigation')[0]
+    const isBackNavigation = navigationEntry?.type === 'back_forward'
+    
+    console.log('📊 Page load type:', {
+      type: navigationEntry?.type,
+      isBackNavigation,
+      referrer: document.referrer,
+      hasThankYouReferrer: document.referrer?.includes('/thankyou')
+    })
+    
+    // If coming back from thank you page, CLEAR EVERYTHING
+    if (isBackNavigation || document.referrer?.includes('/thankyou')) {
+      console.log('🔄 Back navigation from thank you detected - CLEARING ALL DATA')
+      
+      // Clear ALL storage
+      localStorage.clear()
+      sessionStorage.clear()
+      
+      // Force reload to get fresh page
+      window.location.reload()
+      return
+    }
+    
     // First check for prefilled data from URL parameters (hero form)
     const urlParams = new URLSearchParams(window.location.search)
     const isPrefilled = urlParams.get('prefilled') === 'true'
+    const urlSessionId = urlParams.get('sessionId')
     
-    // ALWAYS prioritize URL parameters over localStorage
-    if (isPrefilled) {
+    // Get session ID from localStorage (if any)
+    const storedSessionId = localStorage.getItem('heroSessionId')
+    
+    console.log('📊 Session validation check:', {
+      isPrefilled,
+      urlSessionId,
+      storedSessionId,
+      hasHeroLeadData: !!localStorage.getItem('heroLeadData'),
+      hasJourneyForm: !!localStorage.getItem('journeyForm')
+    })
+    
+    // NUCLEAR OPTION: If user comes directly to /journey without proper session, CLEAR EVERYTHING
+    if (!isPrefilled || !urlSessionId || !storedSessionId || urlSessionId !== storedSessionId) {
+      console.log('🚨 Direct page load or invalid session - CLEARING ALL HERO DATA')
+      
+      // Clear ALL hero-related data from localStorage
+      const heroKeys = [
+        'heroLeadData',
+        'heroQuickLeadData', 
+        'prefilledAdults',
+        'prefilledChildren',
+        'prefilledArrivalDate',
+        'heroFormTimestamp',
+        'heroSessionId',
+        'heroLeadTimestamp',
+        'isFreshHeroData'
+      ]
+      
+      heroKeys.forEach(key => {
+        localStorage.removeItem(key)
+      })
+      
+      // Clear sessionStorage
+      sessionStorage.clear()
+      
+      console.log('🧹 Cleared all hero-related localStorage data')
+      
+      // Load journeyForm data for user progress (if any)
+      const cached = localStorage.getItem('journeyForm')
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached)
+          console.log('Found cached journeyForm for user progress')
+          
+          // Load ALL fields from cached form
+          Object.keys(parsed).forEach(k => {
+            if (k in form) {
+              form[k] = parsed[k]
+            }
+          })
+          
+          // Ensure arrays are properly initialized
+          if (form.adults > 0 && (!form.adultAges || form.adultAges.length !== form.adults)) {
+            const needed = Math.max(1, Number(form.adults) || 1)
+            form.adultAges = Array(needed).fill(30)
+          }
+          
+          if (form.children > 0 && (!form.childAges || form.childAges.length !== form.children)) {
+            const needed = Math.max(0, Number(form.children) || 0)
+            form.childAges = Array(needed).fill(1)
+          }
+          
+          if (parsed.date && parsed.date.length === 7) {
+            form.monthValue = parsed.date.slice(0,7)
+            dateIsMonthOnly.value = true
+          }
+        } catch (e) {
+          console.error('Error parsing cached journeyForm:', e)
+          localStorage.removeItem('journeyForm')
+        }
+      }
+      
+      // Clean URL params if any
+      if (window.history.replaceState && window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname)
+        console.log('🔗 Cleaned URL parameters')
+      }
+      
+      console.log('✅ Loaded form state')
+      return
+    }
+    
+    // ONLY execute this block if we have valid session with URL params
+    if (isPrefilled && urlSessionId && storedSessionId && urlSessionId === storedSessionId) {
+      console.log('✅ Valid session detected, using URL params from hero form')
+      
       const prefilledAdults = urlParams.get('adults')
       const prefilledChildren = urlParams.get('children') || '0'
       const prefilledArrivalDate = urlParams.get('arrivalDate')
       
-      console.log('🚀 Prefilled data from hero form URL params (HIGHEST PRIORITY):', {
+      console.log('🚀 Using prefilled data from valid session:', {
         adults: prefilledAdults,
         children: prefilledChildren,
         arrivalDate: prefilledArrivalDate
@@ -1394,110 +1565,32 @@ onMounted(() => {
         }
       }
       
-      // IMPORTANT: Clear localStorage/sessionStorage for these fields 
-      // when we have URL params to prevent old data from persisting
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('heroLeadData')
-        localStorage.removeItem('heroQuickLeadData')
-        sessionStorage.removeItem('heroLeadData')
-        sessionStorage.removeItem('heroQuickLeadData')
-      }
-    }
-    
-    // Only check storage if NO URL parameters were provided
-    else {
-      console.log('No URL params found, checking storage for data...')
+      // Clear hero data after using it
+      localStorage.removeItem('heroSessionId')
+      localStorage.removeItem('heroLeadData')
       
-      // Check sessionStorage first (most recent)
-      let heroLeadData = null
-      
-      try {
-        heroLeadData = sessionStorage.getItem('heroLeadData')
-        if (!heroLeadData) {
-          // Fallback to localStorage
-          heroLeadData = localStorage.getItem('heroLeadData')
-        }
-      } catch (e) {
-        console.error('Error accessing storage:', e)
-      }
-      
-      if (heroLeadData) {
-        try {
-          const parsedHeroData = JSON.parse(heroLeadData)
-          console.log('Found hero lead data in storage (NO URL params):', parsedHeroData)
-          
-          // Only use storage data if we don't have URL params
-          if (parsedHeroData.adults) {
-            form.adults = parsedHeroData.adults
-            const needed = Math.max(1, Number(parsedHeroData.adults) || 1)
-            form.adultAges = Array(needed).fill(30)
-          }
-          
-          if (parsedHeroData.children !== undefined) {
-            form.children = parsedHeroData.children
-            const needed = Math.max(0, Number(parsedHeroData.children) || 0)
-            form.childAges = Array(needed).fill(1)
-          }
-          
-          if (parsedHeroData.arrivalDate) {
-            const arrivalDate = parsedHeroData.arrivalDate
-            if (arrivalDate.includes('-') && arrivalDate.length === 10) {
-              form.date = arrivalDate
-              dateIsMonthOnly.value = false
-            } else if (arrivalDate.length === 7) {
-              form.monthValue = arrivalDate
-              dateIsMonthOnly.value = true
-            }
-          }
-          
-        } catch (e) {
-          console.error('Error parsing hero lead data:', e)
-        }
-      }
-    }
-    
-    // Always check for cached journey form data (user progress) 
-    // but don't let it override URL params or hero form data
-    const cached = localStorage.getItem('journeyForm')
-    if (cached) {
-      const parsed = JSON.parse(cached)
-      console.log('Found cached journeyForm (user progress):', parsed)
-      
-      // Only hydrate fields that weren't set by URL params or hero form
-      Object.keys(parsed).forEach(k => {
-        if (k in form) {
-          // Don't override if URL params already set these
-          const urlHasAdults = isPrefilled && urlParams.has('adults')
-          const urlHasChildren = isPrefilled && urlParams.has('children')
-          const urlHasDate = isPrefilled && urlParams.has('arrivalDate')
-          
-          const shouldSkip = 
-            (k === 'adults' && (isPrefilled || form.adults !== 2)) ||
-            (k === 'children' && (isPrefilled || form.children !== 0)) ||
-            (k === 'date' && (isPrefilled || form.date)) ||
-            (k === 'monthValue' && (isPrefilled || form.monthValue))
-          
-          if (!shouldSkip) {
-            form[k] = parsed[k]
-          }
-        }
-      })
-      
-      if (parsed.date && parsed.date.length === 7 && !form.monthValue) {
-        form.monthValue = parsed.date.slice(0,7)
-        dateIsMonthOnly.value = true
+      // Clean URL params
+      if (window.history.replaceState) {
+        const newParams = new URLSearchParams(window.location.search)
+        newParams.delete('sessionId')
+        newParams.delete('prefilled')
+        newParams.delete('adults')
+        newParams.delete('children')
+        newParams.delete('arrivalDate')
+        const newUrl = `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
+        window.history.replaceState({}, '', newUrl)
+        console.log('🔗 Cleaned session-related URL parameters')
       }
     }
     
     // Log final state for debugging
-    console.log('✅ Final form state after loading:', {
+    console.log('✅ Final form state:', {
       adults: form.adults,
       children: form.children,
       date: form.date,
       monthValue: form.monthValue,
       adultAges: form.adultAges,
-      childAges: form.childAges,
-      source: isPrefilled ? 'URL params' : (cached ? 'cached journey' : 'defaults')
+      childAges: form.childAges
     })
     
   } catch (e) { 
@@ -1553,6 +1646,12 @@ function resetForm() {
   dateIsMonthOnly.value = false
   Object.keys(errors).forEach(k => delete errors[k])
   showValidationSummary.value = false
+  
+  // Also clear localStorage when resetting
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('journeyForm')
+    console.log('🧹 Cleared journeyForm from localStorage on reset')
+  }
 }
 </script>
 
@@ -1595,5 +1694,9 @@ input[type="range"]::-webkit-slider-thumb {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  line-clamp: 2;
+  -webkit-line-clamp: 2; /* Keep for Safari */
 }
 </style>

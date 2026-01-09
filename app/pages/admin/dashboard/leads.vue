@@ -1537,18 +1537,25 @@ function getCurrentDate() {
 }
 
 function handleStatusChange() {
-  // Reset closed-lost related fields when status changes
+  // Only reset closed-lost related fields if switching FROM closed-lost
   if (statusChange.value !== 'closed-lost') {
     closedLostReason.value = ''
     customClosedLostReason.value = ''
   }
+  
   // Reset closed date when not closed-won or closed-lost
   if (statusChange.value !== 'closed-won' && statusChange.value !== 'closed-lost') {
     closedDate.value = ''
   }
+  
   // Reset general reason field for non-closed-lost statuses
   if (statusChange.value === 'closed-lost' || statusChange.value === 'closed-won') {
     statusReason.value = ''
+  } else {
+    // Keep the status reason for non-closed statuses
+    if (!statusReason.value && selectedLead.value?.reason) {
+      statusReason.value = selectedLead.value.reason
+    }
   }
 }
 
@@ -3454,11 +3461,65 @@ function closeEditTask () {
 // STATUS change
 function openStatusModal (lead = null) {
   if (lead) openLeadDetails(lead)
+  
+  // Set current status
   statusChange.value = selectedLead.value?.status || 'new'
-  statusReason.value = lastStatusChangeReason(selectedLead.value) || ''
-  closedLostReason.value = ''
-  customClosedLostReason.value = ''
+  
+  // Get the last status change event to pre-fill reason
+  const lastStatusEv = (selectedLead.value?.events || []).slice().reverse().find(e => e.type === 'status_change')
+  
+  // Set status reason from last event
+  statusReason.value = lastStatusEv?.reason ?? lastStatusEv?.note ?? selectedLead.value?.reason ?? ''
+  
+  // Pre-fill closed date if exists
   closedDate.value = selectedLead.value?.closedDate ? new Date(selectedLead.value.closedDate).toISOString().split('T')[0] : ''
+  
+  // Pre-fill closed-lost reason if status is closed-lost
+  if (selectedLead.value?.status === 'closed-lost') {
+    // Try to get reason from closedLostDetails first
+    if (selectedLead.value.closedLostDetails) {
+      const details = selectedLead.value.closedLostDetails
+      closedLostReason.value = details.reasonKey || ''
+      
+      // If it's "other", set the custom reason
+      if (details.reasonKey === 'other' && details.customReason) {
+        customClosedLostReason.value = details.customReason
+      }
+    } else if (selectedLead.value.closedReason) {
+      // Fallback to closedReason text
+      const reasonText = selectedLead.value.closedReason.toLowerCase()
+      
+      // Try to match with known reasons
+      const matchedReason = closedLostReasons.find(reason => 
+        reasonText.includes(reason.key.replace(/-/g, ' ')) || 
+        reasonText.includes(reason.label.toLowerCase())
+      )
+      
+      if (matchedReason) {
+        closedLostReason.value = matchedReason.key
+        
+        // If it's "other", extract the custom part
+        if (matchedReason.key === 'other') {
+          // Try to extract custom text after "Other:"
+          const otherMatch = selectedLead.value.closedReason.match(/Other:\s*(.+)/i)
+          if (otherMatch && otherMatch[1]) {
+            customClosedLostReason.value = otherMatch[1].trim()
+          } else {
+            customClosedLostReason.value = selectedLead.value.closedReason
+          }
+        }
+      } else {
+        // If no match found, default to "other"
+        closedLostReason.value = 'other'
+        customClosedLostReason.value = selectedLead.value.closedReason
+      }
+    }
+  } else {
+    // Reset closed-lost fields if not closed-lost
+    closedLostReason.value = ''
+    customClosedLostReason.value = ''
+  }
+  
   showStatusModal.value = true
 }
 

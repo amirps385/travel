@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
       ? body.timezone
       : (countryToTimezone[countryKey] || '')
 
-  // Assemble lead data
+  // Assemble lead data (explicitly include consent, metadata, kilimanjaroRoute)
   const leadData: any = {
     // Contact info
     name: body.name,
@@ -57,6 +57,12 @@ export default defineEventHandler(async (event) => {
     originCity: body.originCity || '',
     message: body.message || '',
     timezone: inferredTimezone || '',
+
+    // Consent (bookacall sends form.consent) — persisted explicitly
+    consent: !!body.consent,
+
+    // metadata: store any client hints (e.g., createdFrom, small client-side info)
+    metadata: body.metadata || {},
 
     // Preferred contact & scheduling
     preferredTime: preferredTime, // Date or null
@@ -91,7 +97,7 @@ export default defineEventHandler(async (event) => {
     utm: body.utm || {},
     status: 'new',
     priority: 'medium',
-    
+
     // NEW FIELDS:
     closedDate: null,
     closedReason: null,

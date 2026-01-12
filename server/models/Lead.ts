@@ -1,4 +1,4 @@
-// server\models\Lead.ts
+// server/models/Lead.ts
 import mongoose from 'mongoose'
 
 const { Schema } = mongoose
@@ -55,6 +55,9 @@ const LeadSchema = new Schema(
     date: { type: String }, // keep as string (ISO or yyyy-mm-dd)
     dateIsMonthOnly: { type: Boolean, default: false },
 
+    // Kilimanjaro route (explicit)
+    kilimanjaroRoute: { type: String, default: '' },
+
     // Traveller counts & ages
     travellers: { type: Number },
     adults: { type: Number, default: 0 },
@@ -76,6 +79,12 @@ const LeadSchema = new Schema(
     // Misc
     message: { type: String, default: '' },
 
+    // Explicit consent field (important for compliance)
+    consent: { type: Boolean, default: false },
+
+    // Arbitrary metadata (createdFrom, utm hints, etc)
+    metadata: { type: Schema.Types.Mixed, default: {} },
+
     // assignment & users
     assignedToId: { type: Schema.Types.ObjectId, ref: 'User' },
 
@@ -90,7 +99,7 @@ const LeadSchema = new Schema(
     priority: { type: String, default: 'medium' },
     priorityUpdatedAt: { type: Date },
     priorityUpdatedBy: { type: String },
-    
+
     // NEW: Closed date and reason fields
     closedDate: { type: Date },
     closedReason: { type: String },

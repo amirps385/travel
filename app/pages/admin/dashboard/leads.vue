@@ -420,14 +420,22 @@
       <div class="text-xs text-slate-500">Country</div>
     </div>
     
-    <!-- Timezone -->
-    <div>
-      <div class="text-sm font-medium">{{ selectedLead.timezone || 'Not detected' }}</div>
-      <div class="text-xs text-slate-500">
-        {{ selectedLead.timezone ? 'Browser Timezone' : 'Timezone' }}
-        <span v-if="selectedLead.timezone" class="text-green-600">✓</span>
-      </div>
-    </div>
+    <!-- User Selected Timezone -->
+<div>
+  <div class="text-sm font-medium">{{ selectedLead.timezone || 'Not selected' }}</div>
+  <div class="text-xs text-slate-500">
+    Selected Timezone
+    <span v-if="selectedLead.timezone" class="text-green-600">✓</span>
+  </div>
+</div>
+
+<!-- Browser Detected Timezone -->
+<div v-if="selectedLead.metadata?.browserTimezone">
+  <div class="text-sm font-medium">{{ selectedLead.metadata.browserTimezone }}</div>
+  <div class="text-xs text-slate-500">
+    Browser Timezone ✓
+  </div>
+</div>
     
     <!-- Origin City -->
     <div>
@@ -649,10 +657,10 @@
     </div>
     
     <!-- Timezone -->
-    <div v-if="selectedLead.timezone">
-      <div class="text-sm font-medium">{{ selectedLead.timezone }}</div>
-      <div class="text-xs text-slate-500">Timezone</div>
-    </div>
+<div v-if="selectedLead.timezone">
+  <div class="text-sm font-medium">{{ selectedLead.timezone }}</div>
+  <div class="text-xs text-slate-500">Selected Timezone</div>
+</div>
     
     <!-- Date Flexibility -->
     <div>

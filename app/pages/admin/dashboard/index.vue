@@ -203,7 +203,8 @@ const rolePermissions = computed(() => {
       'Islands & Zanzibar',
       'Animals Encyclopedia',
       'Hotels & Activities',
-      'Transfers & Cities'
+      'Transfers & Cities',
+      'Group Climbs' // ADDED Group Climbs
     ],
     'lead-manager': [
       'View All Leads',
@@ -428,6 +429,26 @@ const allStats = ref([
       const userList = Array.isArray(data) ? data : []
       return userList.filter(u => u.isActive !== false).length
     }
+  },
+  // ADD THIS: Group Climbs stat
+  {
+    key: 'groupClimbs',
+    title: 'Group Climbs',
+    value: 0,
+    subtitle: 'Upcoming climbs',
+    icon: '🧗‍♂️',
+    colorClass: 'bg-indigo-50 text-indigo-600',
+    roles: ['superadmin', 'admin', 'content-manager'],
+    apiEndpoint: '/api/groupclimb',
+    extractData: (response) => {
+      // Assuming /api/groupclimb returns { ok: true, data: [...] }
+      const data = response?.data || []
+      const now = new Date()
+      const upcoming = Array.isArray(data) 
+        ? data.filter(c => new Date(c.startDate) > now).length 
+        : 0
+      return upcoming
+    }
   }
 ])
 
@@ -448,7 +469,9 @@ const quickActions = computed(() => {
       { to: '/admin/dashboard/tours', icon: '🧭', label: 'Manage Tours', description: 'Edit safari packages', bgColor: 'bg-amber-100' },
       { to: '/admin/dashboard/routes', icon: '🗺️', label: 'Kilimanjaro Routes', description: 'Update climbing routes', bgColor: 'bg-blue-100' },
       { to: '/admin/dashboard/parks', icon: '🏞️', label: 'National Parks', description: 'Edit park information', bgColor: 'bg-green-100' },
-      { to: '/admin/dashboard/islands', icon: '🏝️', label: 'Islands', description: 'Manage island content', bgColor: 'bg-teal-100' }
+      { to: '/admin/dashboard/islands', icon: '🏝️', label: 'Islands', description: 'Manage island content', bgColor: 'bg-teal-100' },
+      // ADD THIS: Group Climbs for superadmin
+      { to: '/admin/dashboard/groupclimb', icon: '🧗‍♂️', label: 'Group Climbs', description: 'Manage climbing adventures', bgColor: 'bg-indigo-100' }
     ],
     'admin': [
       { to: '/admin/dashboard/leads', icon: '👥', label: 'View Leads', description: 'Check recent enquiries', bgColor: 'bg-sky-100' },
@@ -456,7 +479,9 @@ const quickActions = computed(() => {
       { to: '/admin/dashboard/itineraries', icon: '📄', label: 'Itineraries', description: 'Review travel plans', bgColor: 'bg-violet-100' },
       { to: '/admin/dashboard/parks', icon: '🏞️', label: 'National Parks', description: 'Edit park information', bgColor: 'bg-green-100' },
       { to: '/admin/dashboard/hotels', icon: '🏨', label: 'Hotels', description: 'Configure hotel partners', bgColor: 'bg-pink-100' },
-      { to: '/admin/dashboard/activities', icon: '📍', label: 'Activities', description: 'Manage activities', bgColor: 'bg-rose-100' }
+      { to: '/admin/dashboard/activities', icon: '📍', label: 'Activities', description: 'Manage activities', bgColor: 'bg-rose-100' },
+      // ADD THIS: Group Climbs for admin
+      { to: '/admin/dashboard/groupclimb', icon: '🧗‍♂️', label: 'Group Climbs', description: 'Manage climbing adventures', bgColor: 'bg-indigo-100' }
     ],
     'content-manager': [
       { to: '/admin/dashboard/tours', icon: '🧭', label: 'Manage Tours', description: 'Edit safari packages', bgColor: 'bg-amber-100' },
@@ -464,7 +489,9 @@ const quickActions = computed(() => {
       { to: '/admin/dashboard/parks', icon: '🏞️', label: 'National Parks', description: 'Edit park information', bgColor: 'bg-green-100' },
       { to: '/admin/dashboard/islands', icon: '🏝️', label: 'Islands', description: 'Manage island content', bgColor: 'bg-teal-100' },
       { to: '/admin/dashboard/zanzibar', icon: '🏝️', label: 'Zanzibar', description: 'Update experiences', bgColor: 'bg-cyan-100' },
-      { to: '/admin/dashboard/animals', icon: '🦁', label: 'Animals', description: 'Edit wildlife info', bgColor: 'bg-orange-100' }
+      { to: '/admin/dashboard/animals', icon: '🦁', label: 'Animals', description: 'Edit wildlife info', bgColor: 'bg-orange-100' },
+      // ADD THIS: Group Climbs for content-manager
+      { to: '/admin/dashboard/groupclimb', icon: '🧗‍♂️', label: 'Group Climbs', description: 'Manage climbing adventures', bgColor: 'bg-indigo-100' }
     ],
     'lead-manager': [
       { to: '/admin/dashboard/leads', icon: '👥', label: 'Manage Leads', description: 'Follow up on enquiries', bgColor: 'bg-sky-100' },

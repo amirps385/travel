@@ -45,15 +45,15 @@
           </div>
 
           <div class="flex flex-wrap gap-4 justify-center">
-            <button
-              @click="showAdminToast"
+            <NuxtLink
+              to="/admin/groupclimbs"
               class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-full bg-linear-to-r from-amber-500 to-amber-600 text-white font-bold text-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95 overflow-visible"
             >
               <span class="relative z-10">Create Group (Admin)</span>
               <svg class="w-5 h-5 transform group-hover:translate-x-2 transition-transform relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-            </button>
+            </NuxtLink>
 
             <button
               @click="scrollToGrid"
@@ -130,14 +130,14 @@
                       v-for="category in categories"
                       :key="category.id"
                       class="flex items-center px-3 py-2.5 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors"
-                      @mousedown.prevent="toggleCategory(category.slug)"
+                      @mousedown.prevent="toggleCategory(category.id)"
                     >
                       <input
                         type="checkbox"
                         :id="`category-${category.id}`"
-                        :checked="selectedCategories.includes(category.slug)"
+                        :checked="selectedCategories.includes(category.id)"
                         class="h-4 w-4 text-amber-600 rounded focus:ring-amber-500"
-                        @change="toggleCategory(category.slug)"
+                        @change="toggleCategory(category.id)"
                       />
                       <label
                         :for="`category-${category.id}`"
@@ -206,10 +206,10 @@
               <span class="text-xs text-slate-600 font-medium">Active filters:</span>
               
               <!-- Category Badges -->
-              <div v-for="categorySlug in selectedCategories" :key="categorySlug" 
+              <div v-for="categoryId in selectedCategories" :key="categoryId" 
                    class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-xs font-medium">
-                <span>{{ getCategoryName(categorySlug) }}</span>
-                <button @click="toggleCategory(categorySlug)" class="text-amber-500 hover:text-amber-700">
+                <span>{{ getCategoryName(categoryId) }}</span>
+                <button @click="toggleCategory(categoryId)" class="text-amber-500 hover:text-amber-700">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -272,7 +272,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <GroupClimbCard
             v-for="climb in paginatedClimbs"
-            :key="climb.id"
+            :key="climb._id || climb.id"
             :climb="climb"
             @quick-view="openQuickView(climb)"
           />
@@ -390,7 +390,7 @@
             <!-- Image Gallery -->
             <div class="h-72 md:h-80 bg-linear-to-br from-amber-900 to-amber-800 relative overflow-hidden">
               <img
-                :src="quickViewClimb.gallery[0] || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80'"
+                :src="quickViewClimb.gallery && quickViewClimb.gallery[0] ? quickViewClimb.gallery[0] : '/images/placeholder-mountain.jpg'"
                 :alt="quickViewClimb.title"
                 class="w-full h-full object-cover"
               />
@@ -401,7 +401,7 @@
                 </h2>
                 <div class="flex flex-wrap gap-2">
                   <span
-                    v-for="categoryId in quickViewClimb.categoryIds"
+                    v-for="categoryId in (quickViewClimb.categoryIds || [])"
                     :key="categoryId"
                     class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide backdrop-blur-md bg-white/20 text-white border border-white/30"
                   >
@@ -441,10 +441,10 @@
                     <div>
                       <h3 class="text-sm font-medium text-slate-700 mb-1">Group Size</h3>
                       <p class="text-lg font-semibold text-slate-900">
-                        {{ quickViewClimb.seatsBooked }}/{{ quickViewClimb.maxGroupSize }} booked
+                        {{ quickViewClimb.seatsBooked || 0 }}/{{ quickViewClimb.maxGroupSize || 8 }} booked
                       </p>
                       <p class="text-sm" :class="spotsLeftClass(quickViewClimb)">
-                        {{ quickViewClimb.maxGroupSize - quickViewClimb.seatsBooked }} spots left
+                        {{ (quickViewClimb.maxGroupSize || 8) - (quickViewClimb.seatsBooked || 0) }} spots left
                       </p>
                     </div>
                   </div>
@@ -460,13 +460,35 @@
                   Itinerary Summary
                 </h3>
                 <div class="bg-slate-50 rounded-2xl p-6">
-                  <p class="text-slate-700 whitespace-pre-line leading-relaxed">{{ quickViewClimb.itinerarySummary }}</p>
+                  <template v-if="quickViewClimb.itinerary && quickViewClimb.itinerary.length > 0">
+                    <div class="space-y-4">
+                      <div v-for="day in quickViewClimb.itinerary" :key="day.day" class="border-l-2 border-amber-400 pl-4 py-2">
+                        <div class="font-semibold text-slate-800 mb-1">Day {{ day.day }}: {{ day.title }}</div>
+                        <p class="text-slate-600 text-sm">{{ day.description }}</p>
+                        <div v-if="day.activities && day.activities.length > 0" class="mt-2">
+                          <div class="text-xs text-slate-500 mb-1">Activities:</div>
+                          <div class="flex flex-wrap gap-1">
+                            <span v-for="(activity, idx) in day.activities" :key="idx" 
+                                  class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full text-xs">
+                              {{ activity }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                  <template v-else-if="quickViewClimb.itinerarySummary">
+                    <p class="text-slate-700 whitespace-pre-line leading-relaxed">{{ quickViewClimb.itinerarySummary }}</p>
+                  </template>
+                  <template v-else>
+                    <p class="text-slate-500 italic">No itinerary details available yet.</p>
+                  </template>
                 </div>
               </div>
 
               <!-- Included/Not Included -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                <div>
+                <div v-if="quickViewClimb.included && quickViewClimb.included.length > 0">
                   <h4 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -486,7 +508,7 @@
                     </li>
                   </ul>
                 </div>
-                <div>
+                <div v-if="quickViewClimb.notIncluded && quickViewClimb.notIncluded.length > 0">
                   <h4 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -520,7 +542,7 @@
                   <div class="text-right">
                     <p class="text-sm text-slate-600">Deposit to secure spot</p>
                     <p class="text-lg font-semibold text-slate-900">
-                      {{ formatPrice(quickViewClimb.price * 0.3, quickViewClimb.currency) }}
+                      {{ formatPrice((quickViewClimb.price || 0) * 0.3, quickViewClimb.currency) }}
                     </p>
                   </div>
                 </div>
@@ -570,199 +592,57 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
-// Note: Replace with real API call when backend is ready:
-// const { data: climbs } = await $fetch('/api/groupclimbs')
-// const { data: categories } = await $fetch('/api/categories')
-
 // Import the component from the GroupClimb subdirectory
 import GroupClimbCard from '~/components/GroupClimb/GroupClimbCard.vue'
 
-// Mock data - defined as regular constants
-const MOCK_CATEGORIES = [
-  { id: '1', name: 'Beginner Friendly', slug: 'beginner-friendly' },
-  { id: '2', name: 'Advanced Technical', slug: 'advanced-technical' },
-  { id: '3', name: 'Multi-day Expedition', slug: 'multi-day-expedition' },
-  { id: '4', name: 'Weekend Warrior', slug: 'weekend-warrior' },
-  { id: '5', name: 'Family Climbing', slug: 'family-climbing' },
-]
+// Define your hardcoded category options (same as in admin)
+const CATEGORY_OPTIONS = [
+  // Kilimanjaro routes
+  { id: 'kilimanjaro-lemosho', name: 'Kilimanjaro — Lemosho' },
+  { id: 'kilimanjaro-machame', name: 'Kilimanjaro — Machame' },
+  { id: 'kilimanjaro-rongai', name: 'Kilimanjaro — Rongai' },
+  { id: 'kilimanjaro-northern', name: 'Kilimanjaro — Northern Circuit' },
+  { id: 'kilimanjaro-marangu', name: 'Kilimanjaro — Marangu' },
+  { id: 'kilimanjaro-umbwe', name: 'Kilimanjaro — Umbwe' },
+  { id: 'kilimanjaro-expedition', name: 'Kilimanjaro — Expedition / Crater' },
 
-// Update mock data with real Unsplash images that will load
-const MOCK_GROUP_CLIMBS = [
-  {
-    id: '1',
-    title: 'Yosemite Valley Classic',
-    slug: 'yosemite-valley-classic',
-    startDate: '2026-03-10T00:00:00Z',
-    endDate: '2026-03-15T00:00:00Z',
-    durationDays: 6,
-    maxGroupSize: 12,
-    seatsBooked: 8,
-    price: 1299,
-    currency: 'USD',
-    categoryIds: ['beginner-friendly', 'multi-day-expedition'],
-    tags: ['yosemite', 'granite', 'big-walls'],
-    shortDescription: 'Experience the iconic granite walls of Yosemite Valley with expert guides.',
-    itinerarySummary: 'Day 1: Arrival and orientation\nDay 2-3: Basic climbing techniques and practice\nDay 4-5: Half Dome approach and climb\nDay 6: Departure',
-    included: ['Professional guide services', 'All climbing equipment', 'Permits and park fees', 'Camping accommodation', 'Meals during climbs'],
-    notIncluded: ['Transportation to Yosemite', 'Personal insurance', 'Alcoholic beverages', 'Personal climbing shoes'],
-    gallery: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80'],
-    organizer: { name: 'El Capitan Guides', contact: 'guides@elcap.com' },
-    isPublic: true
-  },
-  {
-    id: '2',
-    title: 'Red Rock Canyon Weekend',
-    slug: 'red-rock-canyon-weekend',
-    startDate: '2026-04-05T00:00:00Z',
-    endDate: '2026-04-07T00:00:00Z',
-    durationDays: 3,
-    maxGroupSize: 8,
-    seatsBooked: 6,
-    price: 599,
-    currency: 'USD',
-    categoryIds: ['weekend-warrior', 'beginner-friendly'],
-    tags: ['red-rock', 'sandstone', 'weekend'],
-    shortDescription: 'Perfect weekend getaway for sandstone climbing enthusiasts.',
-    itinerarySummary: 'Friday: Evening arrival and setup\nSaturday: Full day of multi-pitch climbing\nSunday: Morning climb and afternoon departure',
-    included: ['Guide services', 'Basic climbing gear', 'Camping fees', 'Saturday dinner'],
-    notIncluded: ['Transportation', 'Friday/Sunday meals', 'Personal gear'],
-    gallery: ['https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&q=80'],
-    organizer: { name: 'Desert Ascents', contact: 'book@desertascents.com' },
-    isPublic: true
-  },
-  {
-    id: '3',
-    title: 'Alpine Ice Climbing Expedition',
-    slug: 'alpine-ice-climbing-expedition',
-    startDate: '2026-06-15T00:00:00Z',
-    endDate: '2026-06-22T00:00:00Z',
-    durationDays: 8,
-    maxGroupSize: 6,
-    seatsBooked: 3,
-    price: 2499,
-    currency: 'USD',
-    categoryIds: ['advanced-technical', 'multi-day-expedition'],
-    tags: ['alpine', 'ice', 'expedition', 'glacier'],
-    shortDescription: 'Advanced ice and mixed climbing in alpine environments.',
-    itinerarySummary: 'Days 1-2: Travel and base camp setup\nDays 3-5: Ice climbing techniques and glacier travel\nDays 6-7: Summit attempts\nDay 8: Return',
-    included: ['UIAGM certified guides', 'Specialized ice gear', 'Mountain hut accommodation', 'Expedition meals', 'Satellite communication'],
-    notIncluded: ['Airfare', 'Personal alpine gear', 'Travel insurance', 'Visa fees'],
-    gallery: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80'],
-    organizer: { name: 'Peak Pursuits', contact: 'info@peakpursuits.com' },
-    isPublic: true
-  },
-  {
-    id: '4',
-    title: 'Family Climbing Adventure',
-    slug: 'family-climbing-adventure',
-    startDate: '2026-07-20T00:00:00Z',
-    endDate: '2026-07-21T00:00:00Z',
-    durationDays: 2,
-    maxGroupSize: 10,
-    seatsBooked: 4,
-    price: 299,
-    currency: 'USD',
-    categoryIds: ['family-climbing', 'beginner-friendly'],
-    tags: ['family', 'kids', 'introduction'],
-    shortDescription: 'Safe and fun climbing introduction for families with children.',
-    itinerarySummary: 'Day 1: Morning safety briefing and basic techniques\nAfternoon: Top-rope climbing practice\nDay 2: Fun climbing games and skills',
-    included: ['Child-friendly instructors', 'All safety equipment', 'Snacks and water', 'Photos of the day'],
-    notIncluded: ['Lodging', 'Transportation', 'Lunch'],
-    gallery: ['https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&q=80'],
-    organizer: { name: 'Family Adventures Co.', contact: 'hello@familyadventures.com' },
-    isPublic: true
-  },
-  {
-    id: '5',
-    title: 'Smith Rock Sport Climbing',
-    slug: 'smith-rock-sport-climbing',
-    startDate: '2025-10-01T00:00:00Z',
-    endDate: '2025-10-04T00:00:00Z',
-    durationDays: 4,
-    maxGroupSize: 10,
-    seatsBooked: 10,
-    price: 899,
-    currency: 'USD',
-    categoryIds: ['advanced-technical', 'weekend-warrior'],
-    tags: ['sport-climbing', 'oregon', 'volcanic-tuff'],
-    shortDescription: 'Intensive sport climbing on famous volcanic tuff.',
-    itinerarySummary: 'Focus on lead climbing techniques, route reading, and endurance training on classic Smith Rock routes.',
-    included: ['Expert coaching', 'Rope and quickdraws', 'Guidebook', 'Park fees'],
-    notIncluded: ['Personal draws', 'Climbing shoes', 'Camping gear'],
-    gallery: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80'],
-    organizer: { name: 'Vertical World', contact: 'climb@verticalworld.com' },
-    isPublic: true
-  },
-  {
-    id: '6',
-    title: 'Joshua Tree Bouldering',
-    slug: 'joshua-tree-bouldering',
-    startDate: '2025-11-15T00:00:00Z',
-    endDate: '2025-11-17T00:00:00Z',
-    durationDays: 3,
-    maxGroupSize: 8,
-    seatsBooked: 8,
-    price: 549,
-    currency: 'USD',
-    categoryIds: ['weekend-warrior'],
-    tags: ['bouldering', 'desert', 'granite'],
-    shortDescription: 'Weekend bouldering camp in the iconic Joshua Tree National Park.',
-    itinerarySummary: 'Friday: Evening arrival\nSaturday: Full day of bouldering\nSunday: Morning session and departure',
-    included: ['Crash pads', 'Coaching', 'Camping', 'Breakfast and lunch'],
-    notIncluded: ['Dinner', 'Transportation', 'Park pass'],
-    gallery: ['https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&q=80'],
-    organizer: { name: 'Desert Boulders', contact: 'book@desertboulders.com' },
-    isPublic: true
-  },
-  {
-    id: '7',
-    title: 'Pacific Northwest Alpine',
-    slug: 'pacific-northwest-alpine',
-    startDate: '2026-08-12T00:00:00Z',
-    endDate: '2026-08-19T00:00:00Z',
-    durationDays: 8,
-    maxGroupSize: 6,
-    seatsBooked: 2,
-    price: 2199,
-    currency: 'USD',
-    categoryIds: ['advanced-technical', 'multi-day-expedition'],
-    tags: ['alpine', 'cascade-range', 'glacier'],
-    shortDescription: 'Alpine climbing in the Cascade Range with glacier travel.',
-    itinerarySummary: 'Comprehensive alpine skills course covering glacier travel, crevasse rescue, and mixed climbing techniques.',
-    included: ['UIAGM guides', 'Group climbing gear', 'Mountain hut fees', 'Expedition meals'],
-    notIncluded: ['Personal alpine gear', 'Transportation to trailhead', 'Accommodation before/after'],
-    gallery: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80'],
-    organizer: { name: 'Northwest Alpine', contact: 'guides@nwalpine.com' },
-    isPublic: true
-  },
-  {
-    id: '8',
-    title: 'Indoor to Outdoor Transition',
-    slug: 'indoor-to-outdoor-transition',
-    startDate: '2026-05-08T00:00:00Z',
-    endDate: '2026-05-10T00:00:00Z',
-    durationDays: 3,
-    maxGroupSize: 8,
-    seatsBooked: 5,
-    price: 449,
-    currency: 'USD',
-    categoryIds: ['beginner-friendly'],
-    tags: ['transition', 'outdoor-basics', 'safety'],
-    shortDescription: 'Learn to take your indoor climbing skills outdoors safely.',
-    itinerarySummary: 'Day 1: Outdoor safety and equipment\nDay 2: Anchor building and top-rope setups\nDay 3: Lead climbing outdoors',
-    included: ['All technical gear', 'Instruction', 'Site fees', 'Guidebook'],
-    notIncluded: ['Transportation', 'Lodging', 'Meals'],
-    gallery: ['https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&q=80'],
-    organizer: { name: 'Climb Safe Academy', contact: 'info@climbsafe.com' },
-    isPublic: true
-  }
-]
+  // Trip type
+  { id: 'group-departure', name: 'Group Departure' },
+  { id: 'private-departure', name: 'Private Departure' },
+  { id: 'multi-day', name: 'Multi-day / Expedition' },
+  { id: 'day-trip', name: 'Day Trip / Excursion' },
 
-// Use the mock data in the component
-const categories = ref(MOCK_CATEGORIES)
-const groupClimbs = ref(MOCK_GROUP_CLIMBS)
+  // Activity / focus
+  { id: 'summit', name: 'Summit Attempt' },
+  { id: 'acclimatization', name: 'Acclimatization' },
+  { id: 'trekking', name: 'Trekking & Hiking' },
+  { id: 'birdwatching', name: 'Birdwatching' },
+  { id: 'photography', name: 'Photography' },
+
+  // Comfort / accommodation
+  { id: 'camping-basic', name: 'Camping (Basic)' },
+  { id: 'camping-comfort', name: 'Camping (Comfort / Glamping)' },
+  { id: 'lodge', name: 'Lodge / Permanent Tents' },
+
+  // Difficulty / audience
+  { id: 'easy', name: 'Easy' },
+  { id: 'moderate', name: 'Moderate' },
+  { id: 'challenging', name: 'Challenging / High altitude' },
+  { id: 'family-friendly', name: 'Family Friendly' },
+  { id: 'honeymoon', name: 'Honeymoon / Couples' },
+
+  // Add-ons / region
+  { id: 'safari-addon', name: 'Safari Add-on' },
+  { id: 'zanzibar', name: 'Zanzibar / Sea Extension' },
+  { id: 'cultural', name: 'Cultural Excursions' }
+]
 
 // Reactive state
+const categories = ref(CATEGORY_OPTIONS)
+const groupClimbs = ref([])
+const isLoading = ref(false)
+const error = ref('')
+
 const activeTab = ref('upcoming')
 const selectedCategories = ref([])
 const searchQuery = ref('')
@@ -779,35 +659,70 @@ const tabs = [
   { id: 'past', label: 'Past' }
 ]
 
+// Fetch real data from API
+async function loadGroupClimbs() {
+  isLoading.value = true
+  error.value = ''
+  
+  try {
+    const response = await $fetch('/api/groupclimb')
+    
+    if (response.ok && Array.isArray(response.data)) {
+      // Filter to only show public climbs
+      groupClimbs.value = response.data.filter(climb => climb.isPublic && !climb.isDeleted)
+    } else if (Array.isArray(response)) {
+      // Handle case where response is directly an array
+      groupClimbs.value = response.filter(climb => climb.isPublic && !climb.isDeleted)
+    } else {
+      groupClimbs.value = []
+    }
+  } catch (err) {
+    console.error('Failed to load group climbs:', err)
+    error.value = 'Failed to load group climbs. Please try again later.'
+    groupClimbs.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
 // Format date using Intl.DateTimeFormat
 const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  }).format(date)
+  if (!dateString) return 'TBA'
+  try {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }).format(date)
+  } catch {
+    return 'Invalid date'
+  }
 }
 
 // Format price function
 const formatPrice = (price, currency) => {
+  const amount = price || 0
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency || 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(price)
+  }).format(amount)
 }
 
-// Get category name by slug
-const getCategoryName = (slug) => {
-  const category = categories.value.find(cat => cat.slug === slug)
-  return category ? category.name : slug
+// Get category name by ID
+const getCategoryName = (id) => {
+  const category = categories.value.find(cat => cat.id === id)
+  return category ? category.name : id
 }
 
 // Spots left class helper
 const spotsLeftClass = (climb) => {
-  const spotsLeft = climb.maxGroupSize - climb.seatsBooked
+  const max = climb.maxGroupSize || 0
+  const booked = climb.seatsBooked || 0
+  const spotsLeft = max - booked
+  
   if (spotsLeft <= 2) return 'text-red-600 font-semibold'
   if (spotsLeft <= 5) return 'text-orange-600'
   return 'text-emerald-600'
@@ -816,15 +731,25 @@ const spotsLeftClass = (climb) => {
 // Computed upcoming climbs count
 const upcomingClimbsCount = computed(() => {
   const now = new Date()
-  return groupClimbs.value.filter(climb => new Date(climb.startDate) > now).length
+  return groupClimbs.value.filter(climb => {
+    try {
+      return new Date(climb.startDate) > now
+    } catch {
+      return false
+    }
+  }).length
 })
 
 // Filter climbs based on active tab (upcoming vs past)
 const filteredByTab = computed(() => {
   const now = new Date()
   return groupClimbs.value.filter(climb => {
-    const isUpcoming = new Date(climb.startDate) > now
-    return activeTab.value === 'upcoming' ? isUpcoming : !isUpcoming
+    try {
+      const isUpcoming = new Date(climb.startDate) > now
+      return activeTab.value === 'upcoming' ? isUpcoming : !isUpcoming
+    } catch {
+      return false
+    }
   })
 })
 
@@ -833,7 +758,8 @@ const filteredByCategory = computed(() => {
   if (selectedCategories.value.length === 0) return filteredByTab.value
   
   return filteredByTab.value.filter(climb => {
-    return climb.categoryIds.some(categoryId => 
+    const climbCategories = Array.isArray(climb.categoryIds) ? climb.categoryIds : []
+    return climbCategories.some(categoryId => 
       selectedCategories.value.includes(categoryId)
     )
   })
@@ -845,9 +771,14 @@ const filteredBySearch = computed(() => {
   
   const query = searchQuery.value.toLowerCase().trim()
   return filteredByCategory.value.filter(climb => {
-    return climb.title.toLowerCase().includes(query) ||
-           climb.tags.some(tag => tag.toLowerCase().includes(query)) ||
-           climb.shortDescription.toLowerCase().includes(query)
+    const title = climb.title?.toLowerCase() || ''
+    const shortDesc = climb.shortDescription?.toLowerCase() || ''
+    const tags = Array.isArray(climb.tags) ? climb.tags.map(tag => tag.toLowerCase()) : []
+    
+    return title.includes(query) ||
+           shortDesc.includes(query) ||
+           tags.some(tag => tag.includes(query)) ||
+           (climb.description && climb.description.toLowerCase().includes(query))
   })
 })
 
@@ -857,13 +788,25 @@ const filteredClimbs = computed(() => {
   
   switch (sortBy.value) {
     case 'date-asc':
-      return climbs.sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+      return climbs.sort((a, b) => {
+        try {
+          return new Date(a.startDate) - new Date(b.startDate)
+        } catch {
+          return 0
+        }
+      })
     case 'date-desc':
-      return climbs.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+      return climbs.sort((a, b) => {
+        try {
+          return new Date(b.startDate) - new Date(a.startDate)
+        } catch {
+          return 0
+        }
+      })
     case 'price-asc':
-      return climbs.sort((a, b) => a.price - b.price)
+      return climbs.sort((a, b) => (a.price || 0) - (b.price || 0))
     case 'price-desc':
-      return climbs.sort((a, b) => b.price - a.price)
+      return climbs.sort((a, b) => (b.price || 0) - (a.price || 0))
     default:
       return climbs
   }
@@ -914,10 +857,10 @@ const scrollToGrid = () => {
 }
 
 // Category filter handlers
-const toggleCategory = (categorySlug) => {
-  const index = selectedCategories.value.indexOf(categorySlug)
+const toggleCategory = (categoryId) => {
+  const index = selectedCategories.value.indexOf(categoryId)
   if (index === -1) {
-    selectedCategories.value.push(categorySlug)
+    selectedCategories.value.push(categoryId)
   } else {
     selectedCategories.value.splice(index, 1)
   }
@@ -944,6 +887,9 @@ const closeQuickView = () => {
 
 // Handle escape key to close modal
 onMounted(() => {
+  // Load real data
+  loadGroupClimbs()
+  
   const handleEscape = (e) => {
     if (e.key === 'Escape' && quickViewClimb.value) {
       closeQuickView()

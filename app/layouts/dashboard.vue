@@ -37,10 +37,12 @@
               <span v-else-if="item.icon === 'animals'">🦁</span>
               <span v-else-if="item.icon === 'itineraries'">📄</span>
               <span v-else-if="item.icon === 'hotels'">🏨</span>
+              <span v-else-if="item.icon === 'accommodations'">🏨</span>
               <span v-else-if="item.icon === 'activities'">📍</span>
               <span v-else-if="item.icon === 'transfers'">🚐</span>
               <span v-else-if="item.icon === 'cities'">🌆</span>
               <span v-else-if="item.icon === 'users'">👤</span>
+              <span v-else-if="item.icon === 'groupclimb'">🧗‍♂️</span>
               <span v-else>•</span>
             </span>
 
@@ -181,8 +183,7 @@ const route = useRoute()
 const router = useRouter()
 
 /* -------------------------
-   ALL NAV ITEMS (Full List)
-   Added Dashboard for all roles
+   ALL NAV ITEMS (Full List with Group Climbs & Accommodations)
 ------------------------- */
 const allNavItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard', roles: ['superadmin', 'admin', 'content-manager', 'lead-manager', 'itinerary-planner'] },
@@ -195,10 +196,12 @@ const allNavItems = [
   { to: '/admin/dashboard/animals', label: 'Animals', icon: 'animals', roles: ['superadmin', 'admin', 'content-manager'] },
   { to: '/admin/dashboard/itineraries', label: 'Itineraries', icon: 'itineraries', roles: ['superadmin', 'admin', 'itinerary-planner'] },
   { to: '/admin/dashboard/hotels', label: 'Hotels', icon: 'hotels', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
+  { to: '/admin/dashboard/accommodations', label: 'Accommodations', icon: 'accommodations', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
   { to: '/admin/dashboard/activities', label: 'Activities', icon: 'activities', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
-  { to: '/admin/dashboard/users', label: 'Users', icon: 'users', roles: ['superadmin', 'admin'] },
   { to: '/admin/dashboard/transfers', label: 'Transfers', icon: 'transfers', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
-  { to: '/admin/dashboard/cities', label: 'Cities', icon: 'cities', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] }
+  { to: '/admin/dashboard/cities', label: 'Cities', icon: 'cities', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
+  { to: '/admin/dashboard/users', label: 'Users', icon: 'users', roles: ['superadmin', 'admin'] },
+  { to: '/admin/dashboard/groupclimb', label: 'Group Climbs', icon: 'groupclimb', roles: ['superadmin', 'admin', 'content-manager'] }
 ]
 
 /* -------------------------
@@ -253,7 +256,7 @@ const isActive = (to) => {
 }
 
 /* -------------------------
-   HEADER TITLE
+   HEADER TITLE (Updated with Group Climbs & Accommodations)
 ------------------------- */
 const headerTitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Dashboard Overview'
@@ -266,15 +269,17 @@ const headerTitle = computed(() => {
   if (route.path.startsWith('/admin/dashboard/animals')) return 'Animals'
   if (route.path.startsWith('/admin/dashboard/itineraries')) return 'Itineraries'
   if (route.path.startsWith('/admin/dashboard/hotels')) return 'Hotels'
+  if (route.path.startsWith('/admin/dashboard/accommodations')) return 'Accommodations'
   if (route.path.startsWith('/admin/dashboard/activities')) return 'Activities'
   if (route.path.startsWith('/admin/dashboard/users')) return 'Users'
   if (route.path.startsWith('/admin/dashboard/transfers')) return 'Transfers'
   if (route.path.startsWith('/admin/dashboard/cities')) return 'Cities'
+  if (route.path.startsWith('/admin/dashboard/groupclimb')) return 'Group Climbs'
   return 'Dashboard'
 })
 
 /* -------------------------
-   HEADER SUBTITLE
+   HEADER SUBTITLE (Updated with Group Climbs & Accommodations)
 ------------------------- */
 const headerSubtitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard')
@@ -307,6 +312,9 @@ const headerSubtitle = computed(() => {
   if (route.path.startsWith('/admin/dashboard/hotels'))
     return 'Configure hotel partners.'
 
+  if (route.path.startsWith('/admin/dashboard/accommodations'))
+    return 'Manage lodges, hotels, camps and other accommodations.'
+
   if (route.path.startsWith('/admin/dashboard/activities'))
     return 'Manage available activities.'
 
@@ -318,6 +326,9 @@ const headerSubtitle = computed(() => {
 
   if (route.path.startsWith('/admin/dashboard/cities'))
     return 'Organise cities and regions.'
+
+  if (route.path.startsWith('/admin/dashboard/groupclimb'))
+    return 'Manage group climbing adventures, dates, pricing and availability.'
 
   return ''
 })

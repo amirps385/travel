@@ -1,4 +1,3 @@
-// server/models/GroupClimb.ts
 import mongoose from 'mongoose'
 const { Schema } = mongoose
 
@@ -20,27 +19,6 @@ function makeSlug(input: string): string {
 }
 
 /***************************
- * GroupCategory (in-file)
- ***************************/
-const GroupCategorySchema = new Schema(
-  {
-    name: { type: String, required: true, trim: true, index: true },
-    slug: { type: String, required: true, trim: true, unique: true },
-    description: { type: String, default: '' },
-    parentId: { type: Schema.Types.ObjectId, ref: 'GroupCategory', default: null },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-    metadata: { type: Schema.Types.Mixed }
-  },
-  { timestamps: true }
-)
-
-// Export category model from same file
-export const GroupCategory =
-  (mongoose.models && (mongoose.models as any).GroupCategory) ||
-  mongoose.model('GroupCategory', GroupCategorySchema)
-
-/***************************
  * Organizer subdocument
  ***************************/
 const OrganizerSchema = new Schema(
@@ -49,6 +27,31 @@ const OrganizerSchema = new Schema(
     name: { type: String, default: '' },
     contact: { type: String, default: '' },
     email: { type: String, default: '' }
+  },
+  { _id: false }
+)
+
+/***************************
+ * Itinerary Day Schema (NEW)
+ ***************************/
+const ItineraryDaySchema = new Schema(
+  {
+    day: { type: Number, required: true },
+    title: { type: String, required: true },
+    description: { type: String, default: '' },
+    activities: [{ type: String }],
+    dayType: { 
+      type: String, 
+      enum: ['arrival', 'acclimatization', 'trekking', 'summit', 'descent', 'departure', 'rest', 'cultural', ''], 
+      default: '' 
+    },
+    startElevation: { type: Number, default: null },
+    endElevation: { type: Number, default: null },
+    distance: { type: Number, default: null },
+    hikingTime: { type: Number, default: null },
+    // CHANGE THESE FROM STRINGS TO ARRAYS:
+    accommodations: [{ type: String }], // Changed from 'accommodation' string
+    meals: [{ type: String }] // Changed from 'meals' string
   },
   { _id: false }
 )
@@ -65,9 +68,13 @@ const GroupClimbSchema = new Schema(
     routeId: { type: Schema.Types.ObjectId, ref: 'Route', default: null },
     tourId: { type: Schema.Types.ObjectId, ref: 'Tour', default: null },
 
-    // categories & tags
-    categoryIds: [{ type: Schema.Types.ObjectId, ref: 'GroupCategory' }],
+    // categories & tags - CHANGED TO STRINGS
+    categoryIds: [{ type: String }], // Changed from ObjectId to String
     tags: [{ type: String }],
+
+    // NEW: Route and Difficulty as strings
+    route: { type: String, default: '' },
+    difficulty: { type: String, default: '' },
 
     // schedule
     startDate: { type: Date, required: true }, // stored as UTC
@@ -92,7 +99,9 @@ const GroupClimbSchema = new Schema(
     // content
     shortDescription: { type: String, default: '' },
     description: { type: String, default: '' },
-    itinerarySummary: { type: String, default: '' },
+    // CHANGED: itinerarySummary replaced with structured itinerary
+    itinerary: [ItineraryDaySchema], // New structured itinerary
+    itinerarySummary: { type: String, default: '' }, // KEEPING THIS FOR BACKWARD COMPATIBILITY
     included: [{ type: String }],
     notIncluded: [{ type: String }],
     gallery: [{ type: String }],
@@ -139,6 +148,8 @@ GroupClimbSchema.index({ title: 'text', shortDescription: 'text', description: '
 GroupClimbSchema.index({ startDate: 1 })
 GroupClimbSchema.index({ routeId: 1 })
 GroupClimbSchema.index({ categoryIds: 1 })
+GroupClimbSchema.index({ route: 1 }) // New index
+GroupClimbSchema.index({ difficulty: 1 }) // New index
 
 /***************************
  * Pre-validate slug generation

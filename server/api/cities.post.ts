@@ -1,3 +1,4 @@
+// server/api/cities.post.ts
 import { defineEventHandler, readBody } from 'h3'
 import { connectDB } from '../utils/mongoose'
 import City from '../models/City'

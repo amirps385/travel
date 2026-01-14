@@ -32,7 +32,7 @@
           <div class="flex flex-wrap justify-center gap-8 md:gap-12 mb-12">
             <div class="text-center">
               <div class="text-4xl md:text-5xl font-bold text-white mb-2">{{ upcomingClimbsCount }}</div>
-              <div class="text-sm text-amber-200/80 uppercase tracking-wider">Upcoming Climbs</div>
+              <div class="text-sm text-amber-200/80 uppercase tracking-wider">Upcoming & Ongoing</div>
             </div>
             <div class="text-center">
               <div class="text-4xl md:text-5xl font-bold text-white mb-2">{{ groupClimbs.length }}</div>
@@ -344,7 +344,11 @@
           <div class="text-8xl mb-6">🏔️</div>
           <h3 class="text-2xl font-bold text-slate-900 mb-3">No climbs found</h3>
           <p class="text-slate-600 mb-6">
-            {{ activeTab === 'upcoming' ? 'No upcoming climbs match your filters.' : 'No past climbs match your filters.' }}
+            {{ 
+              activeTab === 'upcoming' ? 'No upcoming climbs match your filters.' : 
+              activeTab === 'ongoing' ? 'No ongoing climbs match your filters.' :
+              'No past climbs match your filters.' 
+            }}
             Try adjusting your search or filters.
           </p>
           <button
@@ -591,11 +595,9 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-
-// Import the component from the GroupClimb subdirectory
 import GroupClimbCard from '~/components/GroupClimb/GroupClimbCard.vue'
 
-// Define your hardcoded category options (same as in admin)
+// Define your hardcoded category options
 const CATEGORY_OPTIONS = [
   // Kilimanjaro routes
   { id: 'kilimanjaro-lemosho', name: 'Kilimanjaro — Lemosho' },
@@ -653,11 +655,70 @@ const quickViewClimb = ref(null)
 const isCategoryOpen = ref(false)
 const showToast = ref(false)
 
-// Tabs configuration
+// Tabs configuration - UPDATED: Added "ongoing" tab
 const tabs = [
   { id: 'upcoming', label: 'Upcoming' },
+  { id: 'ongoing', label: 'Ongoing' },
   { id: 'past', label: 'Past' }
 ]
+
+// Helper to get today's date at midnight
+const getToday = () => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return today
+}
+
+// Check if climb is upcoming
+const isUpcomingClimb = (climb) => {
+  if (!climb.startDate) return false
+  try {
+    const climbDate = new Date(climb.startDate)
+    climbDate.setHours(0, 0, 0, 0)
+    return climbDate > getToday()
+  } catch {
+    return false
+  }
+}
+
+// Check if climb is ongoing
+const isOngoingClimb = (climb) => {
+  if (!climb.startDate) return false
+  try {
+    const today = getToday()
+    const startDate = new Date(climb.startDate)
+    startDate.setHours(0, 0, 0, 0)
+    
+    // If no end date, check if start date is today
+    if (!climb.endDate) {
+      return startDate.getTime() === today.getTime()
+    }
+    
+    // Check if today is between start and end dates (inclusive)
+    const endDate = new Date(climb.endDate)
+    endDate.setHours(0, 0, 0, 0)
+    
+    return today >= startDate && today <= endDate
+  } catch {
+    return false
+  }
+}
+
+// Check if climb is past
+const isPastClimb = (climb) => {
+  if (!climb.startDate) return false
+  try {
+    const today = getToday()
+    
+    // Use end date if available, otherwise use start date
+    const compareDate = climb.endDate ? new Date(climb.endDate) : new Date(climb.startDate)
+    compareDate.setHours(0, 0, 0, 0)
+    
+    return compareDate < today
+  } catch {
+    return false
+  }
+}
 
 // Fetch real data from API
 async function loadGroupClimbs() {
@@ -668,10 +729,8 @@ async function loadGroupClimbs() {
     const response = await $fetch('/api/groupclimb')
     
     if (response.ok && Array.isArray(response.data)) {
-      // Filter to only show public climbs
       groupClimbs.value = response.data.filter(climb => climb.isPublic && !climb.isDeleted)
     } else if (Array.isArray(response)) {
-      // Handle case where response is directly an array
       groupClimbs.value = response.filter(climb => climb.isPublic && !climb.isDeleted)
     } else {
       groupClimbs.value = []
@@ -685,7 +744,7 @@ async function loadGroupClimbs() {
   }
 }
 
-// Format date using Intl.DateTimeFormat
+// Format date
 const formatDate = (dateString) => {
   if (!dateString) return 'TBA'
   try {
@@ -700,7 +759,7 @@ const formatDate = (dateString) => {
   }
 }
 
-// Format price function
+// Format price
 const formatPrice = (price, currency) => {
   const amount = price || 0
   return new Intl.NumberFormat('en-US', {
@@ -728,25 +787,27 @@ const spotsLeftClass = (climb) => {
   return 'text-emerald-600'
 }
 
-// Computed upcoming climbs count
+// Computed upcoming climbs count - UPDATED: Includes both upcoming AND ongoing
 const upcomingClimbsCount = computed(() => {
-  const now = new Date()
   return groupClimbs.value.filter(climb => {
-    try {
-      return new Date(climb.startDate) > now
-    } catch {
-      return false
-    }
+    return isUpcomingClimb(climb) || isOngoingClimb(climb)
   }).length
 })
 
-// Filter climbs based on active tab (upcoming vs past)
+// Filter climbs based on active tab (upcoming, ongoing, or past) - UPDATED
 const filteredByTab = computed(() => {
-  const now = new Date()
   return groupClimbs.value.filter(climb => {
     try {
-      const isUpcoming = new Date(climb.startDate) > now
-      return activeTab.value === 'upcoming' ? isUpcoming : !isUpcoming
+      switch (activeTab.value) {
+        case 'upcoming':
+          return isUpcomingClimb(climb)
+        case 'ongoing':
+          return isOngoingClimb(climb)
+        case 'past':
+          return isPastClimb(climb)
+        default:
+          return true
+      }
     } catch {
       return false
     }
@@ -827,7 +888,6 @@ const visiblePages = computed(() => {
   let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
   let end = Math.min(totalPages.value, start + maxVisible - 1)
   
-  // Adjust start if we're near the end
   start = Math.max(1, end - maxVisible + 1)
   
   for (let i = start; i <= end; i++) {
@@ -864,11 +924,10 @@ const toggleCategory = (categoryId) => {
   } else {
     selectedCategories.value.splice(index, 1)
   }
-  currentPage.value = 1 // Reset to first page when filter changes
+  currentPage.value = 1
 }
 
 const handleCategoryBlur = (e) => {
-  // Small delay to allow click events to register
   setTimeout(() => {
     isCategoryOpen.value = false
   }, 200)
@@ -877,7 +936,7 @@ const handleCategoryBlur = (e) => {
 // Quick view modal functions
 const openQuickView = (climb) => {
   quickViewClimb.value = climb
-  document.body.style.overflow = 'hidden' // Prevent scrolling behind modal
+  document.body.style.overflow = 'hidden'
 }
 
 const closeQuickView = () => {
@@ -887,7 +946,6 @@ const closeQuickView = () => {
 
 // Handle escape key to close modal
 onMounted(() => {
-  // Load real data
   loadGroupClimbs()
   
   const handleEscape = (e) => {

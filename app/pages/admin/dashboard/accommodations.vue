@@ -186,6 +186,11 @@
                       ${{ accommodation.minPrice || '0' }} - ${{ accommodation.maxPrice || '0' }}
                     </span>
                     <span v-else class="text-slate-400">—</span>
+                    
+                    <!-- Debug info - shows when debugging this specific accommodation -->
+                    <div v-if="debuggingAccommodation === accommodation._id" class="text-xs text-rose-500 mt-1">
+                      Debug: min={{ accommodation.minPrice }}, max={{ accommodation.maxPrice }}
+                    </div>
                   </div>
                 </td>
                 <td class="py-3 px-4">
@@ -442,29 +447,36 @@
                 </select>
               </div>
 
-              <!-- Location Details -->
+              <!-- City (dropdown loaded from /api/cities) -->
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">
                   City
                 </label>
-                <input
+                <select
                   v-model="form.city"
-                  type="text"
-                  class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                  placeholder="e.g., Arusha"
-                />
+                  class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-white"
+                >
+                  <option value="">Select city</option>
+                  <option v-for="city in cities" :key="city._id || city.name" :value="city.name">
+                    {{ city.name }}
+                  </option>
+                </select>
               </div>
 
+              <!-- Park/Reserve (dropdown loaded from /api/parks) -->
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">
                   Park/Reserve
                 </label>
-                <input
+                <select
                   v-model="form.park"
-                  type="text"
-                  class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                  placeholder="e.g., Serengeti National Park"
-                />
+                  class="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                >
+                  <option :value="null">Select a park</option>
+                  <option v-for="park in parks" :key="park._id" :value="park.name">
+                    {{ park.name }}
+                  </option>
+                </select>
               </div>
 
               <!-- Country -->
@@ -645,10 +657,30 @@
           <div v-if="activeTab === 'details'" class="space-y-4">
             <!-- Amenities & Highlights -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Highlights (single improved quick-add) -->
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-2">
                   Highlights
                 </label>
+
+                <!-- quick-add input -->
+                <div class="flex gap-2 mb-2">
+                  <input
+                    v-model="newHighlightInput"
+                    @keyup.enter.prevent="commitAddHighlight"
+                    type="text"
+                    class="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    placeholder="Type a highlight and press Enter"
+                  />
+                  <button
+                    type="button"
+                    class="px-3 py-1.5 rounded-lg border text-sm bg-white"
+                    @click="commitAddHighlight"
+                  >
+                    Add
+                  </button>
+                </div>
+
                 <div class="space-y-2">
                   <div
                     v-for="(highlight, index) in form.highlights"
@@ -679,10 +711,30 @@
                 </div>
               </div>
 
+              <!-- Amenities (single improved quick-add) -->
               <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-2">
                   Amenities
                 </label>
+
+                <!-- quick-add input -->
+                <div class="flex gap-2 mb-2">
+                  <input
+                    v-model="newAmenityInput"
+                    @keyup.enter.prevent="commitAddAmenity"
+                    type="text"
+                    class="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    placeholder="Type an amenity and press Enter"
+                  />
+                  <button
+                    type="button"
+                    class="px-3 py-1.5 rounded-lg border text-sm bg-white"
+                    @click="commitAddAmenity"
+                  >
+                    Add
+                  </button>
+                </div>
+
                 <div class="space-y-2">
                   <div
                     v-for="(amenity, index) in form.amenities"
@@ -850,28 +902,45 @@
                   placeholder="Cancellation terms and conditions..."
                 ></textarea>
               </div>
+              
+              <!-- Check-in / Check-out structured selectors -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-xs font-semibold text-slate-600 mb-1">
-                    Check-in Time
-                  </label>
-                  <input
-                    v-model="form.policies.checkIn"
-                    type="text"
-                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                    placeholder="e.g., 2:00 PM"
-                  />
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Check-in Time</label>
+                  <div class="flex gap-2">
+                    <select v-model="checkInParts.hour" class="border rounded-lg px-2 py-2">
+                      <option v-for="h in 12" :key="h" :value="String(h)">{{ String(h) }}</option>
+                    </select>
+                    <select v-model="checkInParts.minute" class="border rounded-lg px-2 py-2">
+                      <option value="00">00</option>
+                      <option value="15">15</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                    </select>
+                    <select v-model="checkInParts.ampm" class="border rounded-lg px-2 py-2">
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
                 </div>
+
                 <div>
-                  <label class="block text-xs font-semibold text-slate-600 mb-1">
-                    Check-out Time
-                  </label>
-                  <input
-                    v-model="form.policies.checkOut"
-                    type="text"
-                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                    placeholder="e.g., 11:00 AM"
-                  />
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Check-out Time</label>
+                  <div class="flex gap-2">
+                    <select v-model="checkOutParts.hour" class="border rounded-lg px-2 py-2">
+                      <option v-for="h in 12" :key="h" :value="String(h)">{{ String(h) }}</option>
+                    </select>
+                    <select v-model="checkOutParts.minute" class="border rounded-lg px-2 py-2">
+                      <option value="00">00</option>
+                      <option value="15">15</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                    </select>
+                    <select v-model="checkOutParts.ampm" class="border rounded-lg px-2 py-2">
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1140,6 +1209,21 @@ const activeTab = ref('basic')
 const activeLang = ref('en')
 const newKeyword = ref('')
 const previewData = ref({})
+// Cities list for the city dropdown
+const cities = ref([])
+// Parks list for the park dropdown
+const parks = ref([])
+
+// Quick-add inputs for highlights / amenities
+const newHighlightInput = ref('')
+const newAmenityInput = ref('')
+
+// Structured time parts for check-in / check-out
+const checkInParts = ref({ hour: '2', minute: '00', ampm: 'PM' })
+const checkOutParts = ref({ hour: '11', minute: '00', ampm: 'AM' })
+
+// ADD THIS: Debugging accommodation ID
+const debuggingAccommodation = ref(null)
 
 // Filters & Search
 const searchQuery = ref('')
@@ -1321,6 +1405,47 @@ function detectVideoProvider(video) {
   }
 }
 
+/* quick-add commiters */
+function commitAddHighlight() {
+  const text = (newHighlightInput.value || '').trim()
+  if (!text) return
+  form.value.highlights.push(text)
+  newHighlightInput.value = ''
+}
+
+function commitAddAmenity() {
+  const text = (newAmenityInput.value || '').trim()
+  if (!text) return
+  form.value.amenities.push(text)
+  newAmenityInput.value = ''
+}
+
+/* time helpers */
+function formatTimeParts(parts) {
+  if (!parts || !parts.hour) return ''
+  const minute = parts.minute || '00'
+  const ampm = (parts.ampm || 'AM').toUpperCase()
+  return `${parts.hour}:${minute} ${ampm}`
+}
+
+function parseTimeStringToParts(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') {
+    return { hour: '2', minute: '00', ampm: 'PM' }
+  }
+  const m = timeStr.match(/^\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)?\s*$/)
+  if (!m) return { hour: '2', minute: '00', ampm: 'PM' }
+  let hour = Number(m[1])
+  let minute = m[2] || '00'
+  let ampm = (m[3] || '').toUpperCase()
+  if (!ampm) {
+    ampm = hour >= 12 ? 'PM' : 'AM'
+    if (hour > 12) hour = hour - 12
+    if (hour === 0) hour = 12
+  }
+  return { hour: String(hour), minute: minute.padStart(2, '0'), ampm }
+}
+
+
 function addVideo() {
   form.value.videos.push({ url: '', title: '', provider: '' })
 }
@@ -1440,6 +1565,40 @@ async function loadAccommodations() {
         total: response.pagination.total,
         pages: response.pagination.pages
       }
+      
+      // ADDED: Price data analysis after loading
+      console.log('\n=== PRICE DATA ANALYSIS ===')
+      console.log('Total accommodations:', accommodations.value.length)
+      
+      const withMinPrice = accommodations.value.filter(a => 
+        a.minPrice !== undefined && 
+        a.minPrice !== null && 
+        a.minPrice !== '' && 
+        a.minPrice > 0
+      ).length
+      
+      const withMaxPrice = accommodations.value.filter(a => 
+        a.maxPrice !== undefined && 
+        a.maxPrice !== null && 
+        a.maxPrice !== '' && 
+        a.maxPrice > 0
+      ).length
+      
+      const withAnyPrice = accommodations.value.filter(a => 
+        (a.minPrice !== undefined && a.minPrice !== null && a.minPrice !== '' && a.minPrice > 0) || 
+        (a.maxPrice !== undefined && a.maxPrice !== null && a.maxPrice !== '' && a.maxPrice > 0)
+      ).length
+      
+      console.log(`Accommodations with minPrice (>0): ${withMinPrice}/${accommodations.value.length}`)
+      console.log(`Accommodations with maxPrice (>0): ${withMaxPrice}/${accommodations.value.length}`)
+      console.log(`Accommodations with any price (>0): ${withAnyPrice}/${accommodations.value.length}`)
+      
+      // Check first 3 accommodations in detail
+      console.log('\n=== SAMPLE PRICE DATA ===')
+      accommodations.value.slice(0, 3).forEach((acc, index) => {
+        console.log(`[${index}] ${acc.name}: minPrice=${acc.minPrice}, maxPrice=${acc.maxPrice}`)
+      })
+      
     } else {
       console.error('API error:', response.error)
     }
@@ -1451,11 +1610,44 @@ async function loadAccommodations() {
   }
 }
 
+async function loadCities() {
+  try {
+    const resp = await $fetch('/api/cities')
+    if (Array.isArray(resp)) {
+      cities.value = resp
+    } else {
+      console.warn('Unexpected cities response:', resp)
+    }
+  } catch (err) {
+    console.error('Failed to load cities:', err)
+  }
+}
+
+async function loadParks() {
+  try {
+    const resp = await $fetch('/api/parks')
+    // Assuming your GET endpoint returns an array of park objects
+    if (Array.isArray(resp)) {
+      parks.value = resp
+    } else if (resp && resp.data && Array.isArray(resp.data)) {
+      // Or if it's wrapped in a { data: [...] } response
+      parks.value = resp.data
+    } else {
+      console.warn('Unexpected parks response format:', resp)
+    }
+  } catch (err) {
+    console.error('Failed to load parks:', err)
+  }
+}
+
+
 function openCreateModal() {
   isEditing.value = false
   form.value = emptyForm()
   activeTab.value = 'basic'
   activeLang.value = 'en'
+  checkInParts.value = { hour: '2', minute: '00', ampm: 'PM' }
+checkOutParts.value = { hour: '11', minute: '00', ampm: 'AM' }
   showModal.value = true
 }
 
@@ -1529,6 +1721,14 @@ function populateFormFromPayload(data) {
   isEditing.value = true
   console.log('populateFormFromPayload -> received data keys:', Object.keys(data || {}))
 
+  // parse check-in/check-out to parts
+  const checkInPartsParsed = parseTimeStringToParts(data?.policies?.checkIn || '')
+  const checkOutPartsParsed = parseTimeStringToParts(data?.policies?.checkOut || '')
+
+  // set the parts
+  checkInParts.value = checkInPartsParsed
+  checkOutParts.value = checkOutPartsParsed
+
   form.value = JSON.parse(JSON.stringify({
     ...data,
     starRating: data.starRating || null,
@@ -1556,6 +1756,7 @@ function populateFormFromPayload(data) {
 
 
 
+
 function closeModal() {
   showModal.value = false
   isSaving.value = false
@@ -1568,6 +1769,17 @@ async function saveAccommodation() {
     alert('Name and slug are required')
     return
   }
+
+  // sanitize arrays and trim
+  form.value.highlights = (form.value.highlights || []).map(s => (s || '').trim()).filter(Boolean)
+  form.value.amenities = (form.value.amenities || []).map(s => (s || '').trim()).filter(Boolean)
+  form.value.seo = form.value.seo || { title: '', description: '', keywords: [] }
+  form.value.seo.keywords = (form.value.seo.keywords || []).map(s => (s || '').trim()).filter(Boolean)
+
+  // set policies checkIn / checkOut from the structured selects
+  form.value.policies = form.value.policies || {}
+  form.value.policies.checkIn = formatTimeParts(checkInParts.value)
+  form.value.policies.checkOut = formatTimeParts(checkOutParts.value)
 
   isSaving.value = true
   try {
@@ -1609,6 +1821,7 @@ async function saveAccommodation() {
     isSaving.value = false
   }
 }
+
 
 async function toggleAccommodationStatus(accommodation) {
   try {
@@ -1677,14 +1890,19 @@ async function previewAccommodation(accommodation) {
 
   loading.value = true
   try {
-    // Try $fetch
+    // Try $fetch first
     try {
       console.log('previewAccommodation -> Sending $fetch request (admin header)')
       const resp = await $fetch(url, { headers: { admin: 'true' } })
       console.log('previewAccommodation -> $fetch response:', resp)
 
       if (resp && resp.ok && resp.data) {
-        previewData.value = JSON.parse(JSON.stringify(resp.data))
+        // sanitize and set previewData
+        const safe = JSON.parse(JSON.stringify(resp.data))
+        safe.highlights = (safe.highlights || []).map(s => (s || '').trim()).filter(Boolean)
+        safe.amenities = (safe.amenities || []).map(s => (s || '').trim()).filter(Boolean)
+        safe.seo = safe.seo || { title: '', description: '', keywords: [] }
+        previewData.value = safe
         showPreviewModal.value = true
         return
       } else if (resp && !resp.ok) {
@@ -1705,7 +1923,11 @@ async function previewAccommodation(accommodation) {
     console.log('previewAccommodation -> raw fetch json:', json)
 
     if (json && json.ok && json.data) {
-      previewData.value = JSON.parse(JSON.stringify(json.data))
+      const safe = JSON.parse(JSON.stringify(json.data))
+      safe.highlights = (safe.highlights || []).map(s => (s || '').trim()).filter(Boolean)
+      safe.amenities = (safe.amenities || []).map(s => (s || '').trim()).filter(Boolean)
+      safe.seo = safe.seo || { title: '', description: '', keywords: [] }
+      previewData.value = safe
       showPreviewModal.value = true
     } else {
       const errMsg = (json && json.error) || `Request failed: ${rawResp.status}`
@@ -1732,6 +1954,9 @@ function editPreviewedAccommodation() {
 
 // Debug Functions
 function debugAccommodation(accommodation) {
+  // Set the debugging accommodation ID to show debug info in template
+  debuggingAccommodation.value = accommodation._id
+  
   console.log('=== DEBUG ACCOMMODATION ===')
   console.log('Full object:', accommodation)
   console.log('Type of accommodation:', typeof accommodation)
@@ -1740,7 +1965,39 @@ function debugAccommodation(accommodation) {
   console.log('_id value:', accommodation._id)
   console.log('Has slug?', 'slug' in accommodation)
   console.log('slug value:', accommodation.slug)
+  
+  // ADDED: Price debugging
+  console.log('\n=== PRICE DEBUG ===')
+  console.log('minPrice:', accommodation.minPrice, '(type:', typeof accommodation.minPrice, ')')
+  console.log('maxPrice:', accommodation.maxPrice, '(type:', typeof accommodation.maxPrice, ')')
+  console.log('Template condition (minPrice || maxPrice):', accommodation.minPrice || accommodation.maxPrice)
+  console.log('Template would show dash?', !accommodation.minPrice && !accommodation.maxPrice)
+  
+  // Check for common issues
+  console.log('\n=== VALUE CHECKS ===')
+  console.log('minPrice === 0?', accommodation.minPrice === 0)
+  console.log('maxPrice === 0?', accommodation.maxPrice === 0)
+  console.log('minPrice === null?', accommodation.minPrice === null)
+  console.log('maxPrice === null?', accommodation.maxPrice === null)
+  console.log('minPrice === undefined?', accommodation.minPrice === undefined)
+  console.log('maxPrice === undefined?', accommodation.maxPrice === undefined)
+  console.log('minPrice === ""?', accommodation.minPrice === '')
+  console.log('maxPrice === ""?', accommodation.maxPrice === '')
+  
+  // Check other price-related fields
+  const priceKeys = Object.keys(accommodation).filter(key => 
+    key.toLowerCase().includes('price') || 
+    key.toLowerCase().includes('cost') ||
+    key.toLowerCase().includes('rate')
+  )
+  console.log('All price-related keys:', priceKeys)
+  
   console.log('=== END DEBUG ===')
+  
+  // Clear debug after 5 seconds
+  setTimeout(() => {
+    debuggingAccommodation.value = null
+  }, 5000)
 }
 
 async function testAPIEndpoint() {
@@ -1877,9 +2134,12 @@ watch(selectedItems, (newVal) => {
 })
 
 // Initialize
-onMounted(() => {
+onMounted(async () => {
+  await loadCities()
+  await loadParks()
   loadAccommodations()
 })
+
 </script>
 
 <style scoped>

@@ -260,7 +260,12 @@
                       No group climbs found
                     </p>
                     <p class="text-xs text-slate-400 mb-3">
-                      {{ activeTab === 'upcoming' ? 'No upcoming climbs.' : 'No past climbs.' }}
+                      {{ 
+                        activeTab === 'upcoming' ? 'No upcoming climbs.' : 
+                        activeTab === 'past' ? 'No past climbs.' :
+                        activeTab === 'all' ? 'No climbs found.' : 
+                        'No climbs match your filters.'
+                      }}
                     </p>
                     <button
                       @click="openCreateModal"
@@ -1093,42 +1098,40 @@
                 </div>
               </div>
 
-              <!-- Status & Visibility -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 mb-2">
-                    Status
-                  </label>
-                  <select
-                    v-model="form.status"
-                    class="w-full border rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="upcoming">Upcoming</option>
-                    <option value="open">Open for booking</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
+             <!-- Status & Visibility -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div>
+    <label class="block text-xs font-semibold text-slate-600 mb-2">
+      Status
+    </label>
+    <select
+      v-model="form.status"
+      class="w-full border rounded-lg px-3 py-2 text-sm"
+    >
+      <option value="upcoming">Upcoming</option>
+      <option value="ongoing">Ongoing</option>
+      <option value="completed">Completed</option>
+    </select>
+  </div>
 
-                <div>
-                  <label class="block text-xs font-semibold text-slate-600 mb-2">
-                    Visibility
-                  </label>
-                  <div class="flex items-center gap-3">
-                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        v-model="form.isPublic"
-                        class="rounded border-slate-300 text-emerald-600"
-                      />
-                      <span class="text-sm text-slate-700">
-                        {{ form.isPublic ? 'Public (visible on website)' : 'Hidden (admin only)' }}
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              </div>
+  <div>
+    <label class="block text-xs font-semibold text-slate-600 mb-2">
+      Visibility
+    </label>
+    <div class="flex items-center gap-3">
+      <label class="inline-flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          v-model="form.isPublic"
+          class="rounded border-slate-300 text-emerald-600"
+        />
+        <span class="text-sm text-slate-700">
+          {{ form.isPublic ? 'Public (visible on website)' : 'Hidden (admin only)' }}
+        </span>
+      </label>
+    </div>
+  </div>
+</div>
 
              <!-- Organizer Info - UPDATED: Only name, no email -->
 <div class="border rounded-xl p-4 bg-slate-50/60">
@@ -1450,14 +1453,77 @@ const handleImageError = (event) => {
 }
 
 /* -------------------------
-   STATS
+   STATS - ENHANCED VERSION
 ------------------------- */
 const stats = computed(() => {
   const now = new Date()
-  const upcoming = groupClimbs.value.filter(c => new Date(c.startDate) > now).length
-  const active = groupClimbs.value.filter(c => c.status === 'open' || c.status === 'ongoing').length
-  const totalSpots = groupClimbs.value.reduce((sum, c) => sum + (c.maxGroupSize || 0), 0)
-  const bookedSpots = groupClimbs.value.reduce((sum, c) => sum + (c.seatsBooked || 0), 0)
+  
+  // Helper to get date at midnight for accurate comparison
+  const getDateAtMidnight = (dateString) => {
+    try {
+      const date = new Date(dateString)
+      date.setHours(0, 0, 0, 0)
+      return date
+    } catch {
+      return null
+    }
+  }
+  
+  // Filter climbs by date
+  const upcomingClimbs = groupClimbs.value.filter(c => {
+    try {
+      const startDate = getDateAtMidnight(c.startDate)
+      return startDate && startDate > now
+    } catch {
+      return false
+    }
+  })
+  
+  const ongoingClimbs = groupClimbs.value.filter(c => {
+    try {
+      const startDate = getDateAtMidnight(c.startDate)
+      const endDate = c.endDate ? getDateAtMidnight(c.endDate) : startDate
+      
+      if (!startDate) return false
+      if (!endDate) return startDate.getTime() === now.setHours(0, 0, 0, 0)
+      
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+      return startDate.getTime() <= today && endDate.getTime() >= today
+    } catch {
+      return false
+    }
+  })
+  
+  const pastClimbs = groupClimbs.value.filter(c => {
+    try {
+      const compareDate = c.endDate ? getDateAtMidnight(c.endDate) : getDateAtMidnight(c.startDate)
+      return compareDate && compareDate < now
+    } catch {
+      return false
+    }
+  })
+  
+  // Calculate stats for upcoming climbs only (as requested)
+  const upcomingSpots = upcomingClimbs.reduce((sum, c) => sum + (c.maxGroupSize || 0), 0)
+  const upcomingBooked = upcomingClimbs.reduce((sum, c) => sum + (c.seatsBooked || 0), 0)
+  
+  // Calculate ongoing stats (for reference)
+  const ongoingSpots = ongoingClimbs.reduce((sum, c) => sum + (c.maxGroupSize || 0), 0)
+  const ongoingBooked = ongoingClimbs.reduce((sum, c) => sum + (c.seatsBooked || 0), 0)
+  
+  // Calculate past stats (for reference)
+  const pastSpots = pastClimbs.reduce((sum, c) => sum + (c.maxGroupSize || 0), 0)
+  const pastBooked = pastClimbs.reduce((sum, c) => sum + (c.seatsBooked || 0), 0)
+  
+  // Calculate overall totals
+  const totalSpotsAll = upcomingSpots + ongoingSpots + pastSpots
+  const totalBookedAll = upcomingBooked + ongoingBooked + pastBooked
+  
+  // Active climbs (upcoming + open/ongoing status)
+  const active = upcomingClimbs.filter(c => c.status === 'open' || c.status === 'ongoing').length
+  
+  // Calculate percentage filled for upcoming climbs
+  const upcomingPercentage = upcomingSpots > 0 ? Math.round((upcomingBooked / upcomingSpots) * 100) : 0
   
   return [
     {
@@ -1467,18 +1533,18 @@ const stats = computed(() => {
     },
     {
       label: 'Upcoming',
-      value: upcoming,
+      value: upcomingClimbs.length,
       description: 'Future climbs'
     },
     {
       label: 'Active',
       value: active,
-      description: 'Open for booking'
+      description: 'Upcoming & open for booking'
     },
     {
-      label: 'Booked Spots',
-      value: `${bookedSpots}/${totalSpots}`,
-      description: 'Total bookings'
+      label: 'Upcoming Booked',
+      value: `${upcomingBooked}/${upcomingSpots}`,
+      description: `${upcomingPercentage}% filled`
     }
   ]
 })
@@ -2241,13 +2307,13 @@ onMounted(async () => {
   transition: transform 0.3s ease;
 }
 
-/* Form input focus */
+/* Form input focus - FIXED: Use proper CSS instead of Tailwind shorthand */
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  ring: 2px;
-  ring-color: #10b981;
+  /* Use box-shadow for ring effect */
+  box-shadow: 0 0 0 2px #10b981;
   border-color: #10b981;
 }
 

@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum)
-        .select('name slug city park country type category starRating images isPublic isDeleted createdAt updatedAt _id'),
+        .select('name slug city park country type category starRating images isPublic isDeleted createdAt updatedAt _id minPrice maxPrice rooms'),
       Accommodation.countDocuments(filter)
     ])
     

@@ -373,6 +373,22 @@ const allStats = ref([
     }
   },
   {
+  key: 'accommodations',
+  title: 'Accommodations',
+  value: 0,
+  subtitle: 'Configured accommodations',
+  icon: '🛏️',
+  colorClass: 'bg-fuchsia-50 text-fuchsia-600',
+  roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'],
+  apiEndpoint: '/api/accommodations',
+  extractData: (response) => {
+    // Accept either array or { data: [] } responses
+    if (Array.isArray(response)) return response.length
+    if (response?.data && Array.isArray(response.data)) return response.data.length
+    return 0
+  }
+},
+  {
     key: 'activities',
     title: 'Activities',
     value: 0,

@@ -42,6 +42,7 @@
               <span v-else-if="item.icon === 'transfers'">🚐</span>
               <span v-else-if="item.icon === 'cities'">🌆</span>
               <span v-else-if="item.icon === 'users'">👤</span>
+              <span v-else-if="item.icon === 'email'">📨</span>
               <span v-else-if="item.icon === 'groupclimb'">🧗‍♂️</span>
               <span v-else>•</span>
             </span>
@@ -201,6 +202,7 @@ const allNavItems = [
   { to: '/admin/dashboard/transfers', label: 'Transfers', icon: 'transfers', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
   { to: '/admin/dashboard/cities', label: 'Cities', icon: 'cities', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
   { to: '/admin/dashboard/users', label: 'Users', icon: 'users', roles: ['superadmin', 'admin'] },
+  { to: '/admin/dashboard/emailmarketing', label: 'Email Marketing', icon: 'email',  roles: ['superadmin', 'admin', 'marketing-manager', 'content-manager'] },
   { to: '/admin/dashboard/groupclimb', label: 'Group Climbs', icon: 'groupclimb', roles: ['superadmin', 'admin', 'content-manager'] }
 ]
 
@@ -221,7 +223,8 @@ const userRoleFormatted = computed(() => {
     'admin': 'Admin',
     'content-manager': 'Content Manager',
     'lead-manager': 'Lead Manager',
-    'itinerary-planner': 'Itinerary Planner'
+    'itinerary-planner': 'Itinerary Planner',
+    'marketing-manager': 'Marketing Manager'
   }
   return roleMap[userRole.value] || userRole.value.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 })
@@ -274,6 +277,7 @@ const headerTitle = computed(() => {
   if (route.path.startsWith('/admin/dashboard/users')) return 'Users'
   if (route.path.startsWith('/admin/dashboard/transfers')) return 'Transfers'
   if (route.path.startsWith('/admin/dashboard/cities')) return 'Cities'
+  if (route.path.startsWith('/admin/dashboard/emailmarketing')) return 'Email Marketing'
   if (route.path.startsWith('/admin/dashboard/groupclimb')) return 'Group Climbs'
   return 'Dashboard'
 })
@@ -326,6 +330,10 @@ const headerSubtitle = computed(() => {
 
   if (route.path.startsWith('/admin/dashboard/cities'))
     return 'Organise cities and regions.'
+  
+  if (route.path.startsWith('/admin/dashboard/emailmarketing'))
+  return 'Manage templates, sends, and scheduled campaigns.'
+
 
   if (route.path.startsWith('/admin/dashboard/groupclimb'))
     return 'Manage group climbing adventures, dates, pricing and availability.'

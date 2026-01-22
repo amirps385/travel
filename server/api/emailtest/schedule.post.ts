@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
     const toEmail = body?.email || null;
     const toName = body?.name || 'Guest';
     const scheduledAt = body?.scheduledAt; // ISO string expected
+    const leadId = body?.leadId || null;
 
     // Basic validation
     if (!toEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
@@ -54,7 +55,7 @@ export default defineEventHandler(async (event) => {
       unsubscribe_url: body?.unsubscribe_url ?? process.env.PUBLIC_UNSUBSCRIBE_URL ?? 'https://zafstours.com/unsubscribe'
     };
 
-    debug.steps.push(`Prepared payload => to=${toEmail} templateId=${templateId}`);
+    debug.steps.push(`Prepared payload => to=${toEmail} templateId=${templateId} leadId=${leadId}`);
     debug.paramCount = Object.keys(params).length;
 
     // Import SDK
@@ -95,11 +96,115 @@ export default defineEventHandler(async (event) => {
       debug.steps.push('Calling sendTransacEmail with scheduledAt');
       const resp = await api.sendTransacEmail(sendOptions);
       debug.steps.push('Transactional email scheduled successfully');
+      
+      // ✅ LOGGING: Create email log entry for scheduled email
+      try {
+        // Helper functions
+        const getTemplateName = (id: number) => {
+          const templates = { 4: 'Book a Call', 5: 'Itinerary Request', 6: 'Newsletter' };
+          return templates[id] || `Template ${id}`;
+        };
+        
+        const getEmailSubject = (id: number, name: string) => {
+          switch(id) {
+            case 4: return `${name}, your call request is confirmed`;
+            case 5: return `Thanks ${name} — we received your itinerary request`;
+            case 6: return 'Latest Safari Updates & Special Offers';
+            default: return 'Email from Zafs Tours';
+          }
+        };
+        
+        const getPreviewText = (id: number) => {
+          switch(id) {
+            case 4: return 'Our team will contact you shortly to plan your safari.';
+            case 5: return 'We\'ll send your full itinerary in 48 hours.';
+            case 6: return 'Stay updated with our latest safari news and special offers.';
+            default: return '';
+          }
+        };
+        
+        // Get current user from cookie/token if available
+        const token = getCookie(event, 'auth_token');
+        let sentBy = null;
+        if (token) {
+          try {
+            const jwt = await import('jsonwebtoken');
+            const secret = process.env.JWT_SECRET || 'dev-secret';
+            const currentUser = jwt.verify(token, secret) as any;
+            sentBy = {
+              id: String(currentUser._id || currentUser.id || ''),
+              name: currentUser.name || currentUser.email || 'Unknown',
+              email: currentUser.email || '',
+              role: currentUser.role || 'user',
+              source: 'manual'
+            };
+          } catch (err) {
+            // Ignore token errors
+          }
+        }
+        
+        // Create log entry for scheduled email
+        const logBody = {
+          leadId: leadId,
+          leadEmail: toEmail,
+          leadName: toName,
+          templateId: templateId,
+          templateName: getTemplateName(templateId),
+          subject: getEmailSubject(templateId, toName),
+          previewText: getPreviewText(templateId),
+          html: '',
+          params: params,
+          status: 'scheduled',
+          providerResponse: resp,
+          scheduledAt: scheduledAt,
+          sentAt: null,
+          createdBy: sentBy
+        };
+        
+        // Call the log API
+        const logRes = await $fetch('/api/emailtest/log', {
+          method: 'POST',
+          body: logBody
+        });
+        
+        debug.steps.push('Scheduled email logged successfully');
+        debug.logId = logRes?.logId;
+      } catch (logError: any) {
+        debug.steps.push(`Failed to log scheduled email: ${logError.message}`);
+      }
+      
       return { success: true, messageId: resp?.messageId ?? null, debug };
     } catch (brevoErr: any) {
       debug.steps.push('Brevo API error');
       debug.error = brevoErr?.message || 'Brevo API error';
       debug.brevoResponse = brevoErr?.response?.body || brevoErr?.response?.text || null;
+      
+      // ✅ LOGGING: Log failed scheduling attempt
+      try {
+        const logBody = {
+          leadId: leadId,
+          leadEmail: toEmail,
+          leadName: toName,
+          templateId: templateId,
+          status: 'failed',
+          providerResponse: {
+            error: brevoErr?.message,
+            code: brevoErr?.code || 'UNKNOWN_ERROR',
+            response: brevoErr?.response?.body
+          },
+          scheduledAt: scheduledAt
+        };
+        
+        await $fetch('/api/emailtest/log', {
+          method: 'POST',
+          body: logBody
+        });
+        
+        debug.steps.push('Failed schedule logged');
+      } catch (logError) {
+        debug.steps.push(`Failed to log failed schedule: ${logError.message}`);
+      }
+      
       console.error('Brevo API error (schedule-call):', brevoErr);
       return { success: false, debug };
     }

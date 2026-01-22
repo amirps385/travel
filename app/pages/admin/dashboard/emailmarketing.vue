@@ -1,4 +1,3 @@
-<!-- app/pages/admin/dashboard/emailmarketing.vue -->
 <template>
   <div class="min-h-[calc(100vh-5rem)] bg-slate-50">
     <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8">
@@ -21,7 +20,7 @@
         <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
           <div>
             <h3 class="font-semibold text-slate-800">Contacts List</h3>
-            <p class="text-xs text-slate-500 mt-1">Click email icon to send, preview icon to view details</p>
+            <p class="text-xs text-slate-500 mt-1">Click email icon to send, preview icon to view details, history icon to view email history</p>
           </div>
           <div class="flex items-center gap-3">
             <div class="relative">
@@ -54,7 +53,7 @@
               <tr>
                 <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Contact</th>
                 <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Lead Source</th>
-                <th class="px6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                 <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
                 <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider text-right">Actions</th>
               </tr>
@@ -119,6 +118,17 @@
                       <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+
+                    <!-- EMAIL HISTORY BUTTON -->
+                    <button
+                      @click="openEmailHistory(contact)"
+                      class="p-2 hover:bg-purple-50 rounded-lg transition-colors group"
+                      title="View Email History"
+                    >
+                      <svg class="w-5 h-5 text-purple-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </button>
 
@@ -511,6 +521,15 @@
         <!-- MODAL FOOTER -->
         <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
           <button
+            @click="openEmailHistory(previewContact)"
+            class="px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors"
+          >
+            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            View Email History
+          </button>
+          <button
             @click="closePreviewModal"
             class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
           >
@@ -596,15 +615,26 @@
             <div v-if="selectedTemplateId" class="border-t border-slate-200 pt-6">
               <div class="flex items-center justify-between mb-4">
                 <h4 class="text-sm font-semibold text-slate-700">Email Preview</h4>
-                <button
-                  @click="refreshPreview"
-                  class="inline-flex items-center px-3 py-1.5 text-xs border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-                >
-                  <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Refresh Preview
-                </button>
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="refreshPreview"
+                    class="inline-flex items-center px-3 py-1.5 text-xs border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh Preview
+                  </button>
+                  <button
+                    @click="showPreviewInModal"
+                    class="inline-flex items-center px-3 py-1.5 text-xs border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Full Screen Preview
+                  </button>
+                </div>
               </div>
               
               <!-- Preview Container -->
@@ -629,9 +659,9 @@
                   </div>
                 </div>
                 
-                <!-- Template Preview -->
+                <!-- ACTUAL TEMPLATE PREVIEW -->
                 <div class="overflow-y-auto" style="max-height: 500px;">
-                  <div v-html="emailPreview" class="email-preview"></div>
+                  <div class="email-preview-template" v-html="getFullEmailPreview()"></div>
                 </div>
               </div>
               
@@ -641,234 +671,230 @@
             </div>
 
             <!-- TEMPLATE PARAMETERS -->
-<div v-if="selectedTemplateId" class="border-t border-slate-200 pt-6">
-  <h4 class="text-sm font-semibold text-slate-700 mb-4">Email Parameters</h4>
-  
-  <!-- RECIPIENT INFORMATION -->
-  <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-    <h5 class="text-xs font-semibold text-slate-600 mb-3">Recipient Information</h5>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Recipient Name *</label>
-        <input v-model="emailContact.name" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          placeholder="Enter recipient name" />
-        <p class="text-xs text-slate-500 mt-1">Name as it should appear in the email salutation</p>
-      </div>
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Recipient Email *</label>
-        <input v-model="emailContact.email" @input="refreshPreview" type="email" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          placeholder="recipient@example.com" />
-        <p class="text-xs text-slate-500 mt-1">Email address to send to</p>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Template 4: Book a Call (Based on your Brevo template) -->
-  <div v-if="selectedTemplateId === 4" class="space-y-4">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- Country Dropdown -->
-      <div>
-        <label class="text-xs font-semibold text-slate-600 mb-2 block">Country *</label>
-        <div class="relative">
-          <select
-            v-model="selectedCountryIso"
-            @change="onCountryChange"
-            class="w-full border rounded-lg px-3 py-2 pr-10 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">-- Select Country --</option>
-            <option v-for="country in countries" :key="country.iso2" :value="country.iso2">
-              {{ country.emoji }} {{ country.name }} ({{ country.dial_code }})
-            </option>
-          </select>
-          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-        <p class="text-xs text-slate-500 mt-1">Selecting country will auto-fill dial code and timezone</p>
-      </div>
+            <div v-if="selectedTemplateId" class="border-t border-slate-200 pt-6">
+              <h4 class="text-sm font-semibold text-slate-700 mb-4">Email Parameters</h4>
+              
+              <!-- RECIPIENT INFORMATION -->
+              <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <h5 class="text-xs font-semibold text-slate-600 mb-3">Recipient Information</h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Recipient Name *</label>
+                    <input v-model="emailContact.name" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      placeholder="Enter recipient name" />
+                    <p class="text-xs text-slate-500 mt-1">Name as it should appear in the email salutation</p>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Recipient Email *</label>
+                    <input v-model="emailContact.email" @input="refreshPreview" type="email" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      placeholder="recipient@example.com" />
+                    <p class="text-xs text-slate-500 mt-1">Email address to send to</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Template 4: Book a Call -->
+              <div v-if="selectedTemplateId === 4" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <!-- Country Dropdown -->
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600 mb-2 block">Country *</label>
+                    <div class="relative">
+                      <select
+                        v-model="selectedCountryIso"
+                        @change="onCountryChange"
+                        class="w-full border rounded-lg px-3 py-2 pr-10 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">-- Select Country --</option>
+                        <option v-for="country in countries" :key="country.iso2" :value="country.iso2">
+                          {{ country.emoji }} {{ country.name }} ({{ country.dial_code }})
+                        </option>
+                      </select>
+                      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Selecting country will auto-fill dial code and timezone</p>
+                  </div>
 
-      <!-- Country Code (Read-only) -->
-      <div>
-        <label class="text-xs font-semibold text-slate-600 mb-2 block">Country Code</label>
-        <div class="px-3 py-2 bg-slate-50 border rounded-lg text-sm font-medium text-slate-700">
-          {{ selectedCountry ? selectedCountry.dial_code : '—' }}
-        </div>
-        <p class="text-xs text-slate-500 mt-1">Auto-filled from selected country</p>
-      </div>
+                  <!-- Country Code (Read-only) -->
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600 mb-2 block">Country Code</label>
+                    <div class="px-3 py-2 bg-slate-50 border rounded-lg text-sm font-medium text-slate-700">
+                      {{ selectedCountry ? selectedCountry.dial_code : '—' }}
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Auto-filled from selected country</p>
+                  </div>
 
-      <!-- Phone Number -->
-      <div>
-        <label class="text-xs font-semibold text-slate-600 mb-2 block">Phone Number *</label>
-        <div class="flex items-center gap-2">
-          <div class="px-3 py-2 bg-slate-100 rounded-lg text-sm font-medium min-w-[70px] text-center">
-            {{ selectedCountry ? selectedCountry.dial_code : '+?' }}
-          </div>
-          <input
-            v-model="emailParams.phone"
-            @input="refreshPreview"
-            type="tel"
-            class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Local number e.g. 712345678"
-          />
-        </div>
-        <p class="text-xs text-slate-500 mt-1">
-          Full phone: <strong>{{ selectedCountry ? selectedCountry.dial_code : '' }}{{ emailParams.phone || '' }}</strong>
-        </p>
-      </div>
-    </div>
+                  <!-- Phone Number -->
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600 mb-2 block">Phone Number *</label>
+                    <div class="flex items-center gap-2">
+                      <div class="px-3 py-2 bg-slate-100 rounded-lg text-sm font-medium min-w-[70px] text-center">
+                        {{ selectedCountry ? selectedCountry.dial_code : '+?' }}
+                      </div>
+                      <input
+                        v-model="emailParams.phone"
+                        @input="refreshPreview"
+                        type="tel"
+                        class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Local number e.g. 712345678"
+                      />
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">
+                      Full phone: <strong>{{ selectedCountry ? selectedCountry.dial_code : '' }}{{ emailParams.phone || '' }}</strong>
+                    </p>
+                  </div>
+                </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Timezone Dropdown -->
-      <div>
-        <label class="text-xs font-semibold text-slate-600 mb-2 block">Timezone *</label>
-        <div class="relative">
-          <select
-            v-model="emailParams.timezone"
-            @change="refreshPreview"
-            class="w-full border rounded-lg px-3 py-2 pr-10 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            :disabled="!selectedCountry"
-          >
-            <option value="">-- Select Timezone --</option>
-            <option v-for="timezone in availableTimezones" :key="timezone" :value="timezone">
-              {{ timezone }}
-            </option>
-            <option v-if="emailContact.timezone && !availableTimezones.includes(emailContact.timezone)" :value="emailContact.timezone">
-              {{ emailContact.timezone }} (Timezone provided by the contact in the form)
-            </option>
-          </select>
-          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-        <p class="text-xs text-slate-500 mt-1">
-          {{ selectedCountry ? `Timezones for ${selectedCountry.name}` : 'Select country first' }}
-        </p>
-      </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Timezone Dropdown -->
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600 mb-2 block">Timezone *</label>
+                    <div class="relative">
+                      <select
+                        v-model="emailParams.timezone"
+                        @change="refreshPreview"
+                        class="w-full border rounded-lg px-3 py-2 pr-10 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        :disabled="!selectedCountry"
+                      >
+                        <option value="">-- Select Timezone --</option>
+                        <option v-for="timezone in availableTimezones" :key="timezone" :value="timezone">
+                          {{ timezone }}
+                        </option>
+                        <option v-if="emailContact.timezone && !availableTimezones.includes(emailContact.timezone)" :value="emailContact.timezone">
+                          {{ emailContact.timezone }} (Timezone provided by the contact in the form)
+                        </option>
+                      </select>
+                      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">
+                      {{ selectedCountry ? `You can select timezones for ${selectedCountry.name}, if you want to change timezone in mail` : 'Select country first' }}
+                    </p>
+                  </div>
 
-      <!-- Preferred Time -->
-      <div>
-        <label class="text-xs font-semibold text-slate-600 mb-2 block">Preferred Time *</label>
-        <input
-          v-model="emailParams.preferredTime"
-          @input="refreshPreview"
-          type="text"
-          class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          :placeholder="emailContact.preferredTime ? formatDateTime(emailContact.preferredTime) : 'March 12, 2026 — 10:30 AM'"
-        />
-        <p class="text-xs text-slate-500 mt-1">Date and time for the scheduled call</p>
-      </div>
-    </div>
+                  <!-- Preferred Time -->
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600 mb-2 block">Preferred Time *</label>
+                    <input
+                      v-model="emailParams.preferredTime"
+                      @input="refreshPreview"
+                      type="text"
+                      class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      :placeholder="emailContact.preferredTime ? formatDateTime(emailContact.preferredTime) : 'March 12, 2026 — 10:30 AM'"
+                    />
+                    <p class="text-xs text-slate-500 mt-1">Date and time for the scheduled call</p>
+                  </div>
+                </div>
 
-    <!-- Message -->
-    <div>
-      <label class="text-xs font-semibold text-slate-600 mb-2 block">Message / Notes *</label>
-      <textarea
-        v-model="emailParams.message"
-        @input="refreshPreview"
-        rows="3"
-        class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :placeholder="emailContact.message || 'I am interested in a luxury safari package...'"
-      ></textarea>
-    </div>
-  </div>
+                <!-- Message -->
+                <div>
+                  <label class="text-xs font-semibold text-slate-600 mb-2 block">Message / Notes *</label>
+                  <textarea
+                    v-model="emailParams.message"
+                    @input="refreshPreview"
+                    rows="3"
+                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    :placeholder="emailContact.message || 'I am interested in a luxury safari package...'"
+                  ></textarea>
+                </div>
+              </div>
 
-  <!-- Template 5: Itinerary Request -->
-  <div v-else-if="selectedTemplateId === 5" class="space-y-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Trip Name *</label>
-        <input v-model="emailParams.tripName" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          placeholder="e.g., 'Serengeti Luxury Safari'" />
-      </div>
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Duration (Days) *</label>
-        <input v-model.number="emailParams.days" @input="refreshPreview" type="number" min="1" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          :placeholder="emailContact.days ? String(emailContact.days) : '7'" />
-      </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Number of Travellers *</label>
-        <input v-model="emailParams.travellers" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          :placeholder="`${emailContact.travellers || '2'} people`" />
-      </div>
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Interests / Activities</label>
-        <input v-model="emailParams.interests" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          :placeholder="emailContact.activities?.join(', ') || 'Safari, beach, hiking'" />
-      </div>
-    </div>
-    <div>
-      <label class="text-xs font-semibold text-slate-600">Additional Notes</label>
-      <textarea v-model="emailParams.message" @input="refreshPreview" rows="3" class="mt-1 w-full border rounded-lg px-3 py-2" 
-        :placeholder="emailContact.message || 'Please include a hot air balloon ride and luxury lodge accommodation...'"></textarea>
-    </div>
-  </div>
+              <!-- Template 5: Itinerary Request -->
+              <div v-else-if="selectedTemplateId === 5" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Trip Name *</label>
+                    <input v-model="emailParams.tripName" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      placeholder="e.g., 'Serengeti Luxury Safari'" />
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Duration (Days) *</label>
+                    <input v-model.number="emailParams.days" @input="refreshPreview" type="number" min="1" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      :placeholder="emailContact.days ? String(emailContact.days) : '7'" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Number of Travellers *</label>
+                    <input v-model="emailParams.travellers" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      :placeholder="`${emailContact.travellers || '2'} people`" />
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Interests / Activities</label>
+                    <input v-model="emailParams.interests" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      :placeholder="emailContact.activities?.join(', ') || 'Safari, beach, hiking'" />
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs font-semibold text-slate-600">Additional Notes</label>
+                  <textarea v-model="emailParams.message" @input="refreshPreview" rows="3" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                    :placeholder="emailContact.message || 'Please include a hot air balloon ride and luxury lodge accommodation...'"></textarea>
+                </div>
+              </div>
 
-  <!-- Template 6: Newsletter (Placeholder for future) -->
-  <div v-else-if="selectedTemplateId === 6" class="space-y-4">
-    <div>
-      <label class="text-xs font-semibold text-slate-600">Newsletter Title *</label>
-      <input v-model="emailParams.tripName" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
-        placeholder="Latest Safari Updates & Special Offers" />
-    </div>
-    <div>
-      <label class="text-xs font-semibold text-slate-600">Hero Image URL</label>
-      <input v-model="emailParams.hero_image" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
-        placeholder="https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop" />
-    </div>
-    <div>
-      <label class="text-xs font-semibold text-slate-600">Content *</label>
-      <textarea v-model="emailParams.message" @input="refreshPreview" rows="4" class="mt-1 w-full border rounded-lg px-3 py-2" 
-        placeholder="Dear adventurer, we have exciting news about our upcoming safari tours..."></textarea>
-    </div>
-  </div>
+              <!-- Template 6: Newsletter -->
+              <div v-else-if="selectedTemplateId === 6" class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <div class="flex items-start">
+                    <svg class="w-5 h-5 text-blue-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p class="text-sm text-blue-700 font-medium">No parameters needed for this template</p>
+                      <p class="text-xs text-blue-600 mt-1">The newsletter template has fixed content. Just click send!</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-  <!-- COMMON PARAMETERS (Used in all templates) -->
-  <div class="mt-6 pt-6 border-t border-slate-200">
-    <h5 class="text-xs font-semibold text-slate-600 mb-3">Common Settings</h5>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Call-to-Action URL</label>
-        <input v-model="emailParams.cta_url" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          :placeholder="selectedTemplateId === 4 ? 'https://zafstours.com/book-now' : 'https://zafstours.com/contact'" />
-      </div>
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Hero Image URL</label>
-        <input v-model="emailParams.hero_image" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          placeholder="https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop" />
-        <p class="text-xs text-slate-500 mt-1">Optional. Leave empty for default safari image.</p>
-      </div>
-    </div>
-  </div>
+              <!-- COMMON PARAMETERS -->
+              <div class="mt-6 pt-6 border-t border-slate-200">
+                <h5 class="text-xs font-semibold text-slate-600 mb-3">Common Settings</h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Call-to-Action URL</label>
+                    <input v-model="emailParams.cta_url" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      :placeholder="selectedTemplateId === 4 ? 'https://zafstours.com/book-now' : 'https://zafstours.com/contact'" />
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Hero Image URL</label>
+                    <input v-model="emailParams.hero_image" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      placeholder="https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop" />
+                    <p class="text-xs text-slate-500 mt-1">Optional. Leave empty for default safari image.</p>
+                  </div>
+                </div>
+              </div>
 
-  <!-- COMPANY CONTACT INFO (Defaults - Usually don't need to change) -->
-  <div class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-    <h5 class="text-xs font-semibold text-slate-600 mb-3">Company Contact Information</h5>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Company Phone</label>
-        <input v-model="emailParams.company_phone" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          placeholder="+255 624 023 455" />
-      </div>
-      <div>
-        <label class="text-xs font-semibold text-slate-600">Company Email</label>
-        <input v-model="emailParams.company_email" @input="refreshPreview" type="email" class="mt-1 w-full border rounded-lg px-3 py-2" 
-          placeholder="info@zafstours.com" />
-      </div>
-    </div>
-    <div class="mt-4">
-      <label class="text-xs font-semibold text-slate-600">Unsubscribe URL</label>
-      <input v-model="emailParams.unsubscribe_url" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
-        placeholder="https://zafstours.com/unsubscribe" />
-    </div>
-    <p class="text-xs text-slate-500 mt-2">These are pre-filled with company defaults. Edit only if needed for this specific email.</p>
-  </div>
-</div>
+              <!-- COMPANY CONTACT INFO -->
+              <div class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <h5 class="text-xs font-semibold text-slate-600 mb-3">Company Contact Information</h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Company Phone</label>
+                    <input v-model="emailParams.company_phone" @input="refreshPreview" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      placeholder="+255 624 023 455" />
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-slate-600">Company Email</label>
+                    <input v-model="emailParams.company_email" @input="refreshPreview" type="email" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                      placeholder="info@zafstours.com" />
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <label class="text-xs font-semibold text-slate-600">Unsubscribe URL</label>
+                  <input v-model="emailParams.unsubscribe_url" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
+                    placeholder="https://zafstours.com/unsubscribe" />
+                </div>
+                <p class="text-xs text-slate-500 mt-2">These are pre-filled with company defaults. Edit only if needed for this specific email.</p>
+              </div>
+            </div>
 
             <!-- SCHEDULING OPTIONS -->
             <div v-if="selectedTemplateId" class="bg-slate-50 rounded-lg p-5 border border-slate-200">
@@ -948,6 +974,34 @@
       </div>
     </div>
 
+    <!-- FULL SCREEN PREVIEW MODAL -->
+    <div v-if="showFullScreenPreview" class="fixed inset-0 bg-black/90 z-100 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">Full Email Preview</h3>
+            <p class="text-sm text-slate-500 mt-1">How the email will appear to the recipient</p>
+          </div>
+          <button @click="showFullScreenPreview = false" class="p-2 hover:bg-slate-100 rounded-lg">
+            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-auto bg-slate-50">
+          <div class="email-fullscreen-preview" v-html="getFullEmailPreview()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMAIL HISTORY MODAL -->
+    <EmailLogsModal
+      :lead-id="selectedLeadId"
+      :lead-name="selectedLeadName"
+      :visible="showEmailHistoryModal"
+      @close="showEmailHistoryModal = false"
+    />
+
     <!-- TOAST NOTIFICATIONS -->
     <div v-if="toast.show" class="fixed bottom-4 right-4 z-50">
       <div :class="['px-4 py-3 rounded-lg shadow-lg', toast.type === 'success' ? 'bg-emerald-50 border border-emerald-200' : 'bg-rose-50 border border-rose-200']">
@@ -969,10 +1023,10 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import EmailLogsModal from '~/components/EmailLogsModal.vue'
 
-// Import the composable (Nuxt will auto-import it from composables/useCountries.ts)
 const { 
   COUNTRIES: countryList, 
   findCountryByIso2, 
@@ -986,100 +1040,25 @@ definePageMeta({
   title: 'Email Marketing'
 })
 
-// Types
-interface Contact {
-  _id: string
-  id: string
-  name: string
-  email: string
-  phone?: string
-  countryCode?: string
-  country?: string
-  country_iso?: string
-  country_code?: string
-  originCity?: string
-  source: string
-  leadSourceDetail?: string
-  status: string
-  priority?: string
-  preferredContactMethod?: string
-  timezone?: string
-  scheduleCall?: boolean
-  consent?: boolean
-  metadata?: {
-    browserTimezone?: string
-  }
-  utm?: {
-    source?: string
-    medium?: string
-    campaign?: string
-  }
-  // Trip info
-  date?: string
-  prettyDate?: string
-  days?: number
-  travellers?: number
-  who?: string
-  countries?: string[]
-  activities?: string[]
-  budget?: number
-  kilimanjaroRoute?: string
-  dateIsMonthOnly?: boolean
-  adultAges?: number[]
-  childAges?: number[]
-  adults?: number
-  children?: number
-  message?: string
-  preferredTime?: string
-  // Status & assignment
-  closedDate?: string
-  closedReason?: string
-  priorityUpdatedBy?: string
-  assignedTo?: {
-    name: string
-    email: string
-    role: string
-  }
-  createdAt: string
-}
-
-interface EmailTemplate {
-  id: number
-  name: string
-  description: string
-}
-
-interface TemplateParams {
-  phone: string
-  country: string
-  preferredTime: string
-  timezone: string
-  message: string
-  tripName: string
-  days: number
-  travellers: string
-  interests: string
-  cta_url: string
-  hero_image: string
-  company_phone: string
-  company_email: string
-  unsubscribe_url: string
-}
-
 // State
-const contacts = ref<Contact[]>([])
+const contacts = ref([])
 const loadingContacts = ref(false)
 const searchQuery = ref('')
 
 // Modal states
 const showPreviewModal = ref(false)
 const showEmailModal = ref(false)
-const previewContact = ref<Contact>({} as Contact)
-const emailContact = ref<Contact>({} as Contact)
+const previewContact = ref({})
+const emailContact = ref({})
+
+// Email History Modal state
+const showEmailHistoryModal = ref(false)
+const selectedLeadId = ref('')
+const selectedLeadName = ref('')
 
 // Email sending state
-const selectedTemplateId = ref<number | null>(null)
-const emailParams = ref<TemplateParams>({
+const selectedTemplateId = ref(null)
+const emailParams = ref({
   phone: '',
   country: '',
   preferredTime: '',
@@ -1097,7 +1076,7 @@ const emailParams = ref<TemplateParams>({
 })
 
 // Country selection state
-const selectedCountryIso = ref<string>('')
+const selectedCountryIso = ref('')
 const selectedCountry = computed(() => {
   return selectedCountryIso.value ? findCountryByIso2(selectedCountryIso.value) : null
 })
@@ -1112,9 +1091,13 @@ const countries = ref(countryList)
 // Email preview state
 const emailPreview = ref('')
 const senderName = computed(() => process.env.BREVO_SENDER_NAME || 'Zafstours')
+const senderEmail = computed(() => process.env.BREVO_SENDER_EMAIL || 'amirps385@gmail.com')
+
+// Full screen preview state
+const showFullScreenPreview = ref(false)
 
 // Scheduling
-const sendOption = ref<'now' | 'schedule'>('now')
+const sendOption = ref('now')
 const scheduleDateTime = ref('')
 const sendingEmail = ref(false)
 const schedulingEmail = ref(false)
@@ -1122,20 +1105,270 @@ const schedulingEmail = ref(false)
 // Toast notifications
 const toast = ref({
   show: false,
-  type: 'success' as 'success' | 'error',
+  type: 'success',
   message: ''
 })
 
 // Email templates
-const emailTemplates = ref<EmailTemplate[]>([
+const emailTemplates = ref([
   { id: 4, name: 'Book a Call', description: 'Call confirmation email template' },
-  { id: 5, name: 'Itinerary Request', description: 'Custom itinerary follow-up email' },
+  { id: 5, name: 'Itinerary Request', description: 'Your Africa Adventure Has Officially Begun' },
   { id: 6, name: 'Newsletter', description: 'Monthly updates and special offers' }
 ])
 
-// Template HTMLs
-const templateHtmls = {
-  4: `<!DOCTYPE html>
+// Computed
+const filteredContacts = computed(() => {
+  if (!searchQuery.value.trim()) return contacts.value
+  
+  const query = searchQuery.value.toLowerCase()
+  return contacts.value.filter(contact => {
+    const name = (contact.name || '').toLowerCase()
+    const email = (contact.email || '').toLowerCase()
+    const source = (contact.source || '').toLowerCase()
+    const leadSourceDetail = (contact.leadSourceDetail || '').toLowerCase()
+    const phone = (contact.phone || '').toLowerCase()
+    
+    return name.includes(query) || 
+           email.includes(query) || 
+           source.includes(query) ||
+           leadSourceDetail.includes(query) ||
+           phone.includes(query)
+  })
+})
+
+const selectedTemplate = computed(() => {
+  return emailTemplates.value.find(t => t.id === selectedTemplateId.value) || null
+})
+
+// Methods
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => {
+    toast.value.show = false
+  }, 3000)
+}
+
+const getInitials = (name) => {
+  if (!name) return '??'
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
+const formatSource = (source) => {
+  const sources = {
+    'custom_itinerary': 'Custom Itinerary',
+    'bookacall': 'Book a Call',
+    'newsletter': 'Newsletter',
+    'contact_form': 'Contact Form',
+    'referral': 'Referral'
+  }
+  return sources[source] || source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+const humanizeSource = (source) => {
+  if (!source) return '—'
+  const MAP = {
+    'custom_itinerary': 'custom itinerary',
+    'facebook_ad': 'Facebook ad',
+    'google_search': 'Google search',
+    'email': 'Email',
+    'social_media': 'Social media platform',
+    'facebook': 'Social media platform',
+    'instagram': 'Social media platform'
+  }
+  if (MAP[source]) return MAP[source]
+  const s = String(source)
+    .replace(/[_-]+/g, ' ')
+    .trim()
+  return s.toLowerCase()
+}
+
+const displaySourceDetail = (detail) => {
+  if (!detail) return '—'
+  const MAP = {
+    'request-quote-clone': 'Website — Quote Request',
+    'request-quote': 'Website — Quote Request',
+    'contact-form': 'Website — Contact Form',
+    'facebook_lead': 'Facebook Lead',
+    'facebook_ad': 'Facebook Ad',
+    'google_search': 'Google Search',
+    'whatsapp_form': 'WhatsApp Form'
+  }
+  if (MAP[detail]) return MAP[detail]
+  const s = String(detail).replace(/[_-]+/g, ' ').trim()
+  return s.length > 60 ? s.slice(0,57) + '...' : s
+}
+
+const formatActivityName = (activity) => {
+  if (!activity) return ''
+  return activity
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+const formatStatus = (status) => {
+  const statuses = {
+    'new': 'New',
+    'qualified': 'Qualified',
+    'unqualified': 'Unqualified',
+    'working': 'Working',
+    'closed-won': 'Closed Won',
+    'closed-lost': 'Closed Lost'
+  }
+  return statuses[status] || status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+const priorityLabelFrom = (priority) => {
+  if (!priority) return 'Not Set'
+  const priorityMap = {
+    'low': 'Low',
+    'medium': 'Medium',
+    'high': 'High',
+    'very-high': 'Very High'
+  }
+  return priorityMap[priority] || priority
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+const formatDateShort = (dateString) => {
+  if (!dateString) return '—'
+  try {
+    return new Date(dateString).toLocaleDateString()
+  } catch {
+    return dateString
+  }
+}
+
+const formatDateTime = (value) => {
+  if (!value) return '—'
+  try {
+    return new Date(value).toLocaleString(undefined, {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return value
+  }
+}
+
+const formatScheduleDate = (dateTime) => {
+  const date = new Date(dateTime)
+  return date.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const formatRole = (role) => {
+  if (!role) return ''
+  const roleMap = {
+    'superadmin': 'Super Admin',
+    'admin': 'Admin',
+    'content-manager': 'Content Manager',
+    'lead-manager': 'Lead Manager',
+    'itinerary-planner': 'Itinerary Planner'
+  }
+  return roleMap[role] || role.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
+const getSourceBadgeClass = (source) => {
+  const classes = {
+    'custom_itinerary': 'bg-blue-100 text-blue-800',
+    'bookacall': 'bg-purple-100 text-purple-800',
+    'newsletter': 'bg-green-100 text-green-800',
+    'contact_form': 'bg-yellow-100 text-yellow-800',
+    'referral': 'bg-indigo-100 text-indigo-800'
+  }
+  return classes[source] || 'bg-slate-100 text-slate-800'
+}
+
+const getStatusBadgeClass = (status) => {
+  const classes = {
+    'new': 'bg-blue-100 text-blue-800',
+    'qualified': 'bg-emerald-100 text-emerald-800',
+    'unqualified': 'bg-rose-100 text-rose-800',
+    'working': 'bg-amber-100 text-amber-800',
+    'closed-won': 'bg-green-100 text-green-800',
+    'closed-lost': 'bg-slate-100 text-slate-800'
+  }
+  return classes[status] || 'bg-slate-100 text-slate-800'
+}
+
+const statusIcon = (s) => {
+  if (s === 'working') return '🔄'
+  if (s === 'qualified') return '⭐'
+  if (s === 'closed-won') return '✅'
+  if (s === 'unqualified' || s === 'closed-lost') return '❌'
+  return '🟢'
+}
+
+const hasTripInfo = (contact) => {
+  return contact.days || contact.travellers || contact.who || 
+         (contact.activities && contact.activities.length > 0) ||
+         contact.budget || (contact.countries && contact.countries.length > 0)
+}
+
+// Email History Modal methods
+const openEmailHistory = (contact) => {
+  selectedLeadId.value = contact._id || contact.id
+  selectedLeadName.value = contact.name
+  showEmailHistoryModal.value = true
+}
+
+// Email preview methods
+const refreshPreview = () => {
+  if (!selectedTemplateId.value) {
+    emailPreview.value = ''
+    return
+  }
+
+  console.log('🔄 Refreshing preview for template:', selectedTemplateId.value)
+  
+  const previewHtml = getFullEmailPreview()
+  emailPreview.value = previewHtml
+  
+  console.log('📋 Preview HTML length:', previewHtml.length)
+  
+  // Force update if full screen preview is open
+  if (showFullScreenPreview.value) {
+    const previewDiv = document.querySelector('.email-fullscreen-preview')
+    if (previewDiv) {
+      previewDiv.innerHTML = previewHtml
+    }
+  }
+}
+
+const showPreviewInModal = () => {
+  if (selectedTemplateId.value) {
+    showFullScreenPreview.value = true
+  }
+}
+
+// Generate full email preview HTML - COMPLETE WITH NEWSLETTER TEMPLATE
+const getFullEmailPreview = () => {
+  if (!selectedTemplateId.value) return ''
+  
+  const params = emailParams.value
+  const name = emailContact.value.name || 'Guest'
+  
+  if (selectedTemplateId.value === 4) {
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1166,7 +1399,7 @@ const templateHtmls = {
         <!-- HERO IMAGE -->
         <tr>
             <td align="center" style="padding:0;">
-                <img src="{{ params.hero_image }}" alt="Luxury Safari Image" width="600" style="max-width:100%; height:auto; display:block; border:0;" />
+                <img src="${params.hero_image || 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop'}" alt="Luxury Safari Image" width="600" style="max-width:100%; height:auto; display:block; border:0;" />
             </td>
         </tr>
         
@@ -1176,7 +1409,7 @@ const templateHtmls = {
                 <table border="0" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
                         <td style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:24px; font-weight:bold; text-align:center;">
-                            Exclusive Safari Adventure Awaits, {{ params.name }}!
+                            Exclusive Safari Adventure Awaits, ${name}!
                         </td>
                     </tr>
                 </table>
@@ -1190,18 +1423,19 @@ const templateHtmls = {
                     <tr>
                         <td style="color:#333333; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:1.6; text-align:left;">
                             <p style="margin-top:0; margin-bottom:20px;">
-                                Thanks — we received your call request. We'll call you at <strong>{{ selectedCountry ? selectedCountry.dial_code : '' }}{{ emailParams.phone }}</strong> ({{ emailParams.country }}) around <strong>{{ emailParams.preferredTime }}</strong> ({{ emailParams.timezone }}).
+                                Thanks — we received your call request. We'll call you at <strong>${params.phone || ''}</strong> (${params.country || ''}) around <strong>${params.preferredTime || ''}</strong> (${params.timezone || ''}).
                             </p>
                             
-                            <!-- Always show the message section, but leave empty if no message -->
+                            ${params.message ? `
                             <p style="margin:25px 0 10px 0; color:#1a3c34; font-weight:bold;">Your notes:</p>
                             <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f8f8f8; border-left:4px solid #d4af37; margin-bottom:25px;">
                                 <tr>
                                     <td style="padding:15px 20px; color:#333333; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:1.5; font-style:italic;">
-                                        "{{ emailParams.message }}"
+                                        "${params.message}"
                                     </td>
                                 </tr>
                             </table>
+                            ` : ''}
                             
                             <p style="margin-bottom:0;">
                                 If you need to reschedule or have urgent questions before our call, please reply to this email or contact us directly.
@@ -1255,7 +1489,7 @@ const templateHtmls = {
                 <table border="0" cellpadding="0" cellspacing="0">
                     <tr>
                         <td align="center" style="background-color:#d4af37; border-radius:4px;">
-                            <a href="{{ emailParams.cta_url }}" style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:15px 40px; display:inline-block;">
+                            <a href="${params.cta_url || 'https://zafstours.com/contact'}" style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:15px 40px; display:inline-block;">
                                 BOOK NOW
                             </a>
                         </td>
@@ -1275,8 +1509,8 @@ const templateHtmls = {
                     </tr>
                     <tr>
                         <td align="center">
-                            <a href="tel:{{ emailParams.company_phone }}" style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:12px 30px; display:inline-block; border:2px solid #d4af37; border-radius:4px;">
-                                Call us: {{ emailParams.company_phone }}
+                            <a href="tel:${params.company_phone}" style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:12px 30px; display:inline-block; border:2px solid #d4af37; border-radius:4px;">
+                                Call us: ${params.company_phone}
                             </a>
                         </td>
                     </tr>
@@ -1305,12 +1539,12 @@ const templateHtmls = {
                     </tr>
                     <tr>
                         <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:5px;">
-                            {{ emailParams.company_phone }}
+                            ${params.company_phone}
                         </td>
                     </tr>
                     <tr>
                         <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:25px;">
-                            <a href="mailto:{{ emailParams.company_email }}" style="color:#ffffff; text-decoration:underline;">{{ emailParams.company_email }}</a>
+                            <a href="mailto:${params.company_email}" style="color:#ffffff; text-decoration:underline;">${params.company_email}</a>
                         </td>
                     </tr>
                     <tr>
@@ -1326,7 +1560,7 @@ const templateHtmls = {
                                     </td>
                                     <td style="padding:0 12px; color:#d4af37;">|</td>
                                     <td style="padding:0 12px;">
-                                        <a href="{{ emailParams.unsubscribe_url }}" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Unsubscribe</a>
+                                        <a href="${params.unsubscribe_url}" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Unsubscribe</a>
                                     </td>
                                 </tr>
                             </table>
@@ -1344,13 +1578,14 @@ const templateHtmls = {
         </tr>
     </table>
 </body>
-</html>`,
-  5: `<!DOCTYPE html>
+</html>`
+ } else if (selectedTemplateId.value === 5) {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Itinerary Request Confirmation</title>
+    <title>Your Africa Adventure Has Officially Begun</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f5f5f5;">
     <!-- WRAPPER -->
@@ -1376,7 +1611,7 @@ const templateHtmls = {
         <!-- HERO IMAGE -->
         <tr>
             <td align="center" style="padding:0;">
-                <img src="{{ emailParams.hero_image }}" alt="Safari Adventure" width="600" style="max-width:100%; height:auto; display:block; border:0;" />
+                <img src="${params.hero_image || 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop'}" alt="African Safari Adventure" width="600" style="max-width:100%; height:auto; display:block; border:0;" />
             </td>
         </tr>
         
@@ -1385,90 +1620,126 @@ const templateHtmls = {
             <td align="center" style="padding:40px 20px 20px 20px;">
                 <table border="0" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
-                        <td style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:24px; font-weight=bold; text-align:center;">
-                            Thanks for Your Itinerary Request, {{ emailContact.name }}!
+                        <td style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:28px; font-weight:bold; text-align:center; line-height:1.3;">
+                            Get Ready for the Adventure of a Lifetime
                         </td>
                     </tr>
                 </table>
             </td>
         </tr>
         
-        <!-- CONFIRMATION BODY -->
+        <!-- MAIN CONTENT -->
         <tr>
             <td align="center" style="padding:0 20px;">
                 <table border="0" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
                         <td style="color:#333333; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:1.6; text-align:left;">
-                            <p style="margin-top:0; margin-bottom:20px;">
-                                We've received your custom itinerary request. Our travel team will prepare a day-by-day proposal tailored to your preferences and send it to you within <strong>48 hours</strong>.
+                            <!-- GREETING -->
+                            <p style="margin-top:0; margin-bottom:20px; font-size:18px; color:#1a3c34;">
+                                <strong>Karibu ${name},</strong>
                             </p>
                             
-                            <!-- REQUEST DETAILS -->
-                            <div style="background-color:#f8fafc; border:1px solid #eef6f3; border-radius:8px; padding:20px; margin:25px 0;">
-                                <h3 style="color:#1a3c34; margin-top:0; margin-bottom:15px; font-size:18px;">Request Summary</h3>
+                            <p style="margin-bottom:20px;">
+                                Thank you for sharing your travel plans with us. Your journey to Africa is already taking shape, and we're truly excited to be part of it.
+                            </p>
+                            
+                            <p style="margin-bottom:20px;">
+                                Based on the details you've submitted, our travel experts are now crafting a personalized itinerary tailored to your interests, travel dates, group size, and adventure level. Whether it's a thrilling safari, the challenge of Mount Kilimanjaro, or a perfectly balanced mix of both, we've got you covered.
+                            </p>
+                            
+                            <!-- WHAT HAPPENS NEXT -->
+                            <div style="background-color:#f8fafc; border:1px solid #eef6f3; border-radius:8px; padding:25px; margin:30px 0;">
+                                <h3 style="color:#1a3c34; margin-top:0; margin-bottom:20px; font-size:20px; text-align:center;">
+                                    What happens next?
+                                </h3>
                                 
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size:15px;">
                                     <tr>
-                                        <td style="padding:8px 0; color:#1a3c34; font-weight:bold; width:120px;">Trip:</td>
-                                        <td style="padding:8px 0;">{{ emailParams.tripName }}</td>
+                                        <td valign="top" style="padding:12px 10px 12px 0; width:30px;">
+                                            <span style="color:#1a3c34; font-weight:bold;">✓</span>
+                                        </td>
+                                        <td valign="top" style="padding:12px 0;">
+                                            <strong>Our specialists</strong> are carefully reviewing your preferences
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td style="padding:8px 0; color:#1a3c34; font-weight:bold;">Duration:</td>
-                                        <td style="padding:8px 0;">{{ emailParams.days }} days</td>
+                                        <td valign="top" style="padding:12px 10px 12px 0;">
+                                            <span style="color:#1a3c34; font-weight:bold;">→</span>
+                                        </td>
+                                        <td valign="top" style="padding:12px 0;">
+                                            We'll design an itinerary aligned with your goals, comfort, and budget
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td style="padding:8px 0; color:#1a3c34; font-weight:bold;">Travellers:</td>
-                                        <td style="padding:8px 0;">{{ emailParams.travellers }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding:8px 0; color:#1a3c34; font-weight:bold;">Interests:</td>
-                                        <td style="padding:8px 0;">{{ emailParams.interests }}</td>
+                                        <td valign="top" style="padding:12px 10px 12px 0;">
+                                            <span style="color:#1a3c34; font-weight:bold;">✉</span>
+                                        </td>
+                                        <td valign="top" style="padding:12px 0;">
+                                            You'll hear back from us within <strong>24–48 hours</strong> with a curated plan and next steps
+                                        </td>
                                     </tr>
                                 </table>
                             </div>
                             
+                            <p style="margin-bottom:20px;">
+                                If we need any clarification to perfect your experience, a member of our team may reach out directly.
+                            </p>
+                            
+                            <!-- REQUEST DETAILS -->
+                            ${params.tripName || params.days || params.travellers ? `
+                            <div style="background-color:#f8fafc; border:1px solid #eef6f3; border-radius:8px; padding:20px; margin:25px 0;">
+                                <h3 style="color:#1a3c34; margin-top:0; margin-bottom:15px; font-size:18px;">Request Summary</h3>
+                                
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size:15px;">
+                                    ${params.tripName ? `
+                                    <tr>
+                                        <td style="padding:8px 0; color:#1a3c34; font-weight:bold; width:120px;">Trip:</td>
+                                        <td style="padding:8px 0;">${params.tripName}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${params.days ? `
+                                    <tr>
+                                        <td style="padding:8px 0; color:#1a3c34; font-weight:bold;">Duration:</td>
+                                        <td style="padding:8px 0;">${params.days} days</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${params.travellers ? `
+                                    <tr>
+                                        <td style="padding:8px 0; color:#1a3c34; font-weight:bold;">Travellers:</td>
+                                        <td style="padding:8px 0;">${params.travellers}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${params.interests ? `
+                                    <tr>
+                                        <td style="padding:8px 0; color:#1a3c34; font-weight:bold;">Interests:</td>
+                                        <td style="padding:8px 0;">${params.interests}</td>
+                                    </tr>
+                                    ` : ''}
+                                </table>
+                            </div>
+                            ` : ''}
+                            
                             <!-- MESSAGE -->
+                            ${params.message ? `
                             <div style="margin:25px 0;">
                                 <p style="color:#1a3c34; font-weight:bold; margin-bottom:10px;">Your Message:</p>
                                 <div style="background-color:#f8f8f8; border-left:4px solid #d4af37; padding:15px 20px; font-style:italic; color:#333333;">
-                                    "{{ emailParams.message }}"
+                                    "${params.message}"
                                 </div>
                             </div>
+                            ` : ''}
                             
-                            <p style="margin-bottom:20px;">
-                                We'll contact you shortly to confirm details and next steps. If you'd like to speak sooner, feel free to reply to this email or call us directly.
+                            <p style="margin-bottom:20px; font-style:italic; color:#1a3c34; border-left:4px solid #d4af37; padding-left:15px;">
+                                In the meantime, imagine waking up to sweeping savannah views, spotting wildlife in their natural habitat, or standing on Africa's highest peak. Your adventure is closer than you think.
                             </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        
-        <!-- PRIMARY CTA BUTTON -->
-        <tr>
-            <td align="center" style="padding:30px 20px 20px 20px;">
-                <table border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td align="center" style="background-color:#d4af37; border-radius:4px;">
-                            <a href="{{ emailParams.cta_url }}" style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:15px 40px; display:inline-block;">
-                                VIEW / UPDATE REQUEST
-                            </a>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        
-        <!-- SECONDARY PHONE CTA -->
-        <tr>
-            <td align="center" style="padding:0 20px 40px 20px;">
-                <table border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td align="center" style="font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#666; padding:10px 0;">
-                            or call us: 
-                            <a href="tel:{{ emailParams.company_phone }}" style="color:#1a3c34; font-weight:bold; text-decoration:none;">
-                                {{ emailParams.company_phone }}
-                            </a>
+                            
+                            <!-- CLOSING -->
+                            <p style="margin-bottom:10px;">
+                                Warm regards,
+                            </p>
+                            <p style="margin-top:0; margin-bottom:30px; font-size:18px; color:#d4af37; font-weight:bold;">
+                                Team ZAFS
+                            </p>
                         </td>
                     </tr>
                 </table>
@@ -1481,31 +1752,67 @@ const templateHtmls = {
                 <table border="0" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
                         <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:20px; font-weight:bold; padding-bottom:15px;">
-                            Zafs Tours
+                            ZAFS Tours
                         </td>
                     </tr>
                     <tr>
-                        <td align="center" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:10px;">
-                            Luxury Travel & Safari Specialists
+                        <td align="center" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:20px; font-style:italic;">
+                            Crafting once-in-a-lifetime African adventures
                         </td>
                     </tr>
+                    
+                    <!-- CONTACT INFO -->
                     <tr>
-                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:5px;">
-                            Arusha, Tanzania
+                        <td align="center" style="padding-bottom:25px;">
+                            <table border="0" cellpadding="0" cellspacing="0" style="margin:0 auto; font-family:Arial, Helvetica, sans-serif; font-size:14px;">
+                                <tr>
+                                    <td valign="middle" style="padding:5px 8px 5px 0; color:#ffffff;">
+                                        <strong>Location:</strong>
+                                    </td>
+                                    <td valign="middle" style="padding:5px 0; color:#ffffff;">
+                                        Based in Tanzania
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="middle" style="padding:5px 8px 5px 0; color:#ffffff;">
+                                        <strong>Website:</strong>
+                                    </td>
+                                    <td valign="middle" style="padding:5px 0;">
+                                        <a href="https://zafstours.com" style="color:#ffffff; text-decoration:none;">www.zafstours.com</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="middle" style="padding:5px 8px 5px 0; color:#ffffff;">
+                                        <strong>Email:</strong>
+                                    </td>
+                                    <td valign="middle" style="padding:5px 0;">
+                                        <a href="mailto:${params.company_email || 'info@zafstours.com'}" style="color:#ffffff; text-decoration:none;">${params.company_email || 'info@zafstours.com'}</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="middle" style="padding:5px 8px 5px 0; color:#ffffff;">
+                                        <strong>Phone:</strong>
+                                    </td>
+                                    <td valign="middle" style="padding:5px 0; color:#ffffff;">
+                                        <a href="tel:${params.company_phone || '+255620285462'}" style="color:#ffffff; text-decoration:none;">${params.company_phone || '+255 620 285 462'}</a>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
-                    <tr>
-                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:5px;">
-                            {{ emailParams.company_phone }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:25px;">
-                            <a href="mailto:{{ emailParams.company_email }}" style="color:#ffffff; text-decoration:underline;">{{ emailParams.company_email }}</a>
-                        </td>
-                    </tr>
+                    
+                    <!-- FINAL NOTE -->
                     <tr>
                         <td align="center" style="padding-top:25px; border-top:1px solid #2c5a4d;">
+                            <p style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; margin-bottom:15px;">
+                                You'll hear from our team within 24–48 hours with your personalized itinerary.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- BOTTOM LINKS -->
+                    <tr>
+                        <td align="center" style="padding-top:25px;">
                             <table border="0" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td style="padding:0 12px;">
@@ -1517,209 +1824,10 @@ const templateHtmls = {
                                     </td>
                                     <td style="padding:0 12px; color:#d4af37;">|</td>
                                     <td style="padding:0 12px;">
-                                        <a href="{{ emailParams.unsubscribe_url }}" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Unsubscribe</a>
+                                        <a href="${params.unsubscribe_url || 'https://zafstours.com/unsubscribe?token=test'}" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Unsubscribe</a>
                                     </td>
                                 </tr>
                             </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding-top:25px;">
-                            <p style="color:#a0b5ae; font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:1.5; max-width:500px; margin:0 auto;">
-                                You're receiving this email because you requested a custom itinerary with Zafs Tours. We respect your privacy.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`,
-  6: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zafs Tours Newsletter</title>
-</head>
-<body style="margin:0; padding:0; background-color:#f5f5f5;">
-    <!-- WRAPPER -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px; margin:0 auto; background-color:#ffffff;">
-        <!-- HEADER -->
-        <tr>
-            <td align="center" style="padding:30px 20px; background-color:#1a3c34;">
-                <table border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:28px; font-weight:bold; text-align:center;">
-                            ZAFS TOURS
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; padding-top:8px; text-align:center;">
-                            Luxury Safari Experiences in Tanzania
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        
-        <!-- HERO IMAGE -->
-        <tr>
-            <td align="center" style="padding:0;">
-                <img src="{{ emailParams.hero_image }}" alt="Safari Adventure" width="600" style="max-width:100%; height:auto; display:block; border:0;" />
-            </td>
-        </tr>
-        
-        <!-- TITLE -->
-        <tr>
-            <td align="center" style="padding:40px 20px 20px 20px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                    <tr>
-                        <td style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:24px; font-weight:bold; text-align:center;">
-                            {{ emailParams.tripName || 'Latest Safari Updates & Special Offers' }}
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        
-        <!-- CONTENT -->
-        <tr>
-            <td align="center" style="padding:0 20px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                    <tr>
-                        <td style="color:#333333; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:1.6; text-align:left;">
-                            <p style="margin-top:0; margin-bottom:20px;">
-                                {{ emailParams.message || 'Dear adventurer, we have exciting news about our upcoming safari tours...' }}
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        
-        <!-- HIGHLIGHTS -->
-        <tr>
-            <td align="center" style="padding:30px 20px;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                    <tr>
-                        <td align="center" style="padding:0 10px;">
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:160px; display:inline-table;">
-                                <tr>
-                                    <td align="center" style="background-color:#f8f5ec; padding:15px; border:1px solid #d4af37;">
-                                        <span style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:14px; font-weight:bold;">New Routes</span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                        <td align="center" style="padding:0 10px;">
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:160px; display:inline-table;">
-                                <tr>
-                                    <td align="center" style="background-color:#f8f5ec; padding:15px; border:1px solid #d4af37;">
-                                        <span style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:14px; font-weight:bold;">Special Offers</span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                        <td align="center" style="padding:0 10px;">
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:160px; display=inline-table;">
-                                <tr>
-                                    <td align="center" style="background-color:#f8f5ec; padding:15px; border:1px solid #d4af37;">
-                                        <span style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:14px; font-weight:bold;">Expert Tips</span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        
-        <!-- PRIMARY CTA BUTTON -->
-        <tr>
-            <td align="center" style="padding:30px 20px 20px 20px;">
-                <table border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td align="center" style="background-color:#d4af37; border-radius:4px;">
-                            <a href="{{ emailParams.cta_url }}" style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:15px 40px; display:inline-block;">
-                                EXPLORE TOURS
-                            </a>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        
-        <!-- SECONDARY PHONE CTA -->
-        <tr>
-            <td align="center" style="padding:0 20px 40px 20px;">
-                <table border="0" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td align="center" style="font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#666; padding:10px 0;">
-                            or call us: 
-                            <a href="tel:{{ emailParams.company_phone }}" style="color:#1a3c34; font-weight:bold; text-decoration:none;">
-                                {{ emailParams.company_phone }}
-                            </a>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        
-        <!-- FOOTER -->
-        <tr>
-            <td align="center" style="padding:40px 20px; background-color:#1a3c34;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                    <tr>
-                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:20px; font-weight:bold; padding-bottom:15px;">
-                            Zafs Tours
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:10px;">
-                            Luxury Travel & Safari Specialists
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:5px;">
-                            Arusha, Tanzania
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size=14px; line-height:1.6; padding-bottom:5px;">
-                            {{ emailParams.company_phone }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:25px;">
-                            <a href="mailto:{{ emailParams.company_email }}" style="color:#ffffff; text-decoration:underline;">{{ emailParams.company_email }}</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding-top:25px; border-top:1px solid #2c5a4d;">
-                            <table border="0" cellpadding="0" cellspacing="0">
-                                <tr>
-                                    <td style="padding:0 12px;">
-                                        <a href="https://zafstours.com" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Website</a>
-                                    </td>
-                                    <td style="padding:0 12px; color:#d4af37;">|</td>
-                                    <td style="padding:0 12px;">
-                                        <a href="https://zafstours.com/privacy" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Privacy</a>
-                                    </td>
-                                    <td style="padding:0 12px; color:#d4af37;">|</td>
-                                    <td style="padding:0 12px;">
-                                        <a href="{{ emailParams.unsubscribe_url }}" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Unsubscribe</a>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding-top:25px;">
-                            <p style="color:#a0b5ae; font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:1.5; max-width:500px; margin:0 auto;">
-                                You're receiving this email because you subscribed to Zafs Tours newsletter. We respect your privacy.
-                            </p>
                         </td>
                     </tr>
                 </table>
@@ -1728,282 +1836,163 @@ const templateHtmls = {
     </table>
 </body>
 </html>`
-}
-
-// Computed
-const filteredContacts = computed(() => {
-  if (!searchQuery.value.trim()) return contacts.value
+ } else if (selectedTemplateId.value === 6) {
+  // Newsletter template - NO MESSAGE PARAMETER
   
-  const query = searchQuery.value.toLowerCase()
-  return contacts.value.filter(contact => {
-    const name = (contact.name || '').toLowerCase()
-    const email = (contact.email || '').toLowerCase()
-    const source = (contact.source || '').toLowerCase()
-    const leadSourceDetail = (contact.leadSourceDetail || '').toLowerCase()
-    const phone = (contact.phone || '').toLowerCase()
-    
-    return name.includes(query) || 
-           email.includes(query) || 
-           source.includes(query) ||
-           leadSourceDetail.includes(query) ||
-           phone.includes(query)
-  })
-})
-
-const selectedTemplate = computed(() => {
-  return emailTemplates.value.find(t => t.id === selectedTemplateId.value) || null
-})
-
-const senderEmail = computed(() => {
-  return process.env.BREVO_SENDER_EMAIL || 'From environment'
-})
-
-// Methods
-const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-  toast.value = { show: true, message, type }
-  setTimeout(() => {
-    toast.value.show = false
-  }, 3000)
-}
-
-const getInitials = (name: string | undefined) => {
-  if (!name) return '??'
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-const formatSource = (source: string) => {
-  const sources: Record<string, string> = {
-    'custom_itinerary': 'Custom Itinerary',
-    'bookacall': 'Book a Call',
-    'newsletter': 'Newsletter',
-    'contact_form': 'Contact Form',
-    'referral': 'Referral'
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Zafs Tours Newsletter</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f5f5f5;">
+    <!-- WRAPPER -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px; margin:0 auto; background-color:#ffffff;">
+        <!-- HEADER -->
+        <tr>
+            <td align="center" style="padding:30px 20px; background-color:#1a3c34;">
+                <table border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:28px; font-weight:bold; text-align:center;">
+                            ZAFS TOURS
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; padding-top:8px; text-align:center;">
+                            Luxury Safari Experiences in Tanzania
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        
+        <!-- HERO IMAGE -->
+        <tr>
+            <td align="center" style="padding:0;">
+                <img src="${params.hero_image || 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop'}" alt="Safari Newsletter" width="600" style="max-width:100%; height:auto; display:block; border:0;" />
+            </td>
+        </tr>
+        
+        <!-- CONTENT -->
+        <tr>
+            <td align="center" style="padding:40px 30px;">
+                <h2 style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:24px; font-weight:bold; margin-top:0; margin-bottom:20px;">
+                    Welcome to the Family, ${name}!
+                </h2>
+                
+                <!-- WHAT YOU'LL RECEIVE -->
+                <div style="background-color:#f8fafc; border:2px solid #d4af37; border-radius:8px; padding:25px; margin:30px 0;">
+                    <h3 style="color:#1a3c34; margin-top:0; margin-bottom:20px; font-size:20px; font-weight:bold; text-align:center;">
+                        What You'll Receive
+                    </h3>
+                    
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td valign="top" style="padding:12px 10px 12px 0; width:30px;">
+                                <span style="color:#d4af37;">✦</span>
+                            </td>
+                            <td valign="top" style="padding:12px 0;">
+                                <strong>Exclusive safari offers</strong> and early-bird discounts
+                            </td>
+                        </tr>
+                        <tr>
+                            <td valign="top" style="padding:12px 10px 12px 0;">
+                                <span style="color:#d4af37;">✦</span>
+                            </td>
+                            <td valign="top" style="padding:12px 0;">
+                                <strong>Insider travel tips</strong> and destination guides
+                            </td>
+                        </tr>
+                        <tr>
+                            <td valign="top" style="padding:12px 10px 12px 0;">
+                                <span style="color:#d4af37;">✦</span>
+                            </td>
+                            <td valign="top" style="padding:12px 0;">
+                                <strong>Stunning wildlife photography</strong> and safari stories
+                            </td>
+                        </tr>
+                        <tr>
+                            <td valign="top" style="padding:12px 10px 12px 0;">
+                                <span style="color:#d4af37;">✦</span>
+                            </td>
+                            <td valign="top" style="padding:12px 0;">
+                                <strong>Seasonal promotions</strong> and special packages
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- CTA BUTTON -->
+                <div style="margin:30px 0;">
+                    <a href="${params.cta_url}" style="background-color:#d4af37; color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:15px 40px; border-radius:4px; display:inline-block;">
+                        EXPLORE SAFARIS
+                    </a>
+                </div>
+                
+                <p style="color:#666666; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; font-style:italic;">
+                    Get ready for amazing content delivered straight to your inbox. Our first edition will arrive soon!
+                </p>
+            </td>
+        </tr>
+        
+        <!-- FOOTER -->
+        <tr>
+            <td align="center" style="padding:40px 20px; background-color:#1a3c34;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:20px; font-weight:bold; padding-bottom:15px;">
+                            Zafs Tours
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:10px;">
+                            Luxury Travel & Safari Specialists
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:5px;">
+                            Arusha, Tanzania
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:5px;">
+                            ${params.company_phone}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.6; padding-bottom:25px;">
+                            <a href="mailto:${params.company_email}" style="color:#ffffff; text-decoration:underline;">${params.company_email}</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding-top:25px; border-top:1px solid #2c5a4d;">
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="padding:0 12px;">
+                                        <a href="https://zafstours.com" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Website</a>
+                                    </td>
+                                    <td style="padding:0 12px; color:#d4af37;">|</td>
+                                    <td style="padding:0 12px;">
+                                        <a href="https://zafstours.com/privacy" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Privacy</a>
+                                    </td>
+                                    <td style="padding:0 12px; color:#d4af37;">|</td>
+                                    <td style="padding:0 12px;">
+                                        <a href="${params.unsubscribe_url}" style="color:#d4af37; font-family:Arial, Helvetica, sans-serif; font-size:13px; text-decoration:none;">Unsubscribe</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
   }
-  return sources[source] || source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
-}
-
-const humanizeSource = (source: string | undefined) => {
-  if (!source) return '—'
-  const MAP: Record<string, string> = {
-    'custom_itinerary': 'custom itinerary',
-    'facebook_ad': 'Facebook ad',
-    'google_search': 'Google search',
-    'email': 'Email',
-    'social_media': 'Social media platform',
-    'facebook': 'Social media platform',
-    'instagram': 'Social media platform'
-  }
-  if (MAP[source]) return MAP[source]
-  const s = String(source)
-    .replace(/[_-]+/g, ' ')
-    .trim()
-  return s.toLowerCase()
-}
-
-const displaySourceDetail = (detail: string | undefined) => {
-  if (!detail) return '—'
-  const MAP: Record<string, string> = {
-    'request-quote-clone': 'Website — Quote Request',
-    'request-quote': 'Website — Quote Request',
-    'contact-form': 'Website — Contact Form',
-    'facebook_lead': 'Facebook Lead',
-    'facebook_ad': 'Facebook Ad',
-    'google_search': 'Google Search',
-    'whatsapp_form': 'WhatsApp Form'
-  }
-  if (MAP[detail]) return MAP[detail]
-  const s = String(detail).replace(/[_-]+/g, ' ').trim()
-  return s.length > 60 ? s.slice(0,57) + '...' : s
-}
-
-const formatActivityName = (activity: string | undefined) => {
-  if (!activity) return ''
-  return activity
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
-
-const formatStatus = (status: string) => {
-  const statuses: Record<string, string> = {
-    'new': 'New',
-    'qualified': 'Qualified',
-    'unqualified': 'Unqualified',
-    'working': 'Working',
-    'closed-won': 'Closed Won',
-    'closed-lost': 'Closed Lost'
-  }
-  return statuses[status] || status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
-}
-
-const priorityLabelFrom = (priority: string | undefined) => {
-  if (!priority) return 'Not Set'
-  const priorityMap: Record<string, string> = {
-    'low': 'Low',
-    'medium': 'Medium',
-    'high': 'High',
-    'very-high': 'Very High'
-  }
-  return priorityMap[priority] || priority
-}
-
-const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-const formatDateShort = (dateString: string | undefined) => {
-  if (!dateString) return '—'
-  try {
-    return new Date(dateString).toLocaleDateString()
-  } catch {
-    return dateString
-  }
-}
-
-const formatDateTime = (value: string | undefined) => {
-  if (!value) return '—'
-  try {
-    return new Date(value).toLocaleString(undefined, {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } catch {
-    return value
-  }
-}
-
-const formatScheduleDate = (dateTime: string) => {
-  const date = new Date(dateTime)
-  return date.toLocaleString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const formatRole = (role: string | undefined) => {
-  if (!role) return ''
-  const roleMap: Record<string, string> = {
-    'superadmin': 'Super Admin',
-    'admin': 'Admin',
-    'content-manager': 'Content Manager',
-    'lead-manager': 'Lead Manager',
-    'itinerary-planner': 'Itinerary Planner'
-  }
-  return roleMap[role] || role.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-}
-
-const getSourceBadgeClass = (source: string) => {
-  const classes: Record<string, string> = {
-    'custom_itinerary': 'bg-blue-100 text-blue-800',
-    'bookacall': 'bg-purple-100 text-purple-800',
-    'newsletter': 'bg-green-100 text-green-800',
-    'contact_form': 'bg-yellow-100 text-yellow-800',
-    'referral': 'bg-indigo-100 text-indigo-800'
-  }
-  return classes[source] || 'bg-slate-100 text-slate-800'
-}
-
-const getStatusBadgeClass = (status: string) => {
-  const classes: Record<string, string> = {
-    'new': 'bg-blue-100 text-blue-800',
-    'qualified': 'bg-emerald-100 text-emerald-800',
-    'unqualified': 'bg-rose-100 text-rose-800',
-    'working': 'bg-amber-100 text-amber-800',
-    'closed-won': 'bg-green-100 text-green-800',
-    'closed-lost': 'bg-slate-100 text-slate-800'
-  }
-  return classes[status] || 'bg-slate-100 text-slate-800'
-}
-
-const statusIcon = (s: string) => {
-  if (s === 'working') return '🔄'
-  if (s === 'qualified') return '⭐'
-  if (s === 'closed-won') return '✅'
-  if (s === 'unqualified' || s === 'closed-lost') return '❌'
-  return '🟢'
-}
-
-const hasTripInfo = (contact: Contact) => {
-  return contact.days || contact.travellers || contact.who || 
-         (contact.activities && contact.activities.length > 0) ||
-         contact.budget || (contact.countries && contact.countries.length > 0)
-}
-
-// Email preview methods
-const refreshPreview = () => {
-  if (!selectedTemplateId.value) {
-    emailPreview.value = ''
-    return
-  }
-
-  const templateHtml = templateHtmls[selectedTemplateId.value as keyof typeof templateHtmls]
-  if (!templateHtml) {
-    emailPreview.value = '<p class="text-slate-500 p-4">Template preview not available</p>'
-    return
-  }
-
-  // Replace all template parameters
-  let previewHtml = templateHtml
-  const params = emailParams.value
-  const name = emailContact.value.name || 'Guest'
-
-  // Basic replacements (used in all templates)
-  previewHtml = previewHtml.replace(/{{ params\.name }}/g, name)
-  previewHtml = previewHtml.replace(/{{ emailContact\.name }}/g, name)
-  previewHtml = previewHtml.replace(/{{ emailParams\.message }}/g, params.message || emailContact.value.message || 'No message provided')
-  previewHtml = previewHtml.replace(/{{ emailParams\.cta_url }}/g, params.cta_url || 'https://zafstours.com/contact')
-  previewHtml = previewHtml.replace(/{{ emailParams\.hero_image }}/g, params.hero_image || 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop')
-  previewHtml = previewHtml.replace(/{{ emailParams\.company_phone }}/g, params.company_phone || '+255 624 023 455')
-  previewHtml = previewHtml.replace(/{{ emailParams\.company_email }}/g, params.company_email || 'info@zafstours.com')
-  previewHtml = previewHtml.replace(/{{ emailParams\.unsubscribe_url }}/g, params.unsubscribe_url || 'https://zafstours.com/unsubscribe?token=test')
   
-  // Template-specific replacements
-  if (selectedTemplateId.value === 4) {
-    // Book a Call template
-    const fullPhone = selectedCountry.value ? selectedCountry.value.dial_code + (params.phone || '') : params.phone || ''
-    previewHtml = previewHtml.replace(/{{ selectedCountry \? selectedCountry\.dial_code : '' }}{{ emailParams\.phone }}/g, fullPhone)
-    
-    // Fix: Ensure country is always a string
-    const countryName = selectedCountry.value?.name || params.country || 'Tanzania'
-    previewHtml = previewHtml.replace(/{{ emailParams\.country }}/g, countryName)
-    
-    // Fix: Ensure preferredTime is always a string
-    const preferredTime = params.preferredTime || 
-      (emailContact.value.preferredTime ? formatDateTime(emailContact.value.preferredTime) : 'March 12, 2026 — 10:30 AM')
-    previewHtml = previewHtml.replace(/{{ emailParams\.preferredTime }}/g, preferredTime)
-    
-    // Fix: Ensure timezone is always a string
-    const timezone = params.timezone || emailContact.value.timezone || 'Africa/Dar_es_Salaam'
-    previewHtml = previewHtml.replace(/{{ emailParams\.timezone }}/g, timezone)
-    
-    // Fix: Ensure dial_code is always a string
-    const dialCode = selectedCountry.value?.dial_code || ''
-    previewHtml = previewHtml.replace(/{{ selectedCountry \? selectedCountry\.dial_code : '' }}/g, dialCode)
-  } else if (selectedTemplateId.value === 5) {
-    // Itinerary Request template
-    previewHtml = previewHtml.replace(/{{ emailParams\.tripName }}/g, params.tripName || 'Custom Safari Itinerary')
-    previewHtml = previewHtml.replace(/{{ emailParams\.days }}/g, String(params.days || emailContact.value.days || 7))
-    previewHtml = previewHtml.replace(/{{ emailParams\.travellers }}/g, params.travellers || `${emailContact.value.travellers || '2'} people`)
-    previewHtml = previewHtml.replace(/{{ emailParams\.interests }}/g, params.interests || emailContact.value.activities?.join(', ') || 'Not specified')
-  } else if (selectedTemplateId.value === 6) {
-    // Newsletter template
-    previewHtml = previewHtml.replace(/{{ emailParams\.tripName }}/g, params.tripName || 'Latest Safari Updates & Special Offers')
-  }
-
-  emailPreview.value = previewHtml
+  return '<p class="text-slate-500 p-4">Template preview not available</p>'
 }
 
 const getEmailSubject = () => {
@@ -2015,9 +2004,9 @@ const getEmailSubject = () => {
     case 4:
       return `${name}, your call request is confirmed`
     case 5:
-      return `Thanks ${name} — we received your itinerary request`
+      return `Thanks ${name} - Your Africa Adventure Has Officially Begun`
     case 6:
-      return emailParams.value.tripName || 'Latest Safari Updates & Special Offers'
+      return `Welcome ${name}! Your Safari Insider Newsletter`
     default:
       return 'Email from Zafs Tours'
   }
@@ -2032,7 +2021,7 @@ const getEmailPreviewText = () => {
     case 5:
       return 'We\'ll send your full itinerary in 48 hours.'
     case 6:
-      return 'Stay updated with our latest safari news and special offers.'
+      return 'Welcome to our exclusive safari newsletter community!'
     default:
       return ''
   }
@@ -2042,12 +2031,10 @@ const getEmailPreviewText = () => {
 const onCountryChange = () => {
   const country = selectedCountry.value
   if (country) {
-    // TypeScript knows country is not null/undefined
     emailParams.value.country = country.name || ''
     
     // Auto-fill timezone if not already set
     if (!emailParams.value.timezone && country.timezones && country.timezones.length > 0) {
-      // TypeScript needs assurance that timezones[0] exists
       emailParams.value.timezone = country.timezones[0] || 'Africa/Dar_es_Salaam'
     }
     
@@ -2058,7 +2045,7 @@ const onCountryChange = () => {
 }
 
 // Modal methods
-const openPreviewModal = (contact: Contact) => {
+const openPreviewModal = (contact) => {
   previewContact.value = contact
   showPreviewModal.value = true
 }
@@ -2067,7 +2054,7 @@ const closePreviewModal = () => {
   showPreviewModal.value = false
 }
 
-const openEmailModal = (contact: Contact) => {
+const openEmailModal = (contact) => {
   emailContact.value = contact
   
   // Get current date for scheduling defaults
@@ -2086,7 +2073,7 @@ const openEmailModal = (contact: Contact) => {
   // Set selected country
   selectedCountryIso.value = countryIso
   
-  // Get default timezone - fix the type issue here
+  // Get default timezone
   const defaultTimezone = selectedCountry.value?.timezones?.[0] || 'Africa/Dar_es_Salaam'
   
   // Pre-fill contact data with smart defaults
@@ -2095,7 +2082,7 @@ const openEmailModal = (contact: Contact) => {
     country: contact.country || '',
     preferredTime: contact.preferredTime ? formatDateTime(contact.preferredTime) : 
       `${tomorrow.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} — 10:30 AM`,
-    timezone: contact.timezone || defaultTimezone, // Fixed: Use the variable instead of inline expression
+    timezone: contact.timezone || defaultTimezone,
     message: contact.message || '',
     tripName: contact.activities && contact.activities.length > 0 ? 
       `${formatActivityName(contact.activities[0])} Safari Itinerary` : '',
@@ -2123,10 +2110,13 @@ const closeEmailModal = () => {
   schedulingEmail.value = false
   emailPreview.value = ''
   selectedCountryIso.value = ''
+  showFullScreenPreview.value = false
 }
 
 // Template change handler
 const onTemplateChange = () => {
+  console.log('📝 Template changed to:', selectedTemplateId.value)
+  
   if (!selectedTemplateId.value) {
     emailPreview.value = ''
     return
@@ -2149,7 +2139,7 @@ const onTemplateChange = () => {
     if (!emailParams.value.timezone && emailContact.value.timezone) {
       emailParams.value.timezone = emailContact.value.timezone
     } else if (!emailParams.value.timezone && selectedCountry.value?.timezones?.[0]) {
-      emailParams.value.timezone = selectedCountry.value.timezones[0] // This is already a string, should be fine
+      emailParams.value.timezone = selectedCountry.value.timezones[0]
     } else if (!emailParams.value.timezone) {
       emailParams.value.timezone = 'Africa/Dar_es_Salaam'
     }
@@ -2159,17 +2149,20 @@ const onTemplateChange = () => {
       emailParams.value.tripName = `${formatActivityName(emailContact.value.activities[0])} Safari Itinerary`
     }
   }
+  // For newsletter template (id: 6), no parameters needed
   
-  // Generate preview
-  refreshPreview()
+  // Generate preview immediately
+  setTimeout(() => {
+    refreshPreview()
+  }, 100)
 }
 
 // Watch for parameter changes
 watch(emailParams, () => {
   if (selectedTemplateId.value) {
     // Debounce the preview refresh to avoid too many updates
-    clearTimeout((window as any).previewTimeout)
-    ;(window as any).previewTimeout = setTimeout(refreshPreview, 300)
+    clearTimeout(window.previewTimeout)
+    window.previewTimeout = setTimeout(refreshPreview, 300)
   }
 }, { deep: true })
 
@@ -2180,19 +2173,19 @@ const getDefaultSchedule = (minutes = 10) => {
   return formatDateTimeLocal(future)
 }
 
-const formatDateTimeLocal = (date: Date) => {
-  const pad = (n: number) => String(n).padStart(2, '0')
+const formatDateTimeLocal = (date) => {
+  const pad = (n) => String(n).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-const setQuickSchedule = (minutes: number) => {
+const setQuickSchedule = (minutes) => {
   const now = new Date()
   const future = new Date(now.getTime() + minutes * 60000)
   scheduleDateTime.value = formatDateTimeLocal(future)
   sendOption.value = 'schedule'
 }
 
-// Email sending methods
+// Email sending methods - UPDATED WITH NEWSLETTER SUPPORT
 const sendEmailNow = async () => {
   if (!selectedTemplateId.value || !emailContact.value.email) {
     showToast('Please select a template and ensure contact has email', 'error')
@@ -2202,25 +2195,112 @@ const sendEmailNow = async () => {
   sendingEmail.value = true
 
   try {
-    const { phone: _, country: __, ...restParams } = emailParams.value
+    // Generate the full email HTML BEFORE sending
+    const fullEmailHtml = getFullEmailPreview()
+    const previewText = getEmailPreviewText()
+    const subject = getEmailSubject()
     
+    console.log('🔍 DEBUG - Generated HTML:', {
+      htmlLength: fullEmailHtml.length,
+      previewTextLength: previewText.length,
+      subject: subject,
+      first100Chars: fullEmailHtml.substring(0, 100)
+    })
+
+    // Extract phone and country separately
+    const { phone: paramPhone, country: paramCountry, ...restParams } = emailParams.value
+    
+    // Build the complete phone number with country code
+    const fullPhone = selectedCountry.value 
+      ? selectedCountry.value.dial_code + (paramPhone || '') 
+      : paramPhone || ''
+    
+    // Get country name
+    const countryName = paramCountry || selectedCountry.value?.name || ''
+    
+    // Prepare the request body with ALL necessary data
     const body = {
       email: emailContact.value.email,
       name: emailContact.value.name,
       templateId: selectedTemplateId.value,
-      phone: selectedCountry.value ? selectedCountry.value.dial_code + (emailParams.value.phone || '') : emailParams.value.phone,
-      country: emailParams.value.country,
+      leadId: emailContact.value._id || emailContact.value.id,
+      phone: fullPhone,
+      country: countryName,
+      subject: subject,
+      previewText: previewText,
+      fullHtml: fullEmailHtml,
+      previewHtml: previewText,
       ...restParams
     }
+    
+    // For template 4 (Book a Call), ensure timezone is included
+    if (selectedTemplateId.value === 4) {
+      body.timezone = emailParams.value.timezone || emailContact.value.timezone || 'Africa/Dar_es_Salaam'
+      body.preferredTime = emailParams.value.preferredTime || 
+        (emailContact.value.preferredTime ? formatDateTime(emailContact.value.preferredTime) : 
+        `${new Date(Date.now() + 86400000).toLocaleDateString('en-US', { 
+          month: 'long', 
+          day: 'numeric', 
+          year: 'numeric' 
+        })} — 10:30 AM`)
+    }
+    
+    // For template 5 (Itinerary), ensure trip details are included
+    if (selectedTemplateId.value === 5) {
+      body.tripName = emailParams.value.tripName || 
+        (emailContact.value.activities && emailContact.value.activities.length > 0 
+          ? `${formatActivityName(emailContact.value.activities[0])} Safari Itinerary`
+          : 'Custom Safari Itinerary')
+      body.days = emailParams.value.days || emailContact.value.days || 7
+      body.travellers = emailParams.value.travellers || 
+        `${emailContact.value.travellers || '2'} people`
+      body.interests = emailParams.value.interests || 
+        emailContact.value.activities?.join(', ') || ''
+    }
+    
+    // For template 6 (Newsletter), use the existing 'message' field
+    if (selectedTemplateId.value === 6) {
+      body.message = emailParams.value.message || 'Welcome to the Zafs Tours newsletter!'
+    }
 
-    const res = await $fetch('/api/emailtest/send', {
+    // Determine which endpoint to use based on template
+    let endpoint
+    if (selectedTemplateId.value === 5) {
+      endpoint = '/api/emailtest/send-itinerary'
+    } else if (selectedTemplateId.value === 6) {
+      endpoint = '/api/emailtest/send-newsletter'
+    } else {
+      endpoint = '/api/emailtest/send'
+    }
+
+    console.log('📧 Sending email to:', endpoint)
+    console.log('📧 Email body includes fullHtml:', !!body.fullHtml)
+    console.log('📧 Email body includes previewHtml:', !!body.previewHtml)
+    console.log('📧 Email body includes subject:', !!body.subject)
+
+    const res = await $fetch(endpoint, {
       method: 'POST',
       body
     })
 
-    showToast(`Email sent successfully to ${emailContact.value.name}`, 'success')
-    closeEmailModal()
-  } catch (error: any) {
+    console.log('📧 API Response:', res)
+
+    if (res.success) {
+      showToast(`Email sent successfully to ${emailContact.value.name}`, 'success')
+      // Refresh email logs immediately
+      if (selectedLeadId.value === (emailContact.value._id || emailContact.value.id)) {
+        // Trigger email logs refresh
+        const event = new CustomEvent('refresh-email-logs')
+        window.dispatchEvent(event)
+      }
+      closeEmailModal()
+    } else {
+      // Handle error with debug info if available
+      const errorMessage = res.debug?.error || 'Failed to send email'
+      console.error('📧 Email sending failed:', errorMessage, res)
+      showToast(errorMessage, 'error')
+    }
+  } catch (error) {
     console.error('Send email error:', error)
     showToast(error?.data?.message || error?.message || 'Failed to send email', 'error')
   } finally {
@@ -2237,28 +2317,112 @@ const scheduleEmail = async () => {
   schedulingEmail.value = true
 
   try {
-    const scheduledISO = new Date(scheduleDateTime.value).toISOString()
+    // Validate schedule time is in the future
+    const scheduledDate = new Date(scheduleDateTime.value)
+    if (scheduledDate <= new Date()) {
+      showToast('Schedule time must be in the future', 'error')
+      schedulingEmail.value = false
+      return
+    }
+
+    // Generate the full email HTML BEFORE sending
+    const fullEmailHtml = getFullEmailPreview()
+    const previewText = getEmailPreviewText()
+    const subject = getEmailSubject()
     
-    const { phone: _, country: __, ...restParams } = emailParams.value
+    // Extract phone and country separately
+    const { phone: paramPhone, country: paramCountry, ...restParams } = emailParams.value
     
+    // Build the complete phone number with country code
+    const fullPhone = selectedCountry.value 
+      ? selectedCountry.value.dial_code + (paramPhone || '') 
+      : paramPhone || ''
+    
+    // Get country name
+    const countryName = paramCountry || selectedCountry.value?.name || ''
+    
+    // Prepare the scheduled ISO date
+    const scheduledISO = scheduledDate.toISOString()
+    
+    // Prepare the request body with HTML content
     const body = {
       email: emailContact.value.email,
       name: emailContact.value.name,
       templateId: selectedTemplateId.value,
+      leadId: emailContact.value._id || emailContact.value.id,
       scheduledAt: scheduledISO,
-      phone: selectedCountry.value ? selectedCountry.value.dial_code + (emailParams.value.phone || '') : emailParams.value.phone,
-      country: emailParams.value.country,
+      phone: fullPhone,
+      country: countryName,
+      subject: subject,
+      previewText: previewText,
+      fullHtml: fullEmailHtml,
+      previewHtml: previewText,
       ...restParams
     }
+    
+    // For template 4 (Book a Call), ensure timezone is included
+    if (selectedTemplateId.value === 4) {
+      body.timezone = emailParams.value.timezone || emailContact.value.timezone || 'Africa/Dar_es_Salaam'
+      body.preferredTime = emailParams.value.preferredTime || 
+        (emailContact.value.preferredTime ? formatDateTime(emailContact.value.preferredTime) : 
+        `${scheduledDate.toLocaleDateString('en-US', { 
+          month: 'long', 
+          day: 'numeric', 
+          year: 'numeric' 
+        })} — ${scheduledDate.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })}`)
+    }
+    
+    // For template 5 (Itinerary), ensure trip details are included
+    if (selectedTemplateId.value === 5) {
+      body.tripName = emailParams.value.tripName || 
+        (emailContact.value.activities && emailContact.value.activities.length > 0 
+          ? `${formatActivityName(emailContact.value.activities[0])} Safari Itinerary`
+          : 'Custom Safari Itinerary')
+      body.days = emailParams.value.days || emailContact.value.days || 7
+      body.travellers = emailParams.value.travellers || 
+        `${emailContact.value.travellers || '2'} people`
+      body.interests = emailParams.value.interests || 
+        emailContact.value.activities?.join(', ') || ''
+    }
+    
+    // For template 6 (Newsletter), use the existing 'message' field
+    if (selectedTemplateId.value === 6) {
+      body.message = emailParams.value.message || 'Welcome to the Zafs Tours newsletter!'
+    }
 
-    const res = await $fetch('/api/emailtest/schedule', {
+    // Determine endpoint based on template
+    let endpoint
+    if (selectedTemplateId.value === 5) {
+      endpoint = '/api/emailtest/schedule-itinerary'
+    } else if (selectedTemplateId.value === 6) {
+      endpoint = '/api/emailtest/schedule-newsletter'
+    } else {
+      endpoint = '/api/emailtest/schedule'
+    }
+
+    console.log('📅 Scheduling email with body:', {
+      email: body.email,
+      templateId: body.templateId,
+      scheduledAt: body.scheduledAt,
+      htmlLength: fullEmailHtml.length
+    })
+
+    const res = await $fetch(endpoint, {
       method: 'POST',
       body
     })
 
-    showToast(`Email scheduled for ${formatScheduleDate(scheduleDateTime.value)}`, 'success')
-    closeEmailModal()
-  } catch (error: any) {
+    if (res.success) {
+      showToast(`Email scheduled for ${formatScheduleDate(scheduleDateTime.value)}`, 'success')
+      closeEmailModal()
+    } else {
+      const errorMessage = res.debug?.error || 'Failed to schedule email'
+      showToast(errorMessage, 'error')
+    }
+  } catch (error) {
     console.error('Schedule email error:', error)
     showToast(error?.data?.message || error?.message || 'Failed to schedule email', 'error')
   } finally {
@@ -2321,6 +2485,92 @@ onMounted(() => {
   opacity: 0;
 }
 
+/* Email preview styles */
+.email-preview-template {
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+  color: #333333;
+}
+
+.email-preview-template a {
+  color: #1a3c34;
+  text-decoration: underline;
+}
+
+.email-preview-template table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.email-preview-template td {
+  padding: 0;
+}
+
+.email-preview-template img {
+  max-width: 100%;
+  height: auto;
+}
+
+.email-preview-template .button {
+  background-color: #d4af37;
+  color: #1a3c34;
+  padding: 15px 40px;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.email-preview-template .highlight-box {
+  background-color: #f8f8f8;
+  border-left: 4px solid #d4af37;
+  padding: 15px 20px;
+  font-style: italic;
+}
+
+.email-preview-template .summary-box {
+  background-color: #f8fafc;
+  border: 1px solid #eef6f3;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Full screen preview */
+.email-fullscreen-preview {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100%;
+}
+
+.email-fullscreen-preview :deep(*) {
+  max-width: 100% !important;
+}
+
+.email-fullscreen-preview :deep(table) {
+  width: 100% !important;
+  border-collapse: collapse;
+}
+
+.email-fullscreen-preview :deep(img) {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.email-fullscreen-preview :deep(a) {
+  color: #1a3c34;
+  text-decoration: underline;
+}
+
+.email-fullscreen-preview :deep(.button) {
+  background-color: #d4af37;
+  color: #1a3c34;
+  padding: 15px 40px;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 4px;
+  display: inline-block;
+}
+
 /* Button hover effects */
 .btn-primary {
   background: linear-gradient(180deg, #1a56a6, #174b9a);
@@ -2370,55 +2620,5 @@ onMounted(() => {
 .badge-closed-lost {
   background-color: #fecaca;
   color: #7f1d1d;
-}
-
-/* Email preview styles */
-.email-preview {
-  font-family: Arial, Helvetica, sans-serif;
-  line-height: 1.6;
-  color: #333333;
-}
-
-.email-preview a {
-  color: #1a3c34;
-  text-decoration: underline;
-}
-
-.email-preview table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.email-preview td {
-  padding: 0;
-}
-
-.email-preview img {
-  max-width: 100%;
-  height: auto;
-}
-
-.email-preview .button {
-  background-color: #d4af37;
-  color: #1a3c34;
-  padding: 15px 40px;
-  text-decoration: none;
-  font-weight: bold;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.email-preview .highlight-box {
-  background-color: #f8f8f8;
-  border-left: 4px solid #d4af37;
-  padding: 15px 20px;
-  font-style: italic;
-}
-
-.email-preview .summary-box {
-  background-color: #f8fafc;
-  border: 1px solid #eef6f3;
-  border-radius: 8px;
-  padding: 20px;
 }
 </style>

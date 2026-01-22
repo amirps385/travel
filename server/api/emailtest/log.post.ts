@@ -1,57 +1,13 @@
-// @ts-nocheck
+// server/api/emailtest/log.post.ts
+import { defineEventHandler, readBody, getCookie, createError } from 'h3'
+import { connectDB } from '../../utils/mongoose'
+import { logEmail } from '../../utils/logEmail'
+import jwt from 'jsonwebtoken'
 
-export default defineEventHandler(async (event) => {
-  const debug: any = {
-    timestamp: new Date().toISOString(),
-    steps: []
-  }
-
-  try {
-    // 1) Validate environment variables
-    if (!process.env.BREVO_API_KEY) {
-      debug.steps.push('Missing BREVO_API_KEY');
-      debug.error = 'BREVO_API_KEY missing in .env';
-      return { success: false, debug };
-    }
-    if (!process.env.BREVO_SENDER_EMAIL) {
-      debug.steps.push('Missing BREVO_SENDER_EMAIL');
-      debug.error = 'BREVO_SENDER_EMAIL missing in .env';
-      return { success: false, debug };
-    }
-    debug.steps.push('Environment variables validated');
-
-    // 2) Parse incoming body
-    const body = await readBody(event);
-
-    const toEmail = body?.email || 'your-test-email@example.com';
-    const toName = body?.name || 'Test User';
-    const templateId = Number(body?.templateId ?? 4);
-    const leadId = body?.leadId || null;
-    
-    // All template parameters for the new email template
-    const params = {
-      name: body?.name ?? 'Test User',
-      email: body?.email ?? toEmail,
-      phone: body?.phone ?? '+255 624 023 455',
-      country: body?.country ?? 'Tanzania',
-      preferredTime: body?.preferredTime ?? 'March 12, 2026 — 10:30 AM',
-      timezone: body?.timezone ?? 'Africa/Dar_es_Salaam',
-      message: body?.message ?? 'This is a hardcoded debug message.',
-      cta_url: body?.cta_url ?? 'https://zafstours.com/contact',
-      hero_image: body?.hero_image ?? 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=600&auto=format&fit=crop',
-      logo_url: body?.logo_url ?? '',
-      company_phone: body?.company_phone ?? '+255 624 023 455', 
-      company_email: body?.company_email ?? 'info@zafstours.com',
-      unsubscribe_url: body?.unsubscribe_url ?? 'https://zafstours.com/unsubscribe?token=test'
-    };
-
-    debug.steps.push(`Prepared send payload: to=${toEmail}, templateId=${templateId}, leadId=${leadId}`);
-    debug.paramCount = Object.keys(params).length;
-
-    // 3) Generate full email HTML for logging
-    const generateFullEmailHtml = (templateId: number, params: any) => {
-      if (templateId === 4) {
-        return `<!DOCTYPE html>
+// HTML GENERATION FUNCTION FOR LOGGING
+function generateFullEmailHtmlFromLog(templateId: number, params: any, name: string) {
+  if (templateId === 4) {
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -92,7 +48,7 @@ export default defineEventHandler(async (event) => {
                 <table border="0" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
                         <td style="color:#1a3c34; font-family:Arial, Helvetica, sans-serif; font-size:24px; font-weight:bold; text-align:center;">
-                            Exclusive Safari Adventure Awaits, ${params.name}!
+                            Exclusive Safari Adventure Awaits, ${name}!
                         </td>
                     </tr>
                 </table>
@@ -106,7 +62,7 @@ export default defineEventHandler(async (event) => {
                     <tr>
                         <td style="color:#333333; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:1.6; text-align:left;">
                             <p style="margin-top:0; margin-bottom:20px;">
-                                Thanks — we received your call request. We'll call you at <strong>${params.phone}</strong> (${params.country}) around <strong>${params.preferredTime}</strong> (${params.timezone}).
+                                Thanks — we received your call request. We'll call you at <strong>${params.phone || ''}</strong> (${params.country || ''}) around <strong>${params.preferredTime || ''}</strong> (${params.timezone || ''}).
                             </p>
                             
                             ${params.message ? `
@@ -261,181 +217,103 @@ export default defineEventHandler(async (event) => {
         </tr>
     </table>
 </body>
-</html>`;
-      }
-      // You can add templates for ID 5 and 6 here as needed
-      return '';
-    };
-
-    const fullEmailHtml = generateFullEmailHtml(templateId, params);
-    debug.steps.push('Full email HTML generated for logging');
-
-    // 4) Import and use the SDK
-    let SibApiV3Sdk: any;
-    try {
-      const module = await import('sib-api-v3-sdk');
-      SibApiV3Sdk = module.default || module;
-      debug.steps.push('SDK imported successfully');
-    } catch (e: any) {
-      debug.steps.push('Failed to import SDK');
-      debug.error = `SDK import error: ${e.message}`;
-      return { success: false, debug };
-    }
-
-    // 5) Configure client and send email
-    try {
-      const client = SibApiV3Sdk.ApiClient.instance;
-      client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
-
-      const api = new SibApiV3Sdk.TransactionalEmailsApi();
-
-      const sendOptions = {
-        to: [{ email: toEmail, name: toName }],
-        sender: { 
-          name: process.env.BREVO_SENDER_NAME ?? 'Zafstours', 
-          email: process.env.BREVO_SENDER_EMAIL 
-        },
-        templateId,
-        params
-      };
-
-      debug.steps.push('Sending with params:', JSON.stringify(params, null, 2));
-
-      const resp = await api.sendTransacEmail(sendOptions);
-      
-      debug.steps.push('Email sent successfully');
-      debug.messageId = resp.messageId;
-      
-      // ✅ LOGGING: Create email log entry WITH FULL HTML
-      try {
-        // Helper function to get template name
-        const getTemplateName = (id: number) => {
-          const templates = { 4: 'Book a Call', 5: 'Itinerary Request', 6: 'Newsletter' };
-          return templates[id] || `Template ${id}`;
-        };
-        
-        // Helper function to get subject
-        const getEmailSubject = (id: number, name: string) => {
-          switch(id) {
-            case 4: return `${name}, your call request is confirmed`;
-            case 5: return `Thanks ${name} — we received your itinerary request`;
-            case 6: return 'Latest Safari Updates & Special Offers';
-            default: return 'Email from Zafs Tours';
-          }
-        };
-        
-        // Helper function to get preview text
-        const getPreviewText = (id: number) => {
-          switch(id) {
-            case 4: return 'Our team will contact you shortly to plan your safari.';
-            case 5: return 'We\'ll send your full itinerary in 48 hours.';
-            case 6: return 'Stay updated with our latest safari news and special offers.';
-            default: return '';
-          }
-        };
-        
-        // Get current user from cookie/token if available
-        const token = getCookie(event, 'auth_token');
-        let sentBy = null;
-        if (token) {
-          try {
-            const jwt = await import('jsonwebtoken');
-            const secret = process.env.JWT_SECRET || 'dev-secret';
-            const currentUser = jwt.verify(token, secret) as any;
-            sentBy = {
-              id: String(currentUser._id || currentUser.id || ''),
-              name: currentUser.name || currentUser.email || 'Unknown',
-              email: currentUser.email || '',
-              role: currentUser.role || 'user',
-              source: 'manual'
-            };
-          } catch (err) {
-            // Ignore token errors
-          }
-        }
-        
-        // Create log entry WITH FULL HTML
-        const logBody = {
-          leadId: leadId,
-          leadEmail: toEmail,
-          leadName: toName,
-          templateId: templateId,
-          templateName: getTemplateName(templateId),
-          subject: getEmailSubject(templateId, toName),
-          previewText: getPreviewText(templateId),
-          fullHtml: fullEmailHtml, // THIS IS THE KEY FIELD
-          params: params,
-          status: 'sent',
-          providerResponse: resp,
-          sentAt: new Date().toISOString(),
-          createdBy: sentBy
-        };
-        
-        console.log('Logging email with full HTML:', logBody.templateName, 'HTML length:', fullEmailHtml.length);
-        
-        // Call the log API
-        const logRes = await $fetch('/api/emailtest/log', {
-          method: 'POST',
-          body: logBody
-        });
-        
-        debug.steps.push('Email logged successfully with full HTML');
-        debug.logId = logRes?.logId;
-      } catch (logError: any) {
-        debug.steps.push(`Failed to log email: ${logError.message}`);
-        console.error('Logging error:', logError);
-        // Don't fail the whole request if logging fails
-      }
-      
-      return { 
-        success: true, 
-        messageId: resp.messageId,
-        debug 
-      };
-      
-    } catch (brevoErr: any) {
-      debug.steps.push('Brevo API error');
-      debug.error = brevoErr?.message || 'Unknown Brevo API error';
-      debug.brevoErrorCode = brevoErr?.code;
-      debug.brevoResponse = brevoErr?.response?.body || brevoErr?.response?.text || 'No response body';
-      
-      // ✅ LOGGING: Log failed email attempt
-      try {
-        const logBody = {
-          leadId: leadId,
-          leadEmail: toEmail,
-          leadName: toName,
-          templateId: templateId,
-          status: 'failed',
-          fullHtml: fullEmailHtml, // Include full HTML even for failed attempts
-          providerResponse: {
-            error: brevoErr?.message,
-            code: brevoErr?.code || 'UNKNOWN_ERROR',
-            response: brevoErr?.response?.body
-          },
-          sentAt: new Date().toISOString()
-        };
-        
-        await $fetch('/api/emailtest/log', {
-          method: 'POST',
-          body: logBody
-        });
-        
-        debug.steps.push('Failed email logged');
-      } catch (logError) {
-        debug.steps.push(`Failed to log failed email: ${logError.message}`);
-      }
-      
-      console.error('Brevo API error:', brevoErr);
-      console.error('Brevo error response:', brevoErr?.response?.body);
-      return { success: false, debug };
-    }
-    
-  } catch (err: any) {
-    debug.steps.push('Unhandled exception');
-    debug.error = err.message;
-    debug.stack = err.stack;
-    console.error('Unhandled error:', err);
-    return { success: false, debug };
+</html>`
   }
-});
+  
+  // Default fallback HTML
+  return `<div style="padding: 30px; background-color: white; border-radius: 8px;">
+    <h2 style="color: #1a3c34; margin-top: 0;">Email Content</h2>
+    <p><strong>Template:</strong> ${templateId}</p>
+    <p><strong>Recipient:</strong> ${name}</p>
+    ${params.message ? `<div style="background-color: #f8f9fa; padding: 15px; margin: 20px 0;">
+      <p><strong>Message:</strong> ${params.message}</p>
+    </div>` : ''}
+  </div>`
+}
+
+export default defineEventHandler(async (event) => {
+  try {
+    await connectDB()
+    const body = await readBody(event)
+
+    console.log('Log email request body - TemplateId:', body.templateId, 'Params:', body.params ? 'YES' : 'NO')
+
+    // Basic validation - check for required fields
+    if (!body.leadEmail && !body.leadId) {
+      console.warn('Missing leadEmail and leadId in log request')
+    }
+
+    // Try to decode current user from cookie (optional)
+    const token = getCookie(event, 'auth_token')
+    let currentUser: any = null
+    if (token) {
+      try {
+        const secret = process.env.JWT_SECRET || 'dev-secret'
+        currentUser = jwt.verify(token, secret) as any
+      } catch (err) {
+        console.warn('Failed to decode token:', err)
+      }
+    }
+
+    const createdBy = body.createdBy || (currentUser ? {
+      id: String(currentUser._id || currentUser.id || ''),
+      name: currentUser.name || currentUser.email || 'Unknown',
+      role: currentUser.role || 'user',
+      source: 'manual'
+    } : { id: null, name: 'System', role: 'system', source: 'auto' })
+
+    // Generate full HTML if preview text provided but no full HTML
+    let fullHtml = body.fullHtml || ''
+    
+    // If fullHtml is empty but we have params, generate it
+    if (!fullHtml && body.params && body.templateId) {
+      console.log('Generating full HTML for template:', body.templateId)
+      fullHtml = generateFullEmailHtmlFromLog(body.templateId, body.params, body.leadName || 'Guest')
+      console.log('Generated HTML length:', fullHtml?.length || 0)
+    }
+
+    // Ensure required fields for EmailLog schema
+    const logData = {
+      leadId: body.leadId || null,
+      toEmail: body.leadEmail || body.email || '', // CRITICAL: Must not be empty
+      toName: body.leadName || body.name || '',
+      templateId: body.templateId || null,
+      templateName: body.templateName || null,
+      subject: body.subject || null,
+      previewHtml: body.previewText || body.html || '',
+      fullHtml: fullHtml, // Save the generated full HTML
+      html: body.html || body.emailHtml || null,
+      params: body.params || {},
+      status: body.status || 'sent',
+      providerResponse: body.providerResponse || null,
+      scheduledAt: body.scheduledAt || null,
+      sentAt: body.sentAt || null,
+      createdBy
+    }
+
+    console.log('Creating email log with data - TemplateId:', logData.templateId, 'FullHtml length:', logData.fullHtml?.length || 0)
+
+    const log = await logEmail(logData)
+
+    if (!log) {
+      throw createError({
+        statusCode: 500,
+        message: 'Failed to create email log'
+      })
+    }
+
+    return { 
+      success: true, 
+      logId: String(log._id) 
+    }
+  } catch (error: any) {
+    console.error('Error in log.post.ts:', error)
+    
+    // Return error response instead of throwing to prevent unhandled errors
+    return {
+      success: false,
+      message: error.message || 'Failed to log email',
+      error: error
+    }
+  }
+})

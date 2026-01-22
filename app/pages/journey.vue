@@ -1312,6 +1312,7 @@ onBeforeUnmount(() => {
 })
 
 // send payload to your /api/leads (with browser timezone)
+// In journey.vue - FIXED VERSION
 async function handleSubmit() {
   if (!validate()) return
 
@@ -1350,9 +1351,54 @@ async function handleSubmit() {
       leadSourceDetail: 'Custom Itinerary Builder - Step-by-Step Trip Planning'
     }
 
-    // IMPORTANT: Clear ALL storage BEFORE saving to prevent back button issues
+    console.log('📝 Creating lead with payload:', payload)
+
+    // 1. Save lead to database
+    const leadResponse = await $fetch('/api/leads', { 
+      method: 'POST', 
+      body: payload 
+    })
+
+    console.log('✅ Lead response:', leadResponse)
+
+    // FIX: Your API returns { success: true, lead: {...} }
+    // So we need to access leadResponse.lead._id
+    const leadId = leadResponse?.lead?._id || 
+                   leadResponse?.lead?.id || 
+                   leadResponse?._id || 
+                   leadResponse?.id
+
+    console.log('🔑 Extracted leadId:', leadId)
+
+    if (!leadId) {
+      console.error('❌ Failed to get leadId from response:', leadResponse)
+      throw new Error('Failed to create lead or get lead ID')
+    }
+
+    // 2. Send itinerary email with the leadId
+    console.log('📧 Sending itinerary email with leadId:', leadId)
+    const emailResult = await sendItineraryEmail({
+      leadId: leadId, // PASS THE ACTUAL leadId
+      email: form.email,
+      name: `${form.firstName}${form.lastName ? ' ' + form.lastName : ''}`,
+      tripName: form.activities.length > 0 
+        ? formatActivityName(form.activities[0]) + ' Safari Itinerary'
+        : 'Custom Safari Itinerary',
+      days: form.days,
+      travellers: `${form.adults + form.children} people`,
+      interests: form.activities.map(a => formatActivityName(a)).join(', '),
+      message: form.message || '',
+      cta_url: 'https://zafstours.com/contact',
+      hero_image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop',
+      company_phone: '+255 624 023 455',
+      company_email: 'info@zafstours.com',
+      unsubscribe_url: 'https://zafstours.com/unsubscribe?token=test'
+    })
+
+    console.log('📨 Email sent result:', emailResult)
+
+    // Clear storage
     if (typeof window !== 'undefined') {
-      // Clear ALL hero-related data
       const keysToRemove = [
         'heroLeadData',
         'heroQuickLeadData',
@@ -1363,50 +1409,85 @@ async function handleSubmit() {
         'heroSessionId',
         'heroLeadTimestamp',
         'isFreshHeroData',
-        'journeyForm' // Clear journey form too!
+        'journeyForm'
       ]
       
       keysToRemove.forEach(key => localStorage.removeItem(key))
-      
-      // Clear ALL sessionStorage
       sessionStorage.clear()
-      
-      console.log('🧹 Cleared ALL storage before submission to prevent back button issues')
     }
 
-    // Save to API
-    await $fetch('/api/leads', { method: 'POST', body: payload })
-
-    // DO NOT save to localStorage after submission
-    // This prevents back button from restoring form
-
-    // Clear browser cache by modifying history
+    // Clear history
     if (typeof window !== 'undefined' && window.history.replaceState) {
-      // Replace current state with empty state
       window.history.replaceState(null, '', window.location.href)
     }
 
+    // Go to thank you page
     router.push({
       path: '/thankyou',
       query: {
         name: form.firstName,
         days: form.days,
-        activities: form.activities.join(', ')
+        activities: form.activities.join(', '),
+        leadId: leadId
       }
     })
     
-    // Force reload after redirect to prevent browser back button cache
-    setTimeout(() => {
-      if (typeof window !== 'undefined') {
-        window.location.href = '/thankyou'
-      }
-    }, 100)
-    
   } catch (err) {
-    console.error('Error saving lead:', err)
-    alert('Something went wrong while sending your request. Please try again.')
+    console.error('❌ Journey form submission error:', err)
+    alert('Something went wrong. Please try again.')
   } finally {
     isSubmitting.value = false
+  }
+}
+
+async function sendItineraryEmail(params) {
+  try {
+    console.log('📤 Sending itinerary email function called with params:', {
+      leadId: params.leadId,
+      email: params.email,
+      name: params.name
+    })
+
+    // Validate required fields
+    if (!params.leadId) {
+      console.error('❌ leadId is missing from email params:', params)
+      return { success: false, error: 'leadId is required for email logging' }
+    }
+
+    if (!params.email) {
+      console.error('❌ Email is missing from email params:', params)
+      return { success: false, error: 'Email is required' }
+    }
+
+    const response = await $fetch('/api/emailtest/send-itinerary', {
+      method: 'POST',
+      body: {
+        email: params.email,
+        name: params.name,
+        leadId: params.leadId, // CRITICAL: MUST be included
+        templateId: 5,
+        tripName: params.tripName,
+        days: params.days,
+        travellers: params.travellers,
+        interests: params.interests,
+        message: params.message,
+        cta_url: params.cta_url,
+        hero_image: params.hero_image,
+        company_phone: params.company_phone,
+        company_email: params.company_email,
+        unsubscribe_url: params.unsubscribe_url
+      }
+    })
+
+    console.log('✅ Email API response:', response)
+    return response
+  } catch (error) {
+    console.error('❌ Email sending failed:', error)
+    return { 
+      success: false, 
+      error: error?.message || 'Unknown error',
+      details: error
+    }
   }
 }
 
@@ -1616,6 +1697,14 @@ const isValid = computed(() => {
          form.firstName && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) &&
          form.consentToContact
 })
+
+function formatActivityName(activity) {
+  if (!activity) return ''
+  return activity
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
 
 function resetForm() {
   Object.assign(form, {

@@ -764,7 +764,13 @@
                 <button class="px-4 py-2 rounded-lg border bg-white text-sm" @click="openAddNoteModal">Add note</button>
                 <button class="px-4 py-2 rounded-lg border bg-white text-sm" @click="openLogCallModal">Log call</button>
                 <button class="px-4 py-2 rounded-lg border bg-white text-sm" @click="openCreateTaskModal">Create task</button>
-                <button class="px-4 py-2 rounded-lg border bg-white text-sm" @click="copyPublicLink">Copy public link</button>
+                <!-- VIEW EMAIL HISTORY BUTTON (Replaced "Copy public link") -->
+                <button class="px-4 py-2 rounded-lg border bg-white text-sm flex items-center gap-2" @click="viewEmailHistory">
+                  <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  View email history
+                </button>
               </div>
 
               <!-- Follow-ups section -->
@@ -1350,6 +1356,14 @@
         </div>
       </div>
     </transition>
+    
+    <!-- EMAIL HISTORY MODAL -->
+    <EmailLogsModal
+      :lead-id="selectedLeadIdForEmailHistory"
+      :lead-name="selectedLeadNameForEmailHistory"
+      :visible="showEmailHistoryModal"
+      @close="showEmailHistoryModal = false"
+    />
   </div>
 </template>
 
@@ -1357,6 +1371,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ActivityTimeline from '~/components/admins/ActivityTimeline.vue'
+import EmailLogsModal from '~/components/EmailLogsModal.vue'
 
 definePageMeta({
   layout: 'dashboard',
@@ -1453,6 +1468,11 @@ const showEditFollowUp = ref(false)
 const editingFollowUp = ref(null)
 const editFollowUpDate = ref('')
 const editFollowUpNote = ref('')
+
+// Email History Modal state
+const showEmailHistoryModal = ref(false)
+const selectedLeadIdForEmailHistory = ref('')
+const selectedLeadNameForEmailHistory = ref('')
 
 // Data
 const leads = ref([])
@@ -2258,18 +2278,13 @@ fields.forEach(f => {
   }
 }
 
-// COPY PUBLIC LINK
-async function copyPublicLink () {
-  if (!selectedLead.value || !selectedLead.value._id) return
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
-  const url = `${origin}/lead/${selectedLead.value._id}`
-  try {
-    await navigator.clipboard.writeText(url)
-    alert('Public lead link copied to clipboard')
-  } catch (err) {
-    console.error('copy failed', err)
-    alert('Failed to copy link')
-  }
+// VIEW EMAIL HISTORY (Replaced copyPublicLink)
+function viewEmailHistory() {
+  if (!selectedLead.value) return
+  
+  selectedLeadIdForEmailHistory.value = selectedLead.value._id || selectedLead.value.id
+  selectedLeadNameForEmailHistory.value = selectedLead.value.name || 'Unnamed lead'
+  showEmailHistoryModal.value = true
 }
 
 // navigation to build route
@@ -3936,18 +3951,6 @@ async function patchLead (id, patchBody) {
   }
 }
 
-// copy link helper
-async function copyLinkToClipboard (lead) {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
-  const url = `${origin}/lead/${lead._id}`
-  try {
-    await navigator.clipboard.writeText(url)
-    alert('Link copied')
-  } catch {
-    alert('Copy failed')
-  }
-}
-
 // convenience: open status modal for a lead quickly
 function openStatusChangeFor (lead) {
   openLeadDetails(lead)
@@ -4073,7 +4076,6 @@ input[type="date"]:hover {
   transition: background-color 0.2s;
 }
 .btn-primary:hover { background-color: #047857; }
-
 .btn-secondary {
   background-color: #ffffff;
   border: 1px solid rgba(15,23,42,0.06);
@@ -4083,38 +4085,32 @@ input[type="date"]:hover {
   transition: background-color 0.2s;
 }
 .btn-secondary:hover { background-color: #f8fafc; }
-
 /* Follow-up section styling */
 .follow-up-section {
   border-top: 1px solid #e2e8f0;
   padding-top: 1rem;
   margin-top: 1rem;
 }
-
 .follow-up-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.5rem;
 }
-
 .follow-up-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
-
 .follow-up-input {
   flex: 1;
 }
-
 .follow-up-error {
   margin-top: 0.25rem;
   color: #dc2626;
   font-size: 0.75rem;
 }
-
 /* Status badge improvements */
 .status-badge {
   display: inline-flex;
@@ -4126,7 +4122,6 @@ input[type="date"]:hover {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-
 .status-badge-new {
   background-color: #dbeafe;
   color: #1e40af;
@@ -4136,26 +4131,20 @@ input[type="date"]:hover {
   background-color: #d1fae5;
   color: #065f46;
 }
-
 .status-badge-working {
   background-color: #fef3c7;
   color: #92400e;
 }
-
 .status-badge-unqualified {
   background-color: #fee2e2;
   color: #991b1b;
 }
-
 .status-badge-closed-won {
   background-color: #e0e7ff;
   color: #3730a3;
 }
-
 .status-badge-closed-lost {
   background-color: #fecaca;
   color: #7f1d1d;
 }
-
-
 </style>

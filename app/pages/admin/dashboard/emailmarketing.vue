@@ -693,8 +693,40 @@
                 </div>
               </div>
               
+              <!-- Template 7: Custom Message -->
+              <div v-if="selectedTemplateId === 7" class="space-y-4">
+                <!-- SUBJECT FIELD -->
+                <div>
+                  <label class="text-xs font-semibold text-slate-600 mb-2 block">Subject *</label>
+                  <input 
+                    v-model="emailParams.subject" 
+                    @input="refreshPreview" 
+                    type="text" 
+                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Custom email subject..." 
+                  />
+                  <p class="text-xs text-slate-500 mt-1">Subject line that will appear in the recipient's inbox</p>
+                </div>
+                
+                <!-- MESSAGE CONTENT FIELD -->
+                <div>
+                  <label class="text-xs font-semibold text-slate-600 mb-2 block">Message Content *</label>
+                  <textarea
+                    v-model="emailParams.message"
+                    @input="refreshPreview"
+                    rows="8"
+                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Type your custom message here... You can use basic HTML tags like &lt;br&gt;, &lt;b&gt;, &lt;i&gt;, &lt;ul&gt;, &lt;li&gt; for formatting."
+                  ></textarea>
+                  <p class="text-xs text-slate-500 mt-1">
+                    <strong>Formatting tips:</strong> Use &lt;br&gt; for line breaks, &lt;b&gt;<b>bold</b>&lt;/b&gt;, 
+                    &lt;i&gt;<i>italic</i>&lt;/i&gt;, &lt;ul&gt;&lt;li&gt;bullet points&lt;/li&gt;&lt;/ul&gt;
+                  </p>
+                </div>
+              </div>
+              
               <!-- Template 4: Book a Call -->
-              <div v-if="selectedTemplateId === 4" class="space-y-4">
+              <div v-else-if="selectedTemplateId === 4" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <!-- Country Dropdown -->
                   <div>
@@ -858,12 +890,13 @@
               <div class="mt-6 pt-6 border-t border-slate-200">
                 <h5 class="text-xs font-semibold text-slate-600 mb-3">Common Settings</h5>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div v-if="selectedTemplateId !== 7">
                     <label class="text-xs font-semibold text-slate-600">Call-to-Action URL</label>
                     <input v-model="emailParams.cta_url" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
                       :placeholder="selectedTemplateId === 4 ? 'https://zafstours.com/book-now' : 'https://zafstours.com/contact'" />
                   </div>
-                  <div>
+                  
+                  <div v-if="selectedTemplateId !== 7">
                     <label class="text-xs font-semibold text-slate-600">Hero Image URL</label>
                     <input v-model="emailParams.hero_image" @input="refreshPreview" type="url" class="mt-1 w-full border rounded-lg px-3 py-2" 
                       placeholder="https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop" />
@@ -1068,6 +1101,7 @@ const emailParams = ref({
   days: 7,
   travellers: '',
   interests: '',
+  subject: '', // Add subject field for template 7
   cta_url: 'https://zafstours.com/contact',
   hero_image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&auto=format&fit=crop',
   company_phone: '+255 624 023 455',
@@ -1113,7 +1147,8 @@ const toast = ref({
 const emailTemplates = ref([
   { id: 4, name: 'Book a Call', description: 'Call confirmation email template' },
   { id: 5, name: 'Itinerary Request', description: 'Your Africa Adventure Has Officially Begun' },
-  { id: 6, name: 'Newsletter', description: 'Monthly updates and special offers' }
+  { id: 6, name: 'Newsletter', description: 'Monthly updates and special offers' },
+  { id: 7, name: 'Custom Message', description: 'Send personalized custom messages' }
 ])
 
 // Computed
@@ -1360,14 +1395,92 @@ const showPreviewInModal = () => {
   }
 }
 
-// Generate full email preview HTML - COMPLETE WITH NEWSLETTER TEMPLATE
+// Generate full email preview HTML
 const getFullEmailPreview = () => {
   if (!selectedTemplateId.value) return ''
   
   const params = emailParams.value
   const name = emailContact.value.name || 'Guest'
   
-  if (selectedTemplateId.value === 4) {
+  if (selectedTemplateId.value === 7) {
+    // Custom Message Template
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${params.subject || 'Message from Zafs Tours'}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f5f5f5; font-family:Arial, Helvetica, sans-serif;">
+    <!-- WRAPPER -->
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px; margin:0 auto; background-color:#ffffff;">
+        <!-- SIMPLE HEADER -->
+        <tr>
+            <td align="center" style="padding:30px 20px; background-color:#1a3c34;">
+                <div style="color:#d4af37; font-size:28px; font-weight:bold;">
+                    ZAFS TOURS
+                </div>
+            </td>
+        </tr>
+        
+        <!-- MAIN CONTENT -->
+        <tr>
+            <td style="padding:40px 30px;">
+                <!-- SUBJECT -->
+                <div style="font-size:20px; font-weight:bold; color:#1a3c34; margin-bottom:10px;">
+                    ${params.subject || 'Message from Zafs Tours'}
+                </div>
+                
+                <!-- FROM INFO -->
+                <div style="color:#666; font-size:14px; margin-bottom:30px; border-bottom:1px solid #eee; padding-bottom:15px;">
+                    From: Zafs Tours Team • ${new Date().toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                </div>
+                
+                <!-- GREETING -->
+                <div style="font-size:16px; color:#333; margin-bottom:20px;">
+                    Dear <strong>${name}</strong>,
+                </div>
+                
+                <!-- CUSTOM MESSAGE -->
+                <div style="background-color:#f8f8f8; border:1px solid #e5e7eb; border-radius:8px; padding:25px; margin-bottom:30px; line-height:1.6;">
+                    ${params.message || 'Your custom message here...'}
+                </div>
+                
+                <!-- SIGNATURE -->
+                <div style="color:#333; margin-top:30px;">
+                    <div>Warm regards,</div>
+                    <div style="color:#d4af37; font-weight:bold; font-size:18px; margin-top:5px;">
+                        Team ZAFS
+                    </div>
+                </div>
+            </td>
+        </tr>
+        
+        <!-- SIMPLE FOOTER -->
+        <tr>
+            <td style="background-color:#1a3c34; color:#ffffff; padding:30px 20px; text-align:center;">
+                <div style="font-size:14px; margin-bottom:15px;">
+                    Zafs Tours • Arusha, Tanzania
+                </div>
+                <div style="font-size:12px; color:#d4af37; margin-bottom:20px;">
+                    <a href="https://zafstours.com" style="color:#d4af37; text-decoration:none;">Website</a> • 
+                    <a href="https://zafstours.com/privacy" style="color:#d4af37; text-decoration:none;">Privacy</a> • 
+                    <a href="${params.unsubscribe_url}" style="color:#d4af37; text-decoration:none;">Unsubscribe</a>
+                </div>
+                <div style="font-size:11px; color:#a0b5ae; max-width:400px; margin:0 auto; line-height:1.4;">
+                    You're receiving this email from Zafs Tours
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+  } else if (selectedTemplateId.value === 4) {
+    // Book a Call Template
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1837,8 +1950,7 @@ const getFullEmailPreview = () => {
 </body>
 </html>`
  } else if (selectedTemplateId.value === 6) {
-  // Newsletter template - NO MESSAGE PARAMETER
-  
+  // Newsletter template
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1991,7 +2103,6 @@ const getFullEmailPreview = () => {
 </body>
 </html>`
   }
-  
   return '<p class="text-slate-500 p-4">Template preview not available</p>'
 }
 
@@ -2007,6 +2118,8 @@ const getEmailSubject = () => {
       return `Thanks ${name} - Your Africa Adventure Has Officially Begun`
     case 6:
       return `Welcome ${name}! Your Safari Insider Newsletter`
+    case 7:
+      return emailParams.value.subject || 'Message from Zafs Tours'
     default:
       return 'Email from Zafs Tours'
   }
@@ -2022,6 +2135,10 @@ const getEmailPreviewText = () => {
       return 'We\'ll send your full itinerary in 48 hours.'
     case 6:
       return 'Welcome to our exclusive safari newsletter community!'
+    case 7:
+      return emailParams.value.message 
+        ? emailParams.value.message.replace(/<[^>]*>/g, '').substring(0, 100) + '...'
+        : 'Message from zafstours.com'
     default:
       return ''
   }
@@ -2084,6 +2201,7 @@ const openEmailModal = (contact) => {
       `${tomorrow.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} — 10:30 AM`,
     timezone: contact.timezone || defaultTimezone,
     message: contact.message || '',
+    subject: `Follow-up from Zafs Tours - ${contact.name}`, // Default subject for template 7
     tripName: contact.activities && contact.activities.length > 0 ? 
       `${formatActivityName(contact.activities[0])} Safari Itinerary` : '',
     days: contact.days || 7,
@@ -2148,8 +2266,16 @@ const onTemplateChange = () => {
     if (!emailParams.value.tripName && emailContact.value.activities && emailContact.value.activities.length > 0) {
       emailParams.value.tripName = `${formatActivityName(emailContact.value.activities[0])} Safari Itinerary`
     }
+  } else if (selectedTemplateId.value === 7) {
+    // Custom Message template - set default subject if empty
+    if (!emailParams.value.subject) {
+      emailParams.value.subject = `Follow-up from Zafs Tours - ${emailContact.value.name || 'Guest'}`
+    }
+    // Set default message if empty
+    if (!emailParams.value.message && emailContact.value.message) {
+      emailParams.value.message = emailContact.value.message
+    }
   }
-  // For newsletter template (id: 6), no parameters needed
   
   // Generate preview immediately
   setTimeout(() => {
@@ -2185,7 +2311,7 @@ const setQuickSchedule = (minutes) => {
   sendOption.value = 'schedule'
 }
 
-// Email sending methods - UPDATED WITH NEWSLETTER SUPPORT
+// Email sending methods
 const sendEmailNow = async () => {
   if (!selectedTemplateId.value || !emailContact.value.email) {
     showToast('Please select a template and ensure contact has email', 'error')
@@ -2262,6 +2388,18 @@ const sendEmailNow = async () => {
     if (selectedTemplateId.value === 6) {
       body.message = emailParams.value.message || 'Welcome to the Zafs Tours newsletter!'
     }
+    
+    // For template 7 (Custom Message), ensure subject and message are included
+    if (selectedTemplateId.value === 7) {
+      body.subject = emailParams.value.subject || `Follow-up from Zafs Tours - ${emailContact.value.name || 'Guest'}`
+      body.message = emailParams.value.message || ''
+      
+      // Also include these in the regular params for the backend
+      body.emailParams = {
+        subject: body.subject,
+        message: body.message
+      }
+    }
 
     // Determine which endpoint to use based on template
     let endpoint
@@ -2269,6 +2407,8 @@ const sendEmailNow = async () => {
       endpoint = '/api/emailtest/send-itinerary'
     } else if (selectedTemplateId.value === 6) {
       endpoint = '/api/emailtest/send-newsletter'
+    } else if (selectedTemplateId.value === 7) {
+      endpoint = '/api/emailtest/send-custom'
     } else {
       endpoint = '/api/emailtest/send'
     }
@@ -2392,6 +2532,18 @@ const scheduleEmail = async () => {
     if (selectedTemplateId.value === 6) {
       body.message = emailParams.value.message || 'Welcome to the Zafs Tours newsletter!'
     }
+    
+    // For template 7 (Custom Message), ensure subject and message are included
+    if (selectedTemplateId.value === 7) {
+      body.subject = emailParams.value.subject || `Follow-up from Zafs Tours - ${emailContact.value.name || 'Guest'}`
+      body.message = emailParams.value.message || ''
+      
+      // Also include these in the regular params for the backend
+      body.emailParams = {
+        subject: body.subject,
+        message: body.message
+      }
+    }
 
     // Determine endpoint based on template
     let endpoint
@@ -2399,6 +2551,8 @@ const scheduleEmail = async () => {
       endpoint = '/api/emailtest/schedule-itinerary'
     } else if (selectedTemplateId.value === 6) {
       endpoint = '/api/emailtest/schedule-newsletter'
+    } else if (selectedTemplateId.value === 7) {
+      endpoint = '/api/emailtest/schedule-custom'
     } else {
       endpoint = '/api/emailtest/schedule'
     }

@@ -314,10 +314,13 @@
                   </div>
                   
                   <!-- Consent -->
-                  <div v-if="previewContact.consent !== undefined">
-                    <div class="text-sm font-medium">{{ previewContact.consent ? '✓ Given' : 'Not given' }}</div>
-                    <div class="text-xs text-slate-500">Consent</div>
-                  </div>
+                  <!-- Consent -->
+<div v-if="previewContact.consent !== undefined || previewContact.consentToContact !== undefined">
+  <div class="text-sm font-medium">
+    {{ (previewContact.consent || previewContact.consentToContact) ? '✓ Given' : 'Not given' }}
+  </div>
+  <div class="text-xs text-slate-500">Consent</div>
+</div>
                 </div>
 
                 <!-- UTM tracking -->

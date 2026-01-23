@@ -58,8 +58,8 @@ export default defineEventHandler(async (event) => {
     message: body.message || '',
     timezone: inferredTimezone || '',
 
-    // Consent (bookacall sends form.consent) — persisted explicitly
-    consent: !!body.consent,
+    // Handle both consent and consentToContact fields
+    consent: !!body.consent || !!body.consentToContact,
 
     // metadata: store any client hints (e.g., createdFrom, small client-side info)
     metadata: body.metadata || {},

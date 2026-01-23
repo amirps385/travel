@@ -1346,7 +1346,7 @@ async function handleSubmit() {
       scheduleCall: form.scheduleCall,
       preferredTime: form.preferredTime || null,
       timezone: timezone,
-      consentToContact: form.consentToContact,
+      consent: form.consentToContact,
       source: 'custom_itinerary',
       leadSourceDetail: 'Custom Itinerary Builder - Step-by-Step Trip Planning'
     }

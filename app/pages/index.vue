@@ -23,6 +23,7 @@
         <!-- 3) WHY CHOOSE US (trust section) -->
         <section aria-labelledby="section-why-choose">
           <TripsOffering />
+          <Whychooseus />
         </section>
 
         <!-- 4) IMMERSIVE VIDEO STORY -->
@@ -79,6 +80,7 @@ import CTA from '~/components/CTA.vue'
 import NewsletterSignup from '~/components/NewsletterSignup.vue'
 import SiteFooter from '~/components/SiteFooter.vue'
 import ExperienceTanzania from '~/components/ExperienceTanzania.vue'
+import Whychooseus from '~/components/Whychooseus.vue'
 
 
 definePageMeta({

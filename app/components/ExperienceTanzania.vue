@@ -128,6 +128,15 @@
     </div>
   </div>
 </section>
+
+<section class="full-width-image-section">
+  <img 
+    src="/images/experiencetanzania/group1.png" 
+    alt="Group enjoying Tanzania experience" 
+    class="full-width-image"
+  />
+</section>
+
 </template>
 
 <style scoped>
@@ -403,5 +412,21 @@
   .subtitle {
     font-size: 32px;
   }
+}
+
+.full-width-image-section {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #FFF9E8; /* Matches TripsOffering background */
+}
+
+.full-width-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  margin-bottom: -1px; /* Ensures no subpixel gap */
 }
 </style>

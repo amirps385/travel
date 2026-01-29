@@ -20,14 +20,9 @@
           <ExperienceTanzania />
         </section>
 
-        <!-- 2) SERVICES WE OFFER (bold blue band) 
-        <section aria-labelledby="section-offer">
-          <Offer />
-        </section> -->
-
         <!-- 3) WHY CHOOSE US (trust section) -->
         <section aria-labelledby="section-why-choose">
-          <WhyChoose />
+          <TripsOffering />
         </section>
 
         <!-- 4) IMMERSIVE VIDEO STORY -->
@@ -73,8 +68,7 @@ import Hero from '~/components/Hero.vue'
 import HeroLead from '~/components/HeroLead.vue'
 import ToursPreview from '~/components/ToursPreview.vue'
 import FeaturesSection from '~/components/ExperienceTanzania.vue'
-import Offer from '~/components/Offer.vue'
-import WhyChoose from '~/components/WhyChoose.vue'
+import TripsOffering from '~/components/TripsOffering.vue'  
 import VideoSection from '~/components/VideoSection.vue'
 import SafariPackingListCTA from '~/components/SafariPackingListCTA.vue'
 import KilimanjaroPackingListCTA from '~/components/KilimanjaroPackingListCTA.vue'
@@ -85,6 +79,7 @@ import CTA from '~/components/CTA.vue'
 import NewsletterSignup from '~/components/NewsletterSignup.vue'
 import SiteFooter from '~/components/SiteFooter.vue'
 import ExperienceTanzania from '~/components/ExperienceTanzania.vue'
+
 
 definePageMeta({
   title: 'Home — ZafsTours'

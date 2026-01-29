@@ -17,7 +17,7 @@
         <!-- 1) TOP: TOURS + CORE VALUE PROPS -->
         <section aria-labelledby="section-tours">
           <ToursPreview />
-          <FeaturesSection />
+          <ExperienceTanzania />
         </section>
 
         <!-- 2) SERVICES WE OFFER (bold blue band) 
@@ -72,7 +72,7 @@
 import Hero from '~/components/Hero.vue'
 import HeroLead from '~/components/HeroLead.vue'
 import ToursPreview from '~/components/ToursPreview.vue'
-import FeaturesSection from '~/components/FeaturesSection.vue'
+import FeaturesSection from '~/components/ExperienceTanzania.vue'
 import Offer from '~/components/Offer.vue'
 import WhyChoose from '~/components/WhyChoose.vue'
 import VideoSection from '~/components/VideoSection.vue'
@@ -84,6 +84,7 @@ import FreeConsultationCTA from '~/components/FreeConsultationCTA.vue'
 import CTA from '~/components/CTA.vue'
 import NewsletterSignup from '~/components/NewsletterSignup.vue'
 import SiteFooter from '~/components/SiteFooter.vue'
+import ExperienceTanzania from '~/components/ExperienceTanzania.vue'
 
 definePageMeta({
   title: 'Home — ZafsTours'

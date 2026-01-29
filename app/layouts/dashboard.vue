@@ -1,4 +1,3 @@
-<!-- app/layouts/dashboard.vue -->
 <template>
   <div class="min-h-[calc(100vh-5rem)] bg-slate-50">
     <div class="max-w-7xl mx-auto px-4 lg:px-6 py-8 flex gap-6">
@@ -44,6 +43,7 @@
               <span v-else-if="item.icon === 'users'">👤</span>
               <span v-else-if="item.icon === 'email'">📨</span>
               <span v-else-if="item.icon === 'groupclimb'">🧗‍♂️</span>
+              <span v-else-if="item.icon === 'items'">📦</span>
               <span v-else>•</span>
             </span>
 
@@ -173,18 +173,26 @@
         </div>
       </div>
     </div>
+
+    <!-- NOTIFICATION DRAWER -->
+    <NotificationDrawer
+      :is-open="showNotifications"
+      @close="showNotifications = false"
+      @notification-click="handleNotificationClick"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from '#imports'
+import NotificationDrawer from '@/components/user/NotificationDrawer.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 /* -------------------------
-   ALL NAV ITEMS (Full List with Group Climbs & Accommodations)
+   ALL NAV ITEMS (Full List with Items)
 ------------------------- */
 const allNavItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard', roles: ['superadmin', 'admin', 'content-manager', 'lead-manager', 'itinerary-planner'] },
@@ -202,8 +210,10 @@ const allNavItems = [
   { to: '/admin/dashboard/transfers', label: 'Transfers', icon: 'transfers', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
   { to: '/admin/dashboard/cities', label: 'Cities', icon: 'cities', roles: ['superadmin', 'admin', 'content-manager', 'itinerary-planner'] },
   { to: '/admin/dashboard/users', label: 'Users', icon: 'users', roles: ['superadmin', 'admin'] },
-  { to: '/admin/dashboard/emailmarketing', label: 'Email Marketing', icon: 'email',  roles: ['superadmin', 'admin', 'marketing-manager', 'content-manager'] },
-  { to: '/admin/dashboard/groupclimb', label: 'Group Climbs', icon: 'groupclimb', roles: ['superadmin', 'admin', 'content-manager'] }
+  { to: '/admin/dashboard/emailmarketing', label: 'Email Marketing', icon: 'email', roles: ['superadmin', 'admin', 'marketing-manager', 'content-manager'] },
+  { to: '/admin/dashboard/groupclimb', label: 'Group Climbs', icon: 'groupclimb', roles: ['superadmin', 'admin', 'content-manager'] },
+  // NEW ITEMS SECTION
+  { to: '/admin/dashboard/items', label: 'Items', icon: 'items', roles: ['superadmin', 'admin'] }
 ]
 
 /* -------------------------
@@ -259,7 +269,7 @@ const isActive = (to) => {
 }
 
 /* -------------------------
-   HEADER TITLE (Updated with Group Climbs & Accommodations)
+   HEADER TITLE (Updated with Items)
 ------------------------- */
 const headerTitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard') return 'Dashboard Overview'
@@ -279,11 +289,12 @@ const headerTitle = computed(() => {
   if (route.path.startsWith('/admin/dashboard/cities')) return 'Cities'
   if (route.path.startsWith('/admin/dashboard/emailmarketing')) return 'Email Marketing'
   if (route.path.startsWith('/admin/dashboard/groupclimb')) return 'Group Climbs'
+  if (route.path.startsWith('/admin/dashboard/items')) return 'Items Management'
   return 'Dashboard'
 })
 
 /* -------------------------
-   HEADER SUBTITLE (Updated with Group Climbs & Accommodations)
+   HEADER SUBTITLE (Updated with Items)
 ------------------------- */
 const headerSubtitle = computed(() => {
   if (route.path === '/admin' || route.path === '/admin/dashboard')
@@ -332,11 +343,13 @@ const headerSubtitle = computed(() => {
     return 'Organise cities and regions.'
   
   if (route.path.startsWith('/admin/dashboard/emailmarketing'))
-  return 'Manage templates, sends, and scheduled campaigns.'
-
+    return 'Manage templates, sends, and scheduled campaigns.'
 
   if (route.path.startsWith('/admin/dashboard/groupclimb'))
     return 'Manage group climbing adventures, dates, pricing and availability.'
+
+  if (route.path.startsWith('/admin/dashboard/items'))
+    return 'Manage supplementary items, activities, and add-ons for tours.'
 
   return ''
 })
@@ -363,7 +376,21 @@ const today = computed(() => {
 })
 
 /* -------------------------
-   AVATAR / NOTIFICATIONS
+   NOTIFICATIONS
+------------------------- */
+const showNotifications = ref(false)
+
+function openNotifications() {
+  showNotifications.value = true
+}
+
+function handleNotificationClick(notification) {
+  console.log('Notification clicked:', notification)
+  // Optional: Add custom handling logic here
+}
+
+/* -------------------------
+   AVATAR MENU
 ------------------------- */
 const showMenu = ref(false)
 
@@ -432,11 +459,6 @@ watch(showMenu, (val) => {
   if (val) updateMenuPosition()
 })
 
-function openNotifications() {
-  // Placeholder: implement notifications panel or page later
-  console.log('Open notifications — implement UI later')
-}
-
 async function logout() {
   try {
     await $fetch('/api/auth/logout', { method: 'POST' })
@@ -504,6 +526,31 @@ onMounted(() => {
     }
   }
 })
+
+// Test function for notifications (optional - can be removed later)
+async function sendTestNotification() {
+  try {
+    const response = await $fetch('/api/notifications', {
+      method: 'POST',
+      body: {
+        test: true,
+        type: 'lead_assigned',
+        title: 'Test Notification',
+        message: 'This is a test notification from the dashboard',
+        link: '/admin/dashboard/leads'
+      }
+    })
+    console.log('Test notification sent:', response)
+    
+    // Refresh user data to update notification count
+    await refreshMe()
+    
+    // Show notification drawer
+    showNotifications.value = true
+  } catch (error) {
+    console.error('Failed to send test notification:', error)
+  }
+}
 </script>
 
 <style scoped>

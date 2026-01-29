@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
-    <Navbar />
+    <!-- Navbar -->
+     <Navbar1/>
     <main :class="mainClasses">
       <NuxtPage />
     </main>
@@ -11,7 +12,7 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import Navbar from '~/components/Navbar.vue'
+import Navbar1 from '~/components/Navbar1.vue'
 import SiteFooter from '~/components/SiteFooter.vue'
 
 const route = useRoute()

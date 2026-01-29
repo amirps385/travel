@@ -1727,6 +1727,34 @@ async function saveEditedFollowUp() {
     }
     
     await patchLead(selectedLead.value._id, patchData)
+    
+    // ✅ SEND FOLLOW-UP UPDATE NOTIFICATION
+    if (dateChanged) {
+      try {
+        await $fetch('/api/notifications/send', {
+          method: 'POST',
+          body: {
+            userId: currentUser.value.id,
+            type: 'follow_up_reminder',
+            title: 'Follow-up Updated',
+            message: `You updated a follow-up for lead "${selectedLead.value.name || 'Unnamed lead'}" to ${formattedNewDate}`,
+            data: {
+              leadId: selectedLead.value._id,
+              leadName: selectedLead.value.name || 'Unnamed lead',
+              followUpDate: newIso,
+              previousDate: oldDateIso,
+              note: editFollowUpNote.value,
+              isUpdate: true
+            },
+            link: `/admin/dashboard/leads`
+          }
+        })
+        console.log('✅ Follow-up update notification sent')
+      } catch (notifErr) {
+        console.error('❌ Follow-up update notification failed:', notifErr)
+      }
+    }
+    
     await loadLeads()
   } catch (err) {
     console.error('Failed to save edited follow-up', err)
@@ -2326,6 +2354,15 @@ async function assignLeadToSelected (adminId) {
   selectedLead.value.events.push(ev)
 
   try {
+    console.log('🔵 Assigning lead:', {
+      leadId: selectedLead.value._id,
+      leadName: selectedLead.value.name,
+      assignedToId: adminId,
+      assignedToName: admin?.name,
+      currentUser: currentUser.value.name
+    })
+
+    // Save the assignment
     await patchLead(selectedLead.value._id, { 
       assignedToId: adminId,
       assignedTo: selectedLead.value.assignedTo,
@@ -2334,12 +2371,104 @@ async function assignLeadToSelected (adminId) {
       assignmentBy: currentUser.value.name,
       assignmentAt: new Date().toISOString()
     })
+
+    console.log('✅ Lead assignment saved successfully')
+
+    // ✅ SEND NOTIFICATION TO THE ASSIGNED USER
+    if (adminId && adminId !== currentUser.value.id) {
+      console.log('🟡 Sending notification to user ID:', adminId)
+      console.log('🟡 User details:', {
+        currentUserId: currentUser.value.id,
+        targetUserId: adminId,
+        targetUserName: admin?.name
+      })
+      
+      try {
+        const notificationData = {
+          userId: adminId,
+          type: 'lead_assigned',
+          title: 'New Lead Assigned',
+          message: `Lead "${selectedLead.value.name || 'Unnamed lead'}" has been assigned to you by ${currentUser.value.name}`,
+          data: {
+            leadId: selectedLead.value._id,
+            leadName: selectedLead.value.name || 'Unnamed lead',
+            assignedBy: currentUser.value.name,
+            assignedAt: new Date().toISOString()
+          },
+          link: `/admin/dashboard/leads`
+        }
+        
+        console.log('📤 Sending notification payload:', notificationData)
+        
+        const notificationResponse = await $fetch('/api/notifications/send', {
+          method: 'POST',
+          body: notificationData
+        })
+        
+        console.log('✅ Notification API response:', notificationResponse)
+        
+        // Also try the static method as backup
+        try {
+          console.log('🔄 Also trying User model static method...')
+          await $fetch('/api/test-notification', {
+            method: 'POST',
+            body: {
+              leadId: selectedLead.value._id,
+              leadTitle: selectedLead.value.name || 'Unnamed lead',
+              assignedTo: adminId,
+              assignedBy: currentUser.value.name
+            }
+          })
+        } catch (backupErr) {
+          console.log('ℹ️ Backup method not available, continuing...')
+        }
+        
+      } catch (notifErr) {
+        console.error('❌ Notification failed:', notifErr)
+        console.error('Error details:', {
+          message: notifErr.message,
+          status: notifErr.status,
+          data: notifErr.data
+        })
+        
+        // Try alternative endpoint
+        console.log('🔄 Trying alternative notification endpoint...')
+        try {
+          await $fetch('/api/notifications', {
+            method: 'POST',
+            body: {
+              userId: adminId,
+              type: 'lead_assigned',
+              title: 'New Lead Assigned',
+              message: `Lead "${selectedLead.value.name || 'Unnamed lead'}" has been assigned to you by ${currentUser.value.name}`,
+              data: {
+                leadId: selectedLead.value._id,
+                leadName: selectedLead.value.name || 'Unnamed lead',
+                assignedBy: currentUser.value.name,
+                assignedAt: new Date().toISOString()
+              },
+              link: `/admin/dashboard/leads/${selectedLead.value._id}`
+            }
+          })
+          console.log('✅ Alternative endpoint worked')
+        } catch (altErr) {
+          console.error('❌ Alternative endpoint also failed:', altErr)
+        }
+        
+        // Don't fail the assignment if notification fails
+        console.warn('⚠️ Lead assignment succeeded but notification failed')
+      }
+    } else {
+      console.log('🟡 Skipping notification (same user or no adminId)')
+    }
+
   } catch (err) {
-    console.error('assign failed', err)
-    alert('Failed to assign lead')
+    console.error('❌ Lead assignment failed:', err)
+    alert('Failed to assign lead: ' + (err.message || 'Unknown error'))
     await loadLeads()
   }
 }
+
 
 // bulk assign - WITH PERMISSION CHECK
 function openBulkAssignModal () {
@@ -2361,10 +2490,14 @@ async function performBulkAssign () {
   
   if (!bulkAssignTo.value || !selectedIds.value.length) return
   isLoadingBulk.value = true
+  
   try {
+    const assignedUserName = admins.value.find(a => a.id === bulkAssignTo.value)?.name || 'Unknown'
+    
     for (const id of selectedIds.value) {
       const lead = leads.value.find(l => (l._id || l.id) === id)
       if (!lead) continue
+      
       lead.assignedToId = bulkAssignTo.value
       lead.assignedTo = admins.value.find(a => a.id === bulkAssignTo.value) || null
       
@@ -2379,6 +2512,7 @@ async function performBulkAssign () {
         }
       })
       
+      // Save the assignment
       await patchLead(lead._id, { 
         assignedToId: bulkAssignTo.value,
         events: events,
@@ -2389,8 +2523,37 @@ async function performBulkAssign () {
       }).catch(e => {
         console.error('bulk patch failed for', id, e)
       })
+
+      // ✅ SEND NOTIFICATION FOR BULK ASSIGNMENT USING SEND ENDPOINT
+      if (bulkAssignTo.value && bulkAssignTo.value !== currentUser.value.id) {
+        try {
+          await $fetch('/api/notifications/send', {
+            method: 'POST',
+            body: {
+              userId: bulkAssignTo.value,
+              type: 'lead_assigned',
+              title: 'Lead Assigned (Bulk)',
+              message: `Lead "${lead.name || 'Unnamed lead'}" has been assigned to you by ${currentUser.value.name} as part of a bulk assignment`,
+              data: {
+                leadId: lead._id,
+                leadName: lead.name || 'Unnamed lead',
+                assignedBy: currentUser.value.name,
+                assignedAt: new Date().toISOString(),
+                bulkAssignment: true,
+                totalAssigned: selectedIds.value.length
+              },
+              link: `/admin/dashboard/leads`
+            }
+          })
+          console.log('Bulk assignment notification sent for lead:', lead._id)
+        } catch (notifErr) {
+          console.error('Failed to send bulk notification for lead', lead._id, ':', notifErr)
+        }
+      }
     }
-    alert('Assigned selected leads')
+    
+    alert(`Assigned ${selectedIds.value.length} lead(s) to ${assignedUserName}`)
+    
   } finally {
     isLoadingBulk.value = false
     closeBulkAssignModal()
@@ -2463,6 +2626,30 @@ async function setNextFollowUp () {
     
     alert(`Follow-up set for ${formattedDate}`)
     
+    // ✅ SEND FOLLOW-UP CREATION NOTIFICATION TO CURRENT USER
+    try {
+      await $fetch('/api/notifications/send', {
+        method: 'POST',
+        body: {
+          userId: currentUser.value.id, // Notify the user who created it
+          type: 'follow_up_reminder',
+          title: 'Follow-up Created',
+          message: `You set a follow-up for lead "${selectedLead.value.name || 'Unnamed lead'}" on ${formattedDate}`,
+          data: {
+            leadId: selectedLead.value._id,
+            leadName: selectedLead.value.name || 'Unnamed lead',
+            followUpDate: iso,
+            note: '',
+            reminderDays: 3 // Will remind 3 days before
+          },
+          link: `/admin/dashboard/leads`
+        }
+      })
+      console.log('✅ Follow-up creation notification sent')
+    } catch (notifErr) {
+      console.error('❌ Follow-up notification failed:', notifErr)
+    }
+    
     followUpInput.value = ''
     
     await loadLeads()
@@ -2512,6 +2699,29 @@ async function clearFollowUp () {
       events: selectedLead.value.events,
       updatedBy: currentUser.value.name
     })
+    
+    // ✅ SEND FOLLOW-UP CLEARED NOTIFICATION
+    try {
+      await $fetch('/api/notifications/send', {
+        method: 'POST',
+        body: {
+          userId: currentUser.value.id,
+          type: 'follow_up_reminder',
+          title: 'Follow-up Cleared',
+          message: `You cleared a follow-up for lead "${selectedLead.value.name || 'Unnamed lead'}"`,
+          data: {
+            leadId: selectedLead.value._id,
+            leadName: selectedLead.value.name || 'Unnamed lead',
+            previousFollowUp: prevFollowUp,
+            clearedAt: new Date().toISOString()
+          },
+          link: `/admin/dashboard/leads`
+        }
+      })
+      console.log('✅ Follow-up cleared notification sent')
+    } catch (notifErr) {
+      console.error('❌ Follow-up cleared notification failed:', notifErr)
+    }
     
     alert('Follow-up cleared')
     

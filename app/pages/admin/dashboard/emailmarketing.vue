@@ -8,9 +8,7 @@
             <h2 class="text-2xl font-bold text-slate-900">Email Marketing</h2>
             <p class="text-sm text-slate-500 mt-1">Manage contacts and send targeted emails</p>
           </div>
-          <div class="text-sm text-slate-600 bg-white px-4 py-2 rounded-lg border border-slate-200">
-            Sender: <span class="font-medium text-slate-800">{{ senderEmail }}</span>
-          </div>
+         
         </div>
       </div>
 

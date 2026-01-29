@@ -1,4 +1,5 @@
 <template>
+  <Navtop/>
   <ClientOnly>
     <header class="header">
       <div class="container">

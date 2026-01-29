@@ -15,15 +15,20 @@ export default defineEventHandler(async (event) => {
     if (!payload || !payload.id) return { user: null }
 
     const user = await User.findById(payload.id)
-      .select('_id name email role isActive avatar notifications')
+      .select('_id name email role isActive avatar notifications notificationSettings')
       .lean<any>()
       .catch(() => null)
 
     if (!user) return { user: null }
     if (user.isActive === false) return { user: null }
 
-    // notifications summary
-    const notifications: any[] = Array.isArray(user.notifications) ? user.notifications : []
+    // Process notifications - sort by createdAt desc, limit to 5 for dropdown
+    const notifications: any[] = Array.isArray(user.notifications) 
+      ? user.notifications
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5)
+      : []
+
     const unreadCount = notifications.reduce((s: number, n: any) => s + (n.read ? 0 : 1), 0)
 
     return {
@@ -33,12 +38,30 @@ export default defineEventHandler(async (event) => {
         email: user.email,
         role: user.role,
         avatar: user.avatar || null,
-        notifications: notifications.slice(-5).map((n: any) => ({ id: n._id, message: n.message, read: n.read, createdAt: n.createdAt })),
-        notificationCount: notifications.length,
-        unreadNotificationCount: unreadCount
+        notifications: notifications.map((n: any) => ({
+          id: n._id.toString(),
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          data: n.data,
+          link: n.link,
+          icon: n.icon,
+          read: n.read,
+          createdAt: n.createdAt
+        })),
+        notificationCount: user.notifications.length,
+        unreadNotificationCount: user.notifications.filter((n: any) => !n.read).length,
+        notificationSettings: user.notificationSettings || {
+          email: true,
+          push: true,
+          leadAssignments: true,
+          followUpReminders: true,
+          systemAlerts: true
+        }
       }
     }
   } catch (err) {
+    console.error('Auth me error:', err)
     return { user: null }
   }
 })

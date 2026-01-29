@@ -1,4 +1,4 @@
-// server/api/auth/login.post.ts (updated)
+// server/api/auth/login.post.ts
 import User from '../../models/User'
 import { connectDB } from '../../utils/mongoose'
 import bcrypt from 'bcryptjs'
@@ -17,13 +17,11 @@ export default defineEventHandler(async (event) => {
 
   if (user.isActive === false) throw createError({ statusCode: 403, statusMessage: 'Account disabled' })
 
-  // Don't include avatar in JWT payload to keep token small
   const payload = { 
     id: String(user._id), 
     role: user.role, 
     email: user.email, 
     name: user.name 
-    // avatar removed from JWT payload
   }
   const token = jwt.sign(payload, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '7d' })
 
@@ -32,14 +30,11 @@ export default defineEventHandler(async (event) => {
     sameSite: 'lax', 
     path: '/', 
     maxAge: 60*60*24*7,
-    // Add secure flags if needed
     // secure: process.env.NODE_ENV === 'production'
   })
   
-  // Return user info without avatar in response
   return { 
     user: payload,
-    // Optionally include a flag that avatar exists
     hasAvatar: !!user.avatar
   }
 })

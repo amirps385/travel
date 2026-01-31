@@ -1,364 +1,147 @@
 <template>
-  <section class="relative py-20 lg:py-28 overflow-hidden">
-    <!-- Safari-themed background matching your other components -->
-    <div class="absolute inset-0 bg-gray-900">
-      <!-- Safari background image -->
-      <div
-        class="absolute inset-0 bg-cover bg-center"
-        :style="{ backgroundImage: `url('/images/background/safari6.png')` }"
-      ></div>
+  <section class="relative w-full bg-[#FFF9E8] py-16 lg:py-24">
+    <!-- Inner Container with Rough Edge Design -->
+    <div class="relative w-full max-w-[1520px] mx-auto min-h-[624px] overflow-hidden">
+      <!-- Gold Background Vector -->
+      <svg 
+        class="absolute inset-0 w-full h-full"
+        viewBox="0 0 1519 624" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <path 
+          d="M8.85073 15.626C9.7358 23.9599 3.31902 23.2654 0 21.8765V608.374L19.9141 612.541L30.9776 606.29C45.1387 606.29 55.3171 602.818 58.6361 601.082L115.06 562.538L118.379 590.664L120.591 573.997C140.063 581.497 133.867 588.234 128.336 590.664L150.462 594.831C164.624 588.998 171.852 590.317 173.696 591.706L185.865 594.831C193.831 586.497 206.148 583.72 211.311 583.372L224.587 586.497H236.757H244.501L256.671 579.205L265.522 594.831C292.959 584.831 304.981 588.581 307.563 591.706V602.124H323.052L309.776 615.666L333.009 617.75C346.285 625.25 359.93 624.347 365.093 622.958C388.99 621.292 436.267 607.68 456.919 601.082C467.54 597.748 472.408 599.693 473.514 601.082L476.833 605.249C516.661 623.583 545.795 608.721 555.383 598.998L579.723 594.831L587.467 601.082L595.212 607.332L606.275 610.457C614.241 612.958 621.395 607.332 623.977 604.207C636.368 607.541 648.316 599.346 652.741 594.831L706.952 564.621L699.208 583.372L704.739 577.122L714.697 579.205L723.547 583.372L725.76 590.664C747.002 587.331 766.326 592.053 773.333 594.831C786.609 578.997 812.792 584.761 824.224 589.623C830.42 581.289 842.295 586.845 847.457 590.664C874.895 588.164 889.13 589.623 892.818 590.664L904.987 602.124L892.818 616.708L939.284 624C972.917 619.833 1032.22 604.901 1057.66 597.957L1101.92 616.708L1153.91 590.664V602.124H1163.87L1177.15 597.957L1188.21 608.374H1208.12L1240.21 602.124L1297.74 558.371L1293.31 568.788C1326.95 577.955 1322.08 587.192 1315.44 590.664C1354.38 581.497 1361.17 591.706 1359.69 597.957L1378.5 590.664C1390.89 578.164 1410.95 585.456 1419.44 590.664C1435.37 581.497 1451.15 586.845 1457.05 590.664C1494.22 575.663 1488.77 584.414 1481.39 590.664L1486.92 602.124H1502.41L1486.92 616.708C1509.93 615.041 1518.64 620.875 1520.11 624V13.5426C1523.8 15.626 1528.96 17.7095 1520.11 9.37563C1511.26 1.04174 1497.99 8.68114 1492.45 13.5426C1505.73 24.3766 1486.92 33.3356 1475.86 36.4608C1451.96 29.7937 1439.35 35.7663 1436.03 39.586C1424.53 37.0858 1402.47 40.6277 1392.88 42.7112C1368.99 29.377 1363.75 32.2938 1364.12 35.419C1344.65 32.0855 1327.24 32.6411 1320.97 33.3356C1317.43 52.5035 1299.58 47.5726 1291.1 42.7112L1298.84 59.379L1264.55 39.586C1254.81 27.9185 1228.78 19.4457 1216.98 16.6678C1198.39 10.8341 1182.68 21.8765 1177.15 28.1269L1152.81 23.9599V35.419C1145.73 19.5846 1118.88 9.37563 1106.34 6.25042C1083.33 19.5846 1058.4 23.6127 1048.81 23.9599L982.431 6.25042C952.339 -2.08347 912.666 4.86144 896.592 9.37563C913.772 21.8765 903.75 24.3072 896.592 23.9599L893.924 33.3356C885.958 36.6691 860.365 36.1135 848.564 35.419L835.288 37.5025L829.756 42.7112H825.331C822.675 41.0444 824.962 37.8498 826.437 36.4608C816.701 42.2945 791.403 40.975 779.971 39.586C780.856 27.9185 770.751 29.1686 765.588 31.2521C759.393 35.419 751.943 34.3773 748.993 33.3356C731.292 25.8351 725.391 36.4608 724.654 42.7112C719.343 49.3783 698.101 46.8781 688.144 44.7947C696.11 50.6284 703.264 59.0317 705.846 62.5042L657.167 31.2521C663.362 23.7516 636.146 20.4875 621.764 19.793C612.028 8.95893 588.205 20.8347 577.51 28.1269L569.766 23.9599H555.383L532.15 13.5426C511.794 3.5419 487.528 13.5426 477.939 19.793C482.365 29.7937 448.068 22.571 430.367 17.7095C395.849 4.37529 362.88 0.347245 350.71 0C336.549 8.33389 316.782 10.4174 308.669 10.4174L319.733 21.8765C304.686 23.5432 307.563 29.5159 310.882 32.2938C297.606 32.2938 275.11 33.6828 265.522 34.3773C254.016 33.5439 248.189 37.5025 246.714 39.586C234.323 45.4197 237.126 39.9332 240.076 36.4608C215.294 44.7947 203.936 42.0167 201.354 39.586C186.308 29.5853 178.859 30.5576 177.015 32.2938C168.164 33.9606 159.313 32.9883 155.994 32.2938C145.373 30.627 139.03 31.5993 137.186 32.2938C139.842 38.9609 136.08 44.1002 133.867 45.8364C125.902 50.8367 119.485 45.8364 117.272 42.7112C111.077 43.5446 105.84 45.1419 103.996 45.8364C110.192 50.8367 116.903 59.0317 119.485 62.5042L65.2741 26.0434C50.2279 16.0427 40.5658 19.0985 37.6156 21.8765C29.6499 13.5426 21.0205 11.4591 17.7015 11.4591C17.7015 19.793 11.801 17.7095 8.85073 15.626Z" 
+          fill="#C6A04A"
+        />
+      </svg>
 
-      <!-- Soft gradient overlay -->
-      <div class="absolute inset-0 bg-linear-to-br from-gray-900/50 via-gray-800/40 to-amber-900/30"></div>
-
-      <!-- Soft dark fade for text readability -->
-      <div class="absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-black/70 via-black/50 to-transparent"></div>
-
-      <!-- Subtle pattern overlay -->
-      <div
-        class="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(245,158,11,0.15)_0%,transparent_50%),radial-gradient(circle_at_70%_20%,rgba(16,185,129,0.1)_0%,transparent_50%)]"
-      ></div>
-    </div>
-
-    <!-- Subtle background elements -->
-    <div class="absolute top-10 left-10 w-64 h-64 bg-amber-500/15 rounded-full blur-3xl"></div>
-    <div class="absolute bottom-10 right-10 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl"></div>
-
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-10">
-      <!-- Main Card with safari glass morphism -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-        <!-- Top accent border with safari gradient -->
-        <div class="h-2 bg-linear-to-r from-amber-400 via-amber-500 to-emerald-500"></div>
-
-        <div class="flex flex-col lg:flex-row items-stretch">
-          <!-- Left: Content -->
-          <div class="lg:w-3/5 p-8 md:p-10 lg:p-12">
-            <div class="h-full flex flex-col justify-center">
-              <!-- Safari-themed badge -->
-              <div class="inline-flex items-center mb-6">
-                <div class="w-12 h-1 bg-linear-to-r from-transparent via-amber-500 to-transparent rounded-full"></div>
-                <span class="mx-4 text-amber-300 font-semibold tracking-wider text-sm uppercase">
-                  Free Consultation
-                </span>
-                <div class="w-12 h-1 bg-linear-to-r from-transparent via-amber-500 to-transparent rounded-full"></div>
+      <!-- Content -->
+      <div class="relative z-10 flex items-center justify-center min-h-[624px] px-4 sm:px-6 lg:px-12 xl:px-20">
+        <div class="flex flex-col lg:flex-row items-center justify-between w-full max-w-7xl gap-8 lg:gap-4 py-16 lg:py-0">
+          
+          <!-- Left: Images -->
+          <div class="relative w-full lg:w-1/3 flex justify-center lg:justify-start lg:pl-4 xl:pl-8">
+            <div class="relative w-56 h-72 sm:w-64 sm:h-80">
+              <div 
+                class="absolute top-0 left-0 w-44 h-60 sm:w-48 sm:h-64 rounded-2xl overflow-hidden shadow-2xl border-[5px] border-white transform -rotate-6"
+                style="z-index: 1;"
+              >
+                <img src="/images/freeconsultationcta/img2.png" alt="Safari" class="w-full h-full object-cover" />
               </div>
-
-              <!-- Heading -->
-              <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-                Free 30-minute call with our travel expert
-              </h2>
-
-              <!-- Description -->
-              <p class="text-gray-300 text-lg md:text-xl mb-8 leading-relaxed">
-                Book a free 30-minute call to get personalized advice about safaris, Kilimanjaro routes, and the best
-                times to visit Tanzania.
-              </p>
-
-              <!-- CTA Button -->
-              <div class="mt-4">
-                <NuxtLink
-                  to="/bookacall"
-                  class="group inline-flex items-center justify-center bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg border border-amber-400/30 hover:border-amber-300/40"
-                >
-                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                    ></path>
-                  </svg>
-                  <span>Book a Free Call</span>
-                  <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                  </svg>
-                </NuxtLink>
-
-                <!-- Trust indicator -->
-                <p class="mt-4 text-sm text-gray-400 flex items-center">
-                  <svg class="w-4 h-4 mr-2 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fill-rule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clip-rule="evenodd"
-                    ></path>
-                  </svg>
-                  No obligation • No credit card required • Expert advice guaranteed
-                </p>
-              </div>
-
-              <!-- Benefits list -->
-              <div class="mt-8 space-y-3">
-                <div class="flex items-start">
-                  <div class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center mr-3 mt-0.5 shrink-0">
-                    <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fill-rule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clip-rule="evenodd"
-                      ></path>
-                    </svg>
-                  </div>
-                  <span class="text-gray-300 font-medium">Get answers to all your travel questions</span>
-                </div>
-                <div class="flex items-start">
-                  <div class="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center mr-3 mt-0.5 shrink-0">
-                    <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fill-rule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clip-rule="evenodd"
-                      ></path>
-                    </svg>
-                  </div>
-                  <span class="text-gray-300 font-medium">Personalized itinerary suggestions</span>
-                </div>
-                <div class="flex items-start">
-                  <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center mr-3 mt-0.5 shrink-0">
-                    <svg class="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fill-rule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clip-rule="evenodd"
-                      ></path>
-                    </svg>
-                  </div>
-                  <span class="text-gray-300 font-medium">Local insights you won't find online</span>
-                </div>
+              <div 
+                class="absolute top-6 left-16 sm:top-8 sm:left-20 w-44 h-60 sm:w-48 sm:h-64 rounded-2xl overflow-hidden shadow-2xl border-[5px] border-white transform rotate-6"
+                style="z-index: 2;"
+              >
+                <img src="/images/freeconsultationcta/img1.png" alt="Family" class="w-full h-full object-cover" />
               </div>
             </div>
           </div>
 
-          <!-- Right: Expert Profile with safari styling -->
-          <div class="lg:w-2/5 bg-white/5 backdrop-blur-sm p-8 md:p-10 lg:p-12 flex flex-col items-center justify-center border-t lg:border-t-0 lg:border-l border-white/20">
-            <div class="text-center">
-              <!-- Expert Image -->
-              <div class="relative mb-6 flex justify-center">
-                <!-- Small relative wrapper only around the avatar -->
-                <div class="relative inline-block">
-                  <!-- Avatar circle -->
-                  <div class="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl group">
-                    <div
-                      class="absolute inset-0 bg-linear-to-br from-amber-500/20 to-emerald-500/20 opacity-50 group-hover:opacity-30 transition-opacity"
-                    ></div>
-                    <img
-                      :src="expertImage"
-                      alt="Aya - Tanzania Travel Expert"
-                      class="w-full h-full object-cover relative z-10 group-hover:scale-110 transition-transform duration-500"
-                    />
+          <!-- Center: Content -->
+          <div class="w-full lg:w-5/12 text-center px-2 lg:px-4">
+            <p class="script-text text-white text-[32px] mb-2">
+              Ready to Experience
+            </p>
+            <h2 class="heading-text text-[#1C1A17] text-[32px] mb-4">
+              Tanzania Like Never Before?
+            </h2>
+            <p class="body-text text-white text-base mb-6 max-w-md mx-auto">
+              Let's start planning your perfect adventure. Get a free, no-obligation custom itinerary today.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-6">
+              <button class="btn-text px-6 sm:px-8 py-3 bg-[#1a3b2e] text-white rounded-full shadow-lg min-w-[160px]">
+                Start Adventure
+              </button>
+              <button class="btn-text px-6 sm:px-8 py-3 bg-white text-[#1C1A17] rounded-full shadow-lg border-2 border-white/20 min-w-[160px]">
+                Book A Free Call
+              </button>
+            </div>
 
-                    <!-- Corner accents -->
-                    <div class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-amber-400 rounded-tl-lg"></div>
-                    <div class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-amber-400 rounded-tr-lg"></div>
-                    <div class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-amber-400 rounded-bl-lg"></div>
-                    <div class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-amber-400 rounded-br-lg"></div>
-                  </div>
-
-                  <!-- Verified badge: bottom-right, slightly outside -->
-                  <div class="absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 z-30">
-                    <div
-                      class="w-11 h-11 md:w-12 md:h-12 rounded-full bg-linear-to-r from-emerald-500 to-emerald-600
-                             flex items-center justify-center shadow-xl border-2 border-white/40"
-                    >
-                      <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fill-rule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clip-rule="evenodd"
-                        ></path>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+            <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-white text-sm font-medium">
+              <div class="flex items-center gap-2">
+                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 flex-shrink-0" />
+                <span class="body-text font-medium">Free Consultation</span>
               </div>
-
-              <!-- Expert Info -->
-              <div class="mb-6">
-                <div class="flex items-center justify-center mb-2">
-                  <h3 class="text-2xl md:text-3xl font-bold text-white mr-2">Aya</h3>
-                </div>
-                <p class="text-amber-300 font-medium">Tanzania Travel Expert</p>
-                <p class="text-gray-400 text-sm mt-1">15+ years experience in Tanzanian tourism</p>
+              <div class="flex items-center gap-2">
+                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 flex-shrink-0" />
+                <span class="body-text font-medium">No Obligation</span>
               </div>
-
-              <!-- Expert Stats -->
-              <div class="grid grid-cols-3 gap-4 max-w-xs mx-auto mb-6">
-                <div class="text-center p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div class="text-2xl font-bold text-amber-300 mb-1">15+</div>
-                  <div class="text-xs text-gray-400">Years</div>
-                </div>
-                <div class="text-center p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div class="text-2xl font-bold text-emerald-300 mb-1">500+</div>
-                  <div class="text-xs text-gray-400">Trips</div>
-                </div>
-                <div class="text-center p-3 rounded-xl bg-white/5 border border-white/10">
-                  <div class="text-2xl font-bold text-amber-300 mb-1">100%</div>
-                  <div class="text-xs text-gray-400">Satisfaction</div>
-                </div>
-              </div>
-
-              <!-- Expertise tags -->
-              <div class="mt-4 flex flex-wrap justify-center gap-2">
-                <span
-                  class="inline-flex items-center px-3 py-1.5 rounded-full text-xs bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-                >
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                    ></path>
-                  </svg>
-                  Kilimanjaro
-                </span>
-                <span
-                  class="inline-flex items-center px-3 py-1.5 rounded-full text-xs bg-amber-500/10 text-amber-300 border border-amber-500/20"
-                >
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"
-                    ></path>
-                  </svg>
-                  Safari
-                </span>
-                <span
-                  class="inline-flex items-center px-3 py-1.5 rounded-full text-xs bg-blue-500/10 text-blue-300 border border-blue-500/20"
-                >
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    ></path>
-                  </svg>
-                  Zanzibar
-                </span>
-              </div>
-
-              <!-- Availability indicator -->
-              <div class="mt-6 flex items-center justify-center text-sm text-gray-400">
-                <div class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></div>
-                <span>Available for calls today</span>
+              <div class="flex items-center gap-2">
+                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 flex-shrink-0" />
+                <span class="body-text font-medium">Custom Itinerary</span>
               </div>
             </div>
           </div>
+
+          <!-- Right: Profile -->
+          <div class="w-full lg:w-1/4 flex justify-center lg:justify-end lg:pr-4 xl:pr-8">
+            <div class="relative">
+              <div class="w-32 h-32 sm:w-36 sm:h-36 md:w-44 md:h-44 rounded-full overflow-hidden border-[5px] sm:border-[6px] border-white shadow-2xl bg-white">
+                <img src="/images/freeconsultationcta/girlcircle.png" alt="Consultant" class="w-full h-full object-cover" />
+              </div>
+              <div class="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-full border-3 sm:border-4 border-[#C6A04A] shadow-md"></div>
+            </div>
+          </div>
+
         </div>
-
-        <!-- Bottom accent border -->
-        <div class="h-2 bg-linear-to-r from-emerald-500 via-amber-500 to-amber-400"></div>
       </div>
     </div>
   </section>
 </template>
 
-<script setup>
-// Real travel expert images from Unsplash
-const expertImages = [
-  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face&q=80', // Professional African woman
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=face&q=80', // Smiling woman outdoors
-  'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=400&h=400&fit=crop&crop=face&q=80', // Confident business woman
-  'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face&q=80', // Professional smiling woman
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face&q=80', // Friendly professional woman
-  'https://images.unsplash.com/photo-1545996124-0501ebae84d0?w=400&h=400&fit=crop&crop=face&q=80' // Travel guide style
-]
-
-// Pick a random expert image
-const expertImage = expertImages[Math.floor(Math.random() * expertImages.length)]
-</script>
-
 <style scoped>
-/* Smooth transitions */
-a,
-button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+@import url('https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Outfit:wght@400;700&display=swap');
+
+section {
+  isolation: isolate;
+  font-family: 'Outfit', sans-serif;
 }
 
-/* Glass effect */
-.backdrop-blur-sm {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+.script-text {
+  font-family: 'Kaushan Script', cursive;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
+  color: #FFFFFF;
 }
 
-/* Shadow utilities */
-.shadow-2xl {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+.heading-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  text-align: center;
+  color: #1C1A17;
 }
 
-.shadow-xl {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+.body-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
 }
 
-/* Availability pulse animation */
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+.btn-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: center;
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.border-3 {
+  border-width: 3px;
 }
 
-/* Safari color gradients */
-.bg-linear-to-r.from-amber-500.to-amber-600 {
-  background-image: linear-gradient(to right, #f59e0b, #d97706);
-}
-
-.hover\:from-amber-600:hover {
-  --tw-gradient-from: #d97706;
-}
-
-.hover\:to-amber-700:hover {
-  --tw-gradient-to: #b45309;
-}
-
-/* Text readability */
-.heading-safe {
-  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
-}
-
-/* Background image styling */
-.bg-cover {
-  background-size: cover;
-}
-
-.bg-center {
-  background-position: center;
-}
-
-/* Ensure image covers properly */
-.object-cover {
-  object-fit: cover;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .lg\:border-l {
-    border-left: 0;
-  }
-
-  .lg\:border-t-0 {
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-  }
-}
-
-/* Image zoom on hover */
-.group:hover img {
-  transform: scale(1.05);
-}
-
-/* Ensure proper z-index stacking */
-.relative.z-10 {
-  position: relative;
-  z-index: 10;
+img {
+  image-rendering: -webkit-optimize-contrast;
 }
 </style>

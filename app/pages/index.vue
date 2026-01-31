@@ -28,7 +28,8 @@
 
         <!-- 4) IMMERSIVE VIDEO STORY -->
         <section aria-labelledby="section-video">
-          <VideoSection />
+          <Charity />
+          <Stories />
         </section>
 
         <!-- 5) PACKING LIST MAGNETS -->
@@ -42,7 +43,7 @@
 
         <!-- 7) SOCIAL PROOF: TESTIMONIALS -->
         <section aria-labelledby="section-testimonials">
-          <Testimonials />
+          <Travelguide/>
         </section>
 
         <!-- 8) FREE CONSULTATION (lead magnet) -->
@@ -52,7 +53,7 @@
 
         <!-- 9) FINAL BIG CTA (BOOK / PLAN TRIP) -->
         <section aria-labelledby="section-cta">
-          <CTA />
+          <Socialmedia />
         </section>
 
         <!-- 10) NEWSLETTER SIGNUP -->
@@ -68,19 +69,19 @@
 import Hero from '~/components/Hero.vue'
 import HeroLead from '~/components/HeroLead.vue'
 import ToursPreview from '~/components/ToursPreview.vue'
-import FeaturesSection from '~/components/ExperienceTanzania.vue'
 import TripsOffering from '~/components/TripsOffering.vue'  
-import VideoSection from '~/components/VideoSection.vue'
 import SafariPackingListCTA from '~/components/SafariPackingListCTA.vue'
 import KilimanjaroPackingListCTA from '~/components/KilimanjaroPackingListCTA.vue'
 import KilimanjaroSuccessCalculator from '~/components/KilimanjaroSuccessCalculator.vue'
-import Testimonials from '~/components/Testimonials.vue'
 import FreeConsultationCTA from '~/components/FreeConsultationCTA.vue'
-import CTA from '~/components/CTA.vue'
 import NewsletterSignup from '~/components/NewsletterSignup.vue'
 import SiteFooter from '~/components/SiteFooter.vue'
 import ExperienceTanzania from '~/components/ExperienceTanzania.vue'
 import Whychooseus from '~/components/Whychooseus.vue'
+import Charity from '~/components/Charity.vue'
+import Stories from '~/components/Stories.vue'
+import Travelguide from '~/components/Travelguide.vue'
+import Socialmedia from '~/components/Socialmedia.vue'
 
 
 definePageMeta({

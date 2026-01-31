@@ -13,15 +13,15 @@
       <div class="tabs-container">
         <div class="tabs-scroll">
           <button
-  v-for="cat in categories"
-  :key="cat.key"
-  @click="selectCategory(cat.key)"
-  :class="['tab-button', { active: activeCategory === cat.key }]"
->
-  <img v-if="cat.icon" :src="cat.icon" alt="" class="tab-icon" />
-  <span class="tab-label">{{ cat.label }}</span>
-  <span class="tab-badge">{{ cat.count }} tours</span>
-</button>
+            v-for="cat in categories"
+            :key="cat.key"
+            @click="selectCategory(cat.key)"
+            :class="['tab-button', { active: activeCategory === cat.key }]"
+          >
+            <img v-if="cat.icon" :src="cat.icon" alt="" class="tab-icon" />
+            <span class="tab-label">{{ cat.label }}</span>
+            <span class="tab-badge">{{ cat.count }} tours</span>
+          </button>
         </div>
       </div>
 
@@ -105,7 +105,7 @@ import { ref, computed } from 'vue'
 const categories = [
   { key: 'safari', label: 'Safari Adventures', count: 16, icon: '/images/tripsoffering/jeep.svg' },
   { key: 'kilimanjaro', label: 'Kilimanjaro Treks', count: 10, icon: '/images/tripsoffering/mountain.svg' },
-  { key: 'all', label: 'All Experiences', count: 30, icon: null }, // No icon for "All"
+  { key: 'all', label: 'All Experiences', count: 30, icon: null },
   { key: 'zanzibar', label: 'Zanzibar Escapes', count: 5, icon: '/images/tripsoffering/umbrella.svg' },
 ]
 
@@ -128,59 +128,59 @@ function getTagStyle(color) {
   }
 }
 
+// Updated trips with local images from public/images/tripsoffering/
 const trips = ref([
   {
     id: 1,
-    image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=600&h=400',
+    image: '/images/tripsoffering/image3.jpg',
     title: 'Great Migration Safari',
     excerpt: "Witness millions of wildebeest and zebra crossing the Serengeti during nature's greatest spectacle.",
     duration: '7 days / 6 Nights',
     tag: 'Popular',
     tagColor: 'green',
+    category: 'safari',
     highlights: ['River Crossings', 'Big Five Sightings', 'Hot Air Balloon'],
     price: '$2500'
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1542401886-65d6c61db217?auto=format&fit=crop&w=600&h=400',
+    image: '/images/tripsoffering/image1.jpg',
     title: 'Kilimanjaro Machame Route',
     excerpt: 'Embark on a thrilling climb through diverse ecosystems, leading to the stunning Uhuru Peak.',
     duration: '6 days / 5 Nights',
     tag: 'Challenging',
     tagColor: 'gold',
+    category: 'kilimanjaro',
     highlights: ['Lava Tower', 'Giant Senecios', 'Stunning Sunrise Views'],
     price: '$1500'
   },
   {
     id: 3,
-    image: 'https://images.unsplash.com/photo-1589553416260-f586c8f1514f?auto=format&fit=crop&w=600&h=400',
+    image: '/images/tripsoffering/image2.jpg',
     title: 'Kilimanjaro Machame Route — Acclimatization',
     excerpt: 'Experience the majestic beauty of Kilimanjaro at a relaxed pace, enjoying extra time for acclimatization.',
     duration: '8 days / 7 Nights',
     tag: null,
+    category: 'kilimanjaro',
     highlights: ['Barranco Wall', 'Acclimatization Days', 'Stargazing at High Camp'],
     price: '$1800'
   }
 ])
 
+// Improved filtering logic using category field
 const filteredTrips = computed(() => {
-  // Simple filtering logic - customize as needed
   if (activeCategory.value === 'all') return trips.value
-  return trips.value.filter(t => {
-    if (activeCategory.value === 'safari') return t.title.toLowerCase().includes('safari')
-    if (activeCategory.value === 'kilimanjaro') return /kilimanjaro|machame/i.test(t.title)
-    if (activeCategory.value === 'zanzibar') return /zanzibar/i.test(t.title)
-    return true
-  })
+  return trips.value.filter(trip => trip.category === activeCategory.value)
 })
 </script>
 
 <style scoped>
+/* ... keep all your existing styles exactly the same ... */
 @import url('https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Outfit:wght@400;500;600;700&display=swap');
 
 .trips-section {
   padding: 80px 20px;
-  background-color: #FFF9E8; /* Lighter sand color like Figma */
+  background-color: #F6F1E8;
   font-family: 'Outfit', sans-serif;
 }
 
@@ -264,7 +264,7 @@ const filteredTrips = computed(() => {
 }
 
 .active .tab-icon {
-  color: #FFFFFF;
+  filter: brightness(0) invert(1);
 }
 
 .tab-label {
@@ -407,7 +407,8 @@ const filteredTrips = computed(() => {
   font-weight: 600;
   color: #1C1A17;
   margin-bottom: 12px;
-  text-transform: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .highlights-list {
@@ -489,7 +490,7 @@ const filteredTrips = computed(() => {
 }
 
 .view-details-btn:hover {
-  background: #B08D3F;
+  background: #B59240;
   transform: translateX(2px);
 }
 
@@ -567,6 +568,4 @@ const filteredTrips = computed(() => {
     height: 180px;
   }
 }
-
-
 </style>

@@ -51,25 +51,25 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-6">
-              <button class="btn-text px-6 sm:px-8 py-3 bg-[#1a3b2e] text-white rounded-full shadow-lg min-w-[160px]">
+              <button class="btn-text px-6 sm:px-8 py-3 bg-[#1a3b2e] text-white rounded-full shadow-lg min-w-40">
                 Start Adventure
               </button>
-              <button class="btn-text px-6 sm:px-8 py-3 bg-white text-[#1C1A17] rounded-full shadow-lg border-2 border-white/20 min-w-[160px]">
+              <button class="btn-text px-6 sm:px-8 py-3 bg-white text-[#1C1A17] rounded-full shadow-lg border-2 border-white/20 min-w-40">
                 Book A Free Call
               </button>
             </div>
 
             <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-white text-sm font-medium">
               <div class="flex items-center gap-2">
-                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 flex-shrink-0" />
+                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 shrink-0" />
                 <span class="body-text font-medium">Free Consultation</span>
               </div>
               <div class="flex items-center gap-2">
-                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 flex-shrink-0" />
+                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 shrink-0" />
                 <span class="body-text font-medium">No Obligation</span>
               </div>
               <div class="flex items-center gap-2">
-                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 flex-shrink-0" />
+                <img src="/images/freeconsultationcta/accept.svg" alt="Check" class="w-5 h-5 shrink-0" />
                 <span class="body-text font-medium">Custom Itinerary</span>
               </div>
             </div>
